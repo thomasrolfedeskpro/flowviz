@@ -36,12 +36,14 @@ export class ChevronStream {
   private meshes: THREE.Mesh[]
   private geo:    THREE.BufferGeometry
   private mat:    THREE.MeshBasicMaterial
-  private scene:  THREE.Scene
-  private curve:  THREE.Curve<THREE.Vector3>
+  private scene:  THREE.Object3D
+  /** The pipe itself, not its curve: a drag rebuilds the pipe with a *new*
+   *  curve object, and chevrons must follow it rather than the stale one. */
+  private source: { curve: THREE.Curve<THREE.Vector3> }
 
-  constructor(scene: THREE.Scene, curve: THREE.Curve<THREE.Vector3>, color: number) {
-    this.scene = scene
-    this.curve = curve
+  constructor(scene: THREE.Object3D, source: { curve: THREE.Curve<THREE.Vector3> }, color: number) {
+    this.scene  = scene
+    this.source = source
 
     this.geo = buildChevronGeo()
     this.mat = new THREE.MeshBasicMaterial({
@@ -60,11 +62,12 @@ export class ChevronStream {
 
   update(now: number): void {
     const phase = (now % PERIOD_MS) / PERIOD_MS
+    const curve = this.source.curve
 
     for (let i = 0; i < COUNT; i++) {
       const t   = (phase + i / COUNT) % 1
-      const pos = this.curve.getPointAt(t)
-      const tan = this.curve.getTangentAt(t)
+      const pos = curve.getPointAt(t)
+      const tan = curve.getTangentAt(t)
 
       // Project tangent onto horizontal plane and rotate around Y axis
       // so the chevron arrow points in the direction of travel (flat in XZ plane)

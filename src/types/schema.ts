@@ -36,15 +36,13 @@ export type ComponentType =
   | 'function'
   | 'external'
 
+/** Basic extruded prisms only — the icon on top carries the meaning. */
 export type ComponentShape =
-  | 'stack'
-  | 'cloud'
-  | 'server'
-  | 'desktop'
-  | 'smartphone'
-  | 'router'
-  | 'deskphone'
-  | 'wall'
+  | 'cuboid'
+  | 'cylinder'
+  | 'hexagon'
+  | 'octagon'
+  | 'triangle'
 
 export interface Component {
   id: string
@@ -62,6 +60,20 @@ export interface Component {
     line?: number
     notes?: string
   }
+  /** What is inside this component — a scene of its own, entered by any step
+   *  tagged with this component's id. Nests to any depth. */
+  detail?: SceneDetail
+}
+
+/**
+ * A nested scene. Laid out in its own grid from its own origin, exactly like a
+ * top-level flow, and shown only while a step names the component owning it.
+ */
+export interface SceneDetail {
+  grid: { cols: number; rows: number }
+  zones?: Zone[]
+  components: Component[]
+  connections: Connection[]
 }
 
 export interface WayPoint {
@@ -107,11 +119,39 @@ export interface Packet {
   direction?:    'forward' | 'reverse'
   data?:         Record<string, unknown>
   arrivalStyle?: ArrivalStyle
+  /** Send this many packets down the pipe instead of one, staggered — for work
+   *  that repeats (a query in a loop, a retry storm, a batch of messages). */
+  count?:        number
+}
+
+/** Emphasis for a footer note. Tones reuse the annotation palette. */
+export type NoteStyle = 'info' | 'success' | 'warning' | 'error'
+
+/** A line of author-written commentary pinned under the step description.
+ *  `text` supports inline **bold**, *italic* and `code`. */
+export interface FooterNote {
+  text:   string
+  style?: NoteStyle
+}
+
+/** One bar in the optional waterfall view. `weight` and `start` are unitless —
+ *  bars are scaled against the flow's full span, so they can be milliseconds,
+ *  rows scanned, retries, cost, anything comparable. */
+export interface WaterfallBar {
+  weight: number
+  /** Where the bar begins on the shared axis. Omit and it follows the previous
+   *  bar's end, giving a sequential cascade; set it to show overlap. */
+  start?: number
+  label?: string
+  color?: string
 }
 
 export interface Step {
   id: number
   title: string
+  /** Component id whose `detail` scene this step happens inside. Omitted = the
+   *  top-level scene. */
+  scene?: string
   name?: string
   description?: string
   highlight: string[]
@@ -121,6 +161,8 @@ export interface Step {
     zoom?: number
   }
   annotations?: Annotation[]
+  footer?: FooterNote[]
+  waterfall?: WaterfallBar
   popouts?: Popout[]
   packet?: Packet | null
   packets?: Packet[]

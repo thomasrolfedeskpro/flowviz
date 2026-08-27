@@ -74,7 +74,7 @@ describe('validateFlow()', () => {
   })
 
   it('accepts all valid component shapes', () => {
-    const shapes = ['stack', 'cloud', 'server', 'desktop', 'smartphone', 'router', 'deskphone', 'wall'] as const
+    const shapes = ['cuboid', 'cylinder', 'hexagon', 'octagon', 'triangle'] as const
     for (const shape of shapes) {
       const flow = clone(minimalFlow()) as Record<string, unknown>
       ;(flow['components'] as Record<string, unknown>[])[0]['shape'] = shape
@@ -84,8 +84,37 @@ describe('validateFlow()', () => {
 
   it('throws on an invalid component shape', () => {
     const flow = clone(minimalFlow()) as Record<string, unknown>
-    ;(flow['components'] as Record<string, unknown>[])[0]['shape'] = 'triangle'
+    ;(flow['components'] as Record<string, unknown>[])[0]['shape'] = 'server'
     expect(() => validateFlow(flow)).toThrow(/Invalid component shape/)
+  })
+
+  it('accepts a waterfall bar with non-negative weight and start', () => {
+    const flow = clone(minimalFlow()) as Record<string, unknown>
+    ;(flow['steps'] as Record<string, unknown>[])[0]['waterfall'] =
+      { weight: 10, start: 0, label: '10 ms', color: '#ffffff' }
+    expect(() => validateFlow(flow)).not.toThrow()
+  })
+
+  it('throws on a negative waterfall weight or start', () => {
+    const negWeight = clone(minimalFlow()) as Record<string, unknown>
+    ;(negWeight['steps'] as Record<string, unknown>[])[0]['waterfall'] = { weight: -5 }
+    expect(() => validateFlow(negWeight)).toThrow(/zero or more/)
+
+    const negStart = clone(minimalFlow()) as Record<string, unknown>
+    ;(negStart['steps'] as Record<string, unknown>[])[0]['waterfall'] = { weight: 5, start: -1 }
+    expect(() => validateFlow(negStart)).toThrow(/zero or more/)
+  })
+
+  it('accepts a positive integer packet count and rejects zero', () => {
+    const ok = clone(minimalFlow()) as Record<string, unknown>
+    ;(ok['steps'] as Record<string, unknown>[])[0]['packet'] =
+      { connection: 'c_ab', shape: 'document', count: 25 }
+    expect(() => validateFlow(ok)).not.toThrow()
+
+    const zero = clone(minimalFlow()) as Record<string, unknown>
+    ;(zero['steps'] as Record<string, unknown>[])[0]['packet'] =
+      { connection: 'c_ab', shape: 'document', count: 0 }
+    expect(() => validateFlow(zero)).toThrow()
   })
 
   it('accepts components with no shape (shape is optional)', () => {

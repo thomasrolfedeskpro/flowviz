@@ -1,11 +1,21 @@
 import * as THREE from 'three'
 import * as brandIcons from '@fortawesome/free-brands-svg-icons'
 import * as solidIcons from '@fortawesome/free-solid-svg-icons'
+import { buildBodyGeometry, iconFitRatio } from '@/scene/componentShapes'
+import type { ComponentShape } from '@/types/schema'
 
 type FAIconTuple = [number, number, string[], string, string | string[]]
 type FAIconEntry = { icon: FAIconTuple }
 
 const BOX_H = 0.30  // fixed height for all icon-box components
+
+/** Every Font Awesome free-solid icon name, in the camelCase form flows use. */
+const SOLID_PACK = solidIcons as unknown as Record<string, { icon?: unknown }>
+
+export const SOLID_ICON_NAMES: string[] = Object.keys(SOLID_PACK)
+  .filter(key => key.startsWith('fa') && Array.isArray(SOLID_PACK[key]?.icon))
+  .map(key => key.charAt(2).toLowerCase() + key.slice(3))
+  .sort()
 
 function resolveIcon(
   name: string,
@@ -38,11 +48,12 @@ function buildIconBoxMeshes(
   meshSize: THREE.Vector3,
   boxMat:  THREE.MeshStandardMaterial,
   iconMat: THREE.MeshBasicMaterial,
+  shape:   ComponentShape,
 ): THREE.Mesh[] {
   // Use the full component height so tubes appear to enter the box naturally.
   // Group origin is at center.y + meshSize.y/2, so local y=0 puts the box
   // center at that point; bottom lands at world y=0 (ground), top at meshSize.y.
-  const box  = buildBox(meshSize, boxMat, 0, meshSize.y)
+  const box  = buildBox(meshSize, boxMat, shape, 0, meshSize.y)
   if (svgPaths.length === 0) return [box]
 
   // Draw FA paths onto a 2-D canvas using the browser Path2D API.
@@ -81,7 +92,7 @@ function buildIconBoxMeshes(
   // PlaneGeometry lying flat on top of the box, face up.
   // Use the shorter dimension so the square canvas texture is never stretched
   // on wide or deep rectangular components.
-  const iconSize = Math.min(meshSize.x, meshSize.z) * 0.88
+  const iconSize = Math.min(meshSize.x, meshSize.z) * iconFitRatio(shape)
   const planeY   = meshSize.y / 2 + 0.01
   const face     = new THREE.Mesh(
     new THREE.PlaneGeometry(iconSize, iconSize),
@@ -97,10 +108,11 @@ function buildIconBoxMeshes(
 function buildBox(
   meshSize:  THREE.Vector3,
   mat:       THREE.MeshStandardMaterial,
+  shape:     ComponentShape = 'cuboid',
   localY  = 0,
   boxHeight = BOX_H,
 ): THREE.Mesh {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(meshSize.x, boxHeight, meshSize.z), mat)
+  const m = new THREE.Mesh(buildBodyGeometry(shape, meshSize, boxHeight), mat)
   m.position.y = localY
   return m
 }
@@ -112,13 +124,14 @@ export function buildBrandIconMeshes(
   meshSize: THREE.Vector3,
   boxMat:  THREE.MeshStandardMaterial,
   iconMat: THREE.MeshBasicMaterial,
+  shape:   ComponentShape = 'cuboid',
 ): THREE.Mesh[] {
   const resolved = resolveIcon(logoName, brandIcons as Record<string, unknown>)
   if (!resolved) {
     console.warn(`[IconMesh] Unknown brand icon: "${logoName}"`)
-    return [buildBox(meshSize, boxMat, 0, meshSize.y)]
+    return [buildBox(meshSize, boxMat, shape, 0, meshSize.y)]
   }
-  return buildIconBoxMeshes(resolved.paths, resolved.width, resolved.height, meshSize, boxMat, iconMat)
+  return buildIconBoxMeshes(resolved.paths, resolved.width, resolved.height, meshSize, boxMat, iconMat, shape)
 }
 
 export function buildSolidIconMeshes(
@@ -126,11 +139,12 @@ export function buildSolidIconMeshes(
   meshSize: THREE.Vector3,
   boxMat:  THREE.MeshStandardMaterial,
   iconMat: THREE.MeshBasicMaterial,
+  shape:   ComponentShape = 'cuboid',
 ): THREE.Mesh[] {
   const resolved = resolveIcon(iconName, solidIcons as Record<string, unknown>)
   if (!resolved) {
     console.warn(`[IconMesh] Unknown solid icon: "${iconName}"`)
-    return [buildBox(meshSize, boxMat, 0, meshSize.y)]
+    return [buildBox(meshSize, boxMat, shape, 0, meshSize.y)]
   }
-  return buildIconBoxMeshes(resolved.paths, resolved.width, resolved.height, meshSize, boxMat, iconMat)
+  return buildIconBoxMeshes(resolved.paths, resolved.width, resolved.height, meshSize, boxMat, iconMat, shape)
 }

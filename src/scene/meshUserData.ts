@@ -11,4 +11,6 @@ export interface PacketMeshUserData {
   packetLabel: string
   packetShape: string
   packetData:  Record<string, unknown> | undefined
+  /** How many repeats the author declared, when more than one. */
+  packetCount?: number | undefined
 }

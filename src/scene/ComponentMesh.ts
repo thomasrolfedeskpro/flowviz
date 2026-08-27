@@ -46,7 +46,7 @@ export class ComponentMesh {
   private penetrated:       boolean   = false
   private penetrationTween: Tween<{ opacity: number }> | null = null
 
-  constructor(scene: THREE.Scene, component: InternalComponent) {
+  constructor(scene: THREE.Object3D, component: InternalComponent) {
     this.id        = component.id
     this.topCenter = component.topCenter.clone()
 
@@ -73,11 +73,12 @@ export class ComponentMesh {
       depthWrite:  false,  // never let the icon face clobber depth — box already owns it
     })
 
+    const shape = component.shape ?? 'cuboid'
     const visualMeshes = component.logo
-      ? buildLogoMeshes(component.logo, component.meshSize, this.mat, this.iconMat)
+      ? buildLogoMeshes(component.logo, component.meshSize, this.mat, this.iconMat, shape)
       : component.icon
-        ? buildSolidIconMeshes(component.icon, component.meshSize, this.mat, this.iconMat)
-        : buildShapeMeshes(component.type, component.shape, component.meshSize, this.mat, this.iconMat)
+        ? buildSolidIconMeshes(component.icon, component.meshSize, this.mat, this.iconMat, shape)
+        : buildShapeMeshes(component.type, shape, component.meshSize, this.mat, this.iconMat)
     for (const m of visualMeshes) {
       m.castShadow    = true
       m.receiveShadow = true
@@ -148,7 +149,7 @@ export class ComponentMesh {
       .start()
   }
 
-  dispose(scene: THREE.Scene): void {
+  dispose(scene: THREE.Object3D): void {
     scene.remove(this.group)
     this.hitMesh.geometry.dispose()
     ;(this.hitMesh.material as THREE.Material).dispose()

@@ -4,7 +4,7 @@ import type { FlowDefinition } from '@/types/schema'
 // ── Valid value sets (shared with parseFlow.ts) ───────────────────────────────
 
 const COMPONENT_TYPES  = ['client', 'service', 'database', 'queue', 'function', 'external'] as const
-const COMPONENT_SHAPES = ['stack', 'cloud', 'server', 'desktop', 'smartphone', 'router', 'deskphone', 'wall'] as const
+const COMPONENT_SHAPES = ['cuboid', 'cylinder', 'hexagon', 'octagon', 'triangle'] as const
 const PACKET_SHAPES    = ['sphere', 'document', 'token', 'blob', 'envelope'] as const
 const ANNOTATION_TYPES = ['callout', 'transform'] as const
 const ANNOTATION_STYLES= ['info', 'success', 'warning', 'error'] as const
@@ -43,7 +43,13 @@ const ZoneSchema = z.object({
   }).optional(),
 })
 
-const ComponentSchema = z.object({
+type ComponentInput = {
+  id: string
+  detail?: { grid: { cols: number; rows: number }; zones?: unknown[]; components: ComponentInput[]; connections: unknown[] }
+  [key: string]: unknown
+}
+
+const ComponentSchema: z.ZodType<ComponentInput> = z.lazy(() => z.object({
   id:       z.string(),
   label:    z.string(),
   type:     enumStr(COMPONENT_TYPES,  'Invalid component type'),
@@ -63,7 +69,13 @@ const ComponentSchema = z.object({
     line:        z.number().optional(),
     notes:       z.string().optional(),
   }).optional(),
-})
+  detail: z.object({
+    grid:        z.object({ cols: z.number(), rows: z.number() }),
+    zones:       z.array(ZoneSchema).optional(),
+    components:  z.array(ComponentSchema),
+    connections: z.array(ConnectionSchema),
+  }).optional(),
+})) as unknown as z.ZodType<ComponentInput>
 
 const WayPointSchema = z.object({ col: z.number(), row: z.number() })
 
@@ -97,6 +109,7 @@ const PacketSchema = z.object({
   direction:    enumStr(DIRECTIONS,     'Invalid packet direction').optional(),
   data:         z.record(z.string(), z.unknown()).optional(),
   arrivalStyle: enumStr(ARRIVAL_STYLES, 'Invalid packet arrivalStyle').optional(),
+  count:        z.number().int().positive().optional(),
 })
 
 const MultiPacketSchema = z.object({
@@ -105,6 +118,21 @@ const MultiPacketSchema = z.object({
   direction:    enumStr(DIRECTIONS,     'Invalid packet direction').optional(),
   data:         z.record(z.string(), z.unknown()).optional(),
   arrivalStyle: enumStr(ARRIVAL_STYLES, 'Invalid packets[].arrivalStyle').optional(),
+  count:        z.number().int().positive().optional(),
+})
+
+const NOTE_STYLES = ['info', 'success', 'warning', 'error'] as const
+
+const FooterNoteSchema = z.object({
+  text:  z.string(),
+  style: enumStr(NOTE_STYLES, 'Invalid footer note style').optional(),
+})
+
+const WaterfallSchema = z.object({
+  weight: z.number().nonnegative('waterfall.weight must be zero or more'),
+  start:  z.number().nonnegative('waterfall.start must be zero or more').optional(),
+  label:  z.string().optional(),
+  color:  z.string().optional(),
 })
 
 const StreamDefSchema = z.object({
@@ -115,6 +143,7 @@ const StreamDefSchema = z.object({
 const StepSchema = z.object({
   id:                 z.number(),
   title:              z.string(),
+  scene:              z.string().optional(),
   name:               z.string().optional(),
   description:        z.string().optional(),
   highlight:          z.array(z.string()),
@@ -124,6 +153,8 @@ const StepSchema = z.object({
     zoom:  z.number().optional(),
   }).optional(),
   annotations: z.array(AnnotationSchema).optional(),
+  footer:      z.array(FooterNoteSchema).optional(),
+  waterfall:   WaterfallSchema.optional(),
   popouts:     z.array(PopoutSchema).optional(),
   packet:      PacketSchema.nullable().optional(),
   packets:     z.array(MultiPacketSchema).optional(),
@@ -141,69 +172,148 @@ export const FlowDefinitionSchema = z.object({
   connections: z.array(ConnectionSchema),
   steps:       z.array(StepSchema),
 }).superRefine((flow, ctx) => {
-  const componentIds  = new Set(flow.components.map(c => c.id))
-  const connectionIds = new Set(flow.connections.map(c => c.id))
+  // ── Scene walk ────────────────────────────────────────────────────────────
+  // Every component may carry a nested `detail` scene, to any depth. Ids are
+  // required unique across the whole flow so a step can name any scene, and any
+  // component or connection inside it, without qualification.
+  interface SceneInfo {
+    /** null for the top-level scene, otherwise the owning component's id */
+    id:             string | null
+    path:           (string | number)[]
+    componentIds:   Set<string>
+    connectionIds:  Set<string>
+  }
 
-  flow.connections.forEach((conn, i) => {
-    if (!componentIds.has(conn.from)) {
+  const scenes: SceneInfo[] = []
+  const sceneById = new Map<string | null, SceneInfo>()
+  const seenIds = new Map<string, string>()   // id → where it was first declared
+
+  const claim = (id: string, where: string, path: (string | number)[]) => {
+    const first = seenIds.get(id)
+    if (first) {
       ctx.addIssue({
         code:    z.ZodIssueCode.custom,
-        path:    ['connections', i, 'from'],
-        message: `References unknown component: ${conn.from}`,
+        path,
+        message: `Duplicate id "${id}" — already used by ${first}. Ids must be unique across every scene.`,
       })
+      return
     }
-    if (!componentIds.has(conn.to)) {
-      ctx.addIssue({
-        code:    z.ZodIssueCode.custom,
-        path:    ['connections', i, 'to'],
-        message: `References unknown component: ${conn.to}`,
-      })
-    }
-  })
+    seenIds.set(id, where)
+  }
 
+  type RawScene = {
+    zones?: { id: string; parentId?: string }[]
+    components: { id: string; detail?: RawScene }[]
+    connections: { id: string; from: string; to: string }[]
+  }
+
+  function walk(scene: RawScene, id: string | null, path: (string | number)[]) {
+    const info: SceneInfo = {
+      id,
+      path,
+      componentIds:  new Set(scene.components.map(c => c.id)),
+      connectionIds: new Set(scene.connections.map(c => c.id)),
+    }
+    scenes.push(info)
+    sceneById.set(id, info)
+
+    const label = id === null ? 'the top-level scene' : `scene "${id}"`
+    const zoneIds = new Set((scene.zones ?? []).map(z => z.id))
+
+    ;(scene.zones ?? []).forEach((zone, i) => {
+      claim(zone.id, `a zone in ${label}`, [...path, 'zones', i, 'id'])
+      if (zone.parentId && !zoneIds.has(zone.parentId)) {
+        ctx.addIssue({
+          code:    z.ZodIssueCode.custom,
+          path:    [...path, 'zones', i, 'parentId'],
+          message: `References a zone outside this scene: ${zone.parentId}`,
+        })
+      }
+    })
+
+    scene.components.forEach((comp, i) => {
+      claim(comp.id, `a component in ${label}`, [...path, 'components', i, 'id'])
+    })
+
+    // A connection may only join components in its own scene — v1 has no
+    // cross-scene pipes, and silently drawing nothing would be worse.
+    scene.connections.forEach((conn, i) => {
+      claim(conn.id, `a connection in ${label}`, [...path, 'connections', i, 'id'])
+      for (const end of ['from', 'to'] as const) {
+        if (!info.componentIds.has(conn[end])) {
+          ctx.addIssue({
+            code:    z.ZodIssueCode.custom,
+            path:    [...path, 'connections', i, end],
+            message: seenIds.has(conn[end])
+              ? `References a component in another scene: ${conn[end]}. Connections cannot cross scenes.`
+              : `References unknown component: ${conn[end]}`,
+          })
+        }
+      }
+    })
+
+    scene.components.forEach((comp, i) => {
+      if (comp.detail) walk(comp.detail, comp.id, [...path, 'components', i, 'detail'])
+    })
+  }
+
+  walk(flow as unknown as RawScene, null, [])
+
+  // ── Step references, resolved against the step's own scene ────────────────
   flow.steps.forEach((step, si) => {
-    step.active_connections.forEach((id, ai) => {
-      if (!connectionIds.has(id)) {
+    const scene = sceneById.get(step.scene ?? null)
+    if (!scene) {
+      ctx.addIssue({
+        code:    z.ZodIssueCode.custom,
+        path:    ['steps', si, 'scene'],
+        message: seenIds.has(step.scene as string)
+          ? `"${step.scene}" has no detail scene — only a component with "detail" can hold steps`
+          : `References unknown scene: ${step.scene}`,
+      })
+      return
+    }
+
+    const inScene = (id: string) => scene.componentIds.has(id)
+    const hasConn = (id: string) => scene.connectionIds.has(id)
+    const where = step.scene ? `scene "${step.scene}"` : 'the top-level scene'
+
+    step.highlight.forEach((id, hi) => {
+      if (!inScene(id)) {
         ctx.addIssue({
           code:    z.ZodIssueCode.custom,
-          path:    ['steps', si, 'active_connections', ai],
-          message: `References unknown connection: ${id}`,
+          path:    ['steps', si, 'highlight', hi],
+          message: seenIds.has(id)
+            ? `Component "${id}" is not in ${where}`
+            : `References unknown component: ${id}`,
         })
       }
     })
-    if (step.packet) {
-      if (!connectionIds.has(step.packet.connection)) {
-        ctx.addIssue({
-          code:    z.ZodIssueCode.custom,
-          path:    ['steps', si, 'packet', 'connection'],
-          message: `References unknown connection: ${step.packet.connection}`,
-        })
-      }
+
+    const connRef = (id: string, path: (string | number)[]) => {
+      if (hasConn(id)) return
+      ctx.addIssue({
+        code:    z.ZodIssueCode.custom,
+        path,
+        message: seenIds.has(id)
+          ? `Connection "${id}" is not in ${where}`
+          : `References unknown connection: ${id}`,
+      })
     }
-    step.packets?.forEach((pkt, pi) => {
-      if (!connectionIds.has(pkt.connection)) {
+
+    step.active_connections.forEach((id, ai) => connRef(id, ['steps', si, 'active_connections', ai]))
+    if (step.packet) connRef(step.packet.connection, ['steps', si, 'packet', 'connection'])
+    step.packets?.forEach((pkt, pi) => connRef(pkt.connection, ['steps', si, 'packets', pi, 'connection']))
+    if (step.stream) connRef(step.stream.connection, ['steps', si, 'stream', 'connection'])
+    step.streams?.forEach((st, sti) => connRef(st.connection, ['steps', si, 'streams', sti, 'connection']))
+
+    step.annotations?.forEach((a, ai) => {
+      if (!inScene(a.target)) {
         ctx.addIssue({
           code:    z.ZodIssueCode.custom,
-          path:    ['steps', si, 'packets', pi, 'connection'],
-          message: `References unknown connection: ${pkt.connection}`,
-        })
-      }
-    })
-    if (step.stream) {
-      if (!connectionIds.has(step.stream.connection)) {
-        ctx.addIssue({
-          code:    z.ZodIssueCode.custom,
-          path:    ['steps', si, 'stream', 'connection'],
-          message: `References unknown connection: ${step.stream.connection}`,
-        })
-      }
-    }
-    step.streams?.forEach((s, si2) => {
-      if (!connectionIds.has(s.connection)) {
-        ctx.addIssue({
-          code:    z.ZodIssueCode.custom,
-          path:    ['steps', si, 'streams', si2, 'connection'],
-          message: `References unknown connection: ${s.connection}`,
+          path:    ['steps', si, 'annotations', ai, 'target'],
+          message: seenIds.has(a.target)
+            ? `Annotation target "${a.target}" is not in ${where}`
+            : `References unknown component: ${a.target}`,
         })
       }
     })
@@ -228,6 +338,6 @@ function formatIssue(issue: z.ZodIssue): string {
  */
 export function parseFlowSchema(raw: unknown): ValidationResult {
   const result = FlowDefinitionSchema.safeParse(raw)
-  if (result.success) return { success: true, data: result.data as FlowDefinition }
+  if (result.success) return { success: true, data: result.data as unknown as FlowDefinition }
   return { success: false, errors: result.error.issues.map(formatIssue) }
 }

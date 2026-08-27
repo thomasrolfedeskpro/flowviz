@@ -8,6 +8,39 @@ Full technical design: `flowviz-design.md`
 
 ---
 
+## Dev server
+
+The dev server runs on **port 5175** (pinned in `vite.config.ts`).
+
+**Never run `pkill -f vite`.** `pkill -f` matches the full command line of every
+process on the machine, so it kills dev servers in unrelated repos — and it also
+matches `vitest`, because the pattern is a substring. Other checkouts on this
+machine run their own vite dev servers.
+
+Reuse one running server across test runs; HMR picks up edits, so restarts are
+almost never needed. When one genuinely has to be stopped, kill by port:
+
+```bash
+lsof -ti tcp:5175 | xargs kill
+```
+
+(`lsof` returns both the npm wrapper and the vite child, and zsh does not
+word-split an unquoted `$PID`, so piping to `xargs` is what actually kills both.)
+
+---
+
+## Where flows live
+
+- `public/flows/examples/` — committed. Reference flows that ship with the repo.
+- `public/flows/custom/` — **git-ignored.** Personal and product-specific flows.
+
+Write new flows to `custom/` unless asked for a shipped example: these diagrams
+name internal services and file paths, and keeping them out of git is deliberate.
+The flow id is the bare filename, so `?flow=my-flow` finds it in either
+directory. The manifest in `vite.config.ts` scans one level deep only.
+
+---
+
 ## Git and PR workflow
 
 **Before pushing to any branch**, check whether its PR has already been merged into `main`:

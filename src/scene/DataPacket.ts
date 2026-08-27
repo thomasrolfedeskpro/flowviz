@@ -27,7 +27,7 @@ export class DataPacket {
   private onDone:       (() => void) | null = null
   private arrivalColor: number | null = null
 
-  constructor(scene: THREE.Scene, shape: PacketShape, theme: Theme = 'dark') {
+  constructor(scene: THREE.Object3D, shape: PacketShape, theme: Theme = 'dark') {
     const color = THEME_COLORS[theme].packetColor
     this.travelGeo  = new THREE.SphereGeometry(TRAVEL_SPHERE_RADIUS, 16, 12)
     this.arrivalGeo = buildPacketGeometry(shape)
@@ -62,12 +62,15 @@ export class DataPacket {
     mat.emissive.setHex(color)
   }
 
-  travel(curve: THREE.Curve<THREE.Vector3>, durationMs: number, reversed = false): Promise<void> {
+  /** `delayMs` holds the packet hidden at the source before it sets off, so a
+   *  burst of repeats leaves in sequence rather than all at once. */
+  travel(curve: THREE.Curve<THREE.Vector3>, durationMs: number, reversed = false, delayMs = 0): Promise<void> {
     this.curve     = curve
     this.duration  = durationMs
     this.reversed  = reversed
-    this.startTime = performance.now()
+    this.startTime = performance.now() + delayMs
     this.arrived   = false
+    this.mesh.visible = delayMs <= 0
 
     // Ensure we're using the travel sphere while in the tube
     this.mesh.geometry = this.travelGeo
@@ -78,8 +81,17 @@ export class DataPacket {
     return new Promise(resolve => { this.onDone = resolve })
   }
 
+  /** Milliseconds left before this packet lands — 0 once it has, including the
+   *  wait a staggered burst member still has ahead of it. */
+  remainingMs(now: number): number {
+    if (this.arrived || this.startTime < 0) return 0
+    return Math.max(0, this.startTime + this.duration - now)
+  }
+
   update(now: number): void {
     if (!this.curve || this.startTime < 0 || this.arrived) return
+    if (now < this.startTime) return   // still waiting its turn in a burst
+    this.mesh.visible = true
 
     const elapsed = now - this.startTime
     const raw     = Math.min(elapsed / this.duration, 1)
@@ -125,7 +137,7 @@ export class DataPacket {
     }
   }
 
-  dispose(scene: THREE.Scene): void {
+  dispose(scene: THREE.Object3D): void {
     scene.remove(this.mesh)
     this.travelGeo.dispose()
     this.arrivalGeo.dispose()

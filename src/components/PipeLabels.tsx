@@ -12,11 +12,13 @@ interface PipeLabelDatum {
 }
 
 interface PipeLabelsProps {
-  pipes:  PipeLabelDatum[]
-  bridge: OverlayBridge
+  pipes:   PipeLabelDatum[]
+  bridge:  OverlayBridge
+  /** connection id → repeat count for the current step, when above one. */
+  counts?: Record<string, number>
 }
 
-export function PipeLabels({ pipes, bridge }: PipeLabelsProps) {
+export function PipeLabels({ pipes, bridge, counts = {} }: PipeLabelsProps) {
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   useAnimationFrame(() => {
@@ -44,6 +46,7 @@ export function PipeLabels({ pipes, bridge }: PipeLabelsProps) {
           style={{ transform: 'translate(-9999px, -9999px)' }}
         >
           {pipe.label}
+          {counts[pipe.id] > 1 && <span className={styles.count}>×{counts[pipe.id]}</span>}
         </div>
       ))}
     </>,

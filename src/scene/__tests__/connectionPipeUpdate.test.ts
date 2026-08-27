@@ -113,6 +113,23 @@ describe('ConnectionPipe.update() — drag rebuild path', () => {
     expect(inside).toBe(false)
   })
 
+  it('updates midpoint in place so overlay labels holding the reference follow', () => {
+    const graph = buildGraph(twoNodeFlow())
+    const scene = new THREE.Scene()
+    const conn  = graph.connections.get('c_ab')!
+    const pipe  = new ConnectionPipe(scene, conn)
+
+    const held   = pipe.midpoint            // what PipeLabels captures at scene-ready
+    const beforeX = held.x
+
+    graph.components.get('b')!.center.x += 3 * CELL_SIZE
+    pipe.update()
+
+    expect(pipe.midpoint).toBe(held)        // same object — reference stays live
+    expect(held.x).not.toBeCloseTo(beforeX, 1)
+    expect(held.x).toBeCloseTo(pipe.curve.getPointAt(0.5).x, 5)
+  })
+
   it('disposes the old geometry on rebuild (no leak of the previous TubeGeometry)', () => {
     const graph = buildGraph(twoNodeFlow())
     const scene = new THREE.Scene()

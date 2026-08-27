@@ -23,6 +23,26 @@ meaningful event per step.
 
 ---
 
+## 1b. Where a flow file lives
+
+Flows live under `public/flows/` in one of two directories, and which one you
+pick matters because only one of them is committed:
+
+| Directory | Committed? | For |
+|---|---|---|
+| `public/flows/examples/` | yes | Reference flows that ship with the repo |
+| `public/flows/custom/` | **no — git-ignored** | Your own work, and anything specific to your product |
+
+**Write new flows to `public/flows/custom/<slug>.json`** unless you have been
+asked for a shipped example. Product-specific diagrams end up naming internal
+services, file paths and customers; keeping them out of git is deliberate.
+
+The filename is the flow's id, and the id is what `?flow=` takes — it does not
+include the directory, so `?flow=my-flow` finds `custom/my-flow.json`. Two flows
+in different directories cannot share a filename.
+
+---
+
 ## 2. Top-level structure
 
 ```json
@@ -140,7 +160,7 @@ Each component maps to a 3D mesh in the scene.
   "id":       "auth_server",
   "label":    "Auth Server",
   "type":     "service",
-  "shape":    "server",
+  "shape":    "cylinder",
   "color":    "#7c3a9d",
   "position": { "col": 5, "row": 2 },
   "size":     { "w": 2, "h": 1 },
@@ -174,25 +194,30 @@ Default colours per type (overridable with `color`):
 
 ### 6.2 `shape` (optional)
 
-Overrides the component's 3D geometry with a recognisable silhouette. Mutually
-exclusive with `logo` — if both are present `logo` takes precedence.
+Sets the component's footprint. Every body is a plain extruded prism filling the
+component's cells — there are no bespoke "server" or "cloud" models. What the
+component *is* is carried by its `icon` or `logo`, drawn on the top face; the
+shape is only there to group things visually (e.g. every cache a cylinder).
 
-| `shape`      | Silhouette | Good for |
-|--------------|------------|---------|
-| `desktop`    | Monitor + stand | Desktop browsers, workstations |
-| `smartphone` | Phone body + button | Mobile clients |
-| `server`     | Rack unit + bezel | Physical or VM servers |
-| `stack`      | Three stacked disks | Database clusters, storage arrays |
-| `cloud`      | Blob cluster | Cloud services, PaaS |
-| `router`     | Box + three antennas | Network devices, API gateways |
-| `deskphone`  | Handset on base | Legacy telephony |
-| `wall`       | Brick pattern | Firewall, security boundary |
+| `shape`    | Footprint | Notes |
+|------------|-----------|-------|
+| `cuboid`   | Rectangle | The default when `shape` is omitted |
+| `cylinder` | Circle    | Reads well for stores and caches |
+| `octagon`  | 8-sided   | |
+| `hexagon`  | 6-sided   | |
+| `triangle` | 3-sided   | Smallest icon face — use sparingly |
+
+Non-square components stretch their footprint to fill `size`, so a `2 × 1`
+cylinder is an ellipse rather than a circle in a gap.
+
+`shape` combines with `icon` and `logo` — the prism is the body, the icon sits on
+top of it.
 
 ### 6.3 `logo` (optional)
 
 Renders a Font Awesome **brands** icon as a flat 2D logo on the top face of the
-component box, filling ~88% of the shorter dimension. Takes precedence over `shape`
-and `icon`.
+component body, filling ~88% of the shorter dimension on a `cuboid` (less on the
+rounder shapes, so it never overhangs). Takes precedence over `icon`.
 
 ```json
 { "logo": "stripe" }
@@ -213,7 +238,8 @@ and `icon`.
 - The logo uses the same material colour as the component (controlled by `color`
   or the default for the `type`). Set `color` to the brand's hex colour for
   authentic branding.
-- Do not specify `shape` or `icon` alongside `logo` — `logo` takes precedence.
+- Do not specify `icon` alongside `logo` — `logo` takes precedence. `shape` is
+  fine: it sets the body the logo sits on.
 - Sizing: `size` defaults to `{ "w": 1, "h": 1 }`. On rectangular components the
   logo is square-fitted to avoid distortion.
 
@@ -302,6 +328,45 @@ All fields optional. Shown in the hover tooltip when the user hovers the compone
 
 ---
 
+### 6.8 `detail` — a scene inside a component (optional)
+
+A component can contain a whole scene of its own. Give it `detail` and any step
+tagged with that component's id is rendered *inside* it: the camera dives into
+the component, the outer scene is replaced by the inner one, and stepping back
+out reverses it. The breadcrumb in the top-left panel shows where you are, and
+the step list indents the steps that happen inside.
+
+```jsonc
+{
+  "id": "factory", "label": "Factory", "type": "service",
+  "position": { "col": 7, "row": 3 },
+  "detail": {
+    "grid": { "cols": 14, "rows": 8 },
+    "zones":       [ /* … */ ],
+    "components":  [ /* … */ ],
+    "connections": [ /* … */ ]
+  }
+}
+```
+
+A `detail` scene is laid out exactly like a top-level flow — its own grid from
+its own origin, its own zones, components and connections — and nests to any
+depth: a component inside a `detail` can carry a `detail` of its own.
+
+**Rules:**
+- **Ids are unique across the entire flow**, not per scene. A component,
+  connection or zone id used twice is a validation error, wherever the two live.
+  That is what lets a step name any scene, and anything inside it, unqualified.
+- **Connections cannot cross a scene boundary.** A pipe joins two components in
+  the same scene. Drawing the parent's incoming pipe as if it continued inside is
+  not supported yet.
+- A `detail` scene has no `steps` of its own — see § 8.14.
+- Reach for this when the inner detail would wreck the outer layout. If it fits
+  in the main grid, put it there: one scene the reader can see at once beats two
+  they have to navigate.
+
+---
+
 ## 7. `connections`
 
 Each connection is rendered as a pipe (tube geometry) between two components.
@@ -380,12 +445,15 @@ state — the viewer sees the full architecture before anything happens.
     "connection":   "c_auth_redirect",
     "shape":        "envelope",
     "arrivalStyle": "success",
+    "count":        1,
     "data": {
       "response_type":  "code",
       "client_id":      "app_123",
       "code_challenge": "S256..."
     }
-  }
+  },
+  "footer":    [{ "text": "**42 ms** — cached redirect", "style": "info" }],
+  "waterfall": { "weight": 42, "label": "42 ms" }
 }
 ```
 
@@ -394,8 +462,9 @@ state — the viewer sees the full architecture before anything happens.
 `name` is the short label shown in the **step navigation sidebar** on the right side of the screen. Users click it to jump directly to that step.
 
 - **Optional.** If omitted the sidebar falls back to `title`.
-- **Keep it short** — 2–4 words at most. The sidebar column is narrow (≈220 px).
-  Long names wrap and make the list harder to scan.
+- **Keep it short** — 2–4 words at most. The sidebar column is narrow (≈250 px).
+  Long names wrap and make the list harder to scan, and are trimmed to one line
+  while the waterfall column is open (§ 8.13).
 - `title` should still be a complete, descriptive sentence shown in the HUD.
   `name` is the abbreviated version for quick navigation.
 
@@ -555,6 +624,24 @@ response logically share the same pipe (e.g. a client calls a server and the
 server responds). For architecturally distinct directions — different protocols,
 different endpoints — define a separate connection with `from`/`to` swapped.
 
+**`count` (optional, default 1):**
+
+Sends the packet that many times down the same pipe instead of once, staggered so
+the burst leaves in sequence, and marks the pipe label with `×N`. Use it when one
+step really is the *same* operation happening repeatedly:
+
+```json
+"packet": { "connection": "c_orm_db", "shape": "token", "count": 25 }
+```
+
+- 25 queries in a loop, 12 retries, a batch of 40 messages, 200 rows synced —
+  anything countable that is genuinely the *same* operation each time.
+- Nothing to do with duration. `count` is how many times, not how long.
+- The renderer caps a burst at 40 meshes; a larger `count` still shows the true
+  number in the `×N` marker and the tooltip, it just stops adding geometry.
+- Do **not** use `count` for a stream (§ 8.11). A burst is N discrete transfers;
+  a stream is one connection held open.
+
 **Packet shape vocabulary:**
 
 | `shape`    | Geometry       | Semantic meaning |
@@ -609,19 +696,23 @@ Each item uses the same schema as `packet`.
 
 Streams render as a continuous river of chevron arrows flowing along a connection pipe.
 
-**Only use streams for connections that carry a genuine, ongoing, unbounded flow of data** — the kind that would be described as a "stream" in engineering terms. The animation is literally a stream; it should only appear where there is literally a stream.
+**A stream means the connection stays open for a long time and data flows down it continuously** — streamed video or audio, a WebSocket held open, a telemetry feed. That open, long-lived connection is the *only* thing the chevrons are for.
 
-**Correct uses:**
+**A stream is not how you show data moving.** Showing data move is already the job of the pipe and the packet travelling along it. If your reason for adding a stream is "this step should look like something is being sent", use `packet` instead — the chevrons say something different, and using them for ordinary traffic makes the diagram lie about how the system works.
+
+**Correct uses — the connection is held open and data flows down it:**
 - Video or audio live-stream delivery (encoder → CDN → viewer)
+- A WebSocket (or SSE) connection kept open to push data for as long as the client is connected
 - Telemetry / sensor data pumped continuously from a device
 - Kafka topic consuming events at a constant rate
 - A Kinesis Data Stream or similar ingestion pipeline
 - Log aggregation pipelines (Fluentd / Logstash → Elasticsearch)
 
 **Incorrect uses — do not use streams for:**
+- Anything whose point is just "data moves from A to B" (use `packet`)
 - HTTP request/response cycles (use `packet`)
 - Scheduled triggers or cron jobs (use `packet`)
-- WebSocket subscription broadcasts (use `packet` — each broadcast is a discrete event)
+- A single WebSocket broadcast — one discrete message over an open socket is a `packet`; the open socket itself is the stream
 - "Overview" decoration to make a diagram look busier
 - General API traffic between services
 
@@ -647,6 +738,157 @@ Streams render as a continuous river of chevron arrows flowing along a connectio
 - Streams do **not** interact with `packet` / `packets` — both can coexist in the same step.
 - Streams travel in the `from` → `to` direction only (no `direction` field).
 - If in doubt, use `packet` instead. A packet that loops back in the next step communicates rhythm without misrepresenting discrete events as continuous flows.
+
+---
+
+### 8.12 `footer` — emphasised notes under the step description (optional)
+
+`description` is prose. `footer` is for the one or two facts you want a viewer to
+not miss: a measurement, a warning, a conclusion. Notes render under the
+description in the top-left panel, each on its own tinted line.
+
+```json
+"footer": [
+  { "text": "**Slow step — 3,180 ms** across 25 identical queries", "style": "error" },
+  { "text": "Collapse with an `IN (...)` batch to save ~3 s",        "style": "warning" }
+]
+```
+
+| Field   | Notes |
+|---------|-------|
+| `text`  | Required. Supports inline `**bold**`, `*italic*` and `` `code` `` — nothing else. |
+| `style` | Optional: `info` (default), `success`, `warning`, `error`. Sets the tint and left bar. |
+
+**Example use cases**
+
+| Flow is about | Footer note |
+|---|---|
+| A slow request | `"**Slow step — 3,180 ms** across 25 identical queries"` |
+| A cost breakdown | `"**£0.42 per 1k calls** — the most expensive hop"` |
+| A security review | `"Token is **unencrypted** in transit here"` |
+| A migration runbook | `"**Not reversible** past this point"` |
+| A teaching diagram | `"This is the bit people get wrong: the hash is *not* the query"` |
+
+**Rules:**
+- One or two notes per step. A footer with five lines is just a second description.
+- Put the number in the note, with its unit — the renderer never formats or
+  interprets it. `"**4,570 ms**"`, `"**18 MB** transferred"`, `"**3 retries**"`.
+- `error` / `warning` should mean something is genuinely wrong or costly, not
+  just interesting. Reserve them so they keep their weight.
+
+### 8.13 `waterfall` — a measured bar beside each step
+
+Give steps a `waterfall` bar and the Steps sidebar gains a small chart toggle.
+Turning it on slides a waterfall column out from behind the sidebar, with each
+bar level with the step it measures, offset and scaled on one shared axis — read
+top to bottom in step order.
+
+- Hovering either column highlights the pair and reveals that bar's label.
+- Clicking a bar jumps to its step, exactly like clicking the step row.
+- The two columns scroll together, so a bar never drifts from its step.
+- With no `waterfall` data anywhere in the flow, the toggle does not appear.
+
+```json
+"waterfall": { "start": 240, "weight": 3180, "label": "3,180 ms · ×25", "color": "#ef4444" }
+```
+
+| Field    | Notes |
+|----------|-------|
+| `weight` | Required, zero or more: how long/big the bar is. **Unitless.** |
+| `start`  | Optional, zero or more, on the same scale: where the bar begins. Omit it and the bar starts where the previous *measured* bar ended, giving a plain sequential cascade. |
+| `label`  | Optional text, shown as a tooltip when you hover the row. This is where the unit goes — tracks stay a fixed width so the axis holds. |
+| `color`  | Optional hex. Use it to grade or group bars (red for the step you want blamed, one colour per service, …). |
+
+Bars are scaled against the flow's full span — the furthest `start + weight` —
+so `weight` and `start` can be milliseconds, rows scanned, bytes, retries,
+pounds, story points: whatever the flow is about. Nothing in the renderer
+assumes time.
+
+**`start` is what makes it a waterfall.** Use it to show:
+
+- **Overlap** — two steps that ran concurrently start at the same offset.
+- **Containment** — a parent step spanning 0–1000 with its children sitting
+  inside it, so you can see the parent is mostly waiting.
+- **Gaps** — dead time between two steps shows as empty track.
+
+Omit `start` everywhere and you get a stacked cascade, which is right for a
+strictly sequential pipeline.
+
+**Partial coverage is fine.** Steps with no `waterfall` keep their row in the
+column, just without a bar — useful for a narration step that measures nothing.
+They are skipped when the implicit cascade is worked out, so the next bar
+continues from the last measured one rather than leaving a hole.
+
+**Example use cases**
+
+| Flow is about | `weight` | `label` | Reading |
+|---|---|---|---|
+| A slow HTTP request | span duration | `"3,180 ms"` | Which step ate the budget |
+| An ETL job | rows processed | `"1.2M rows"` | Which stage carries the volume |
+| A deploy pipeline | stage duration | `"4 min 12 s"` | Where the pipeline stalls |
+| An API bill | requests or cost | `"£38 / day"` | Which call is expensive |
+| A migration | records touched | `"84k records"` | Which table dominates |
+
+**Rules:**
+- Every `weight` in one flow must measure the same thing, or the bars are
+  meaningless. Same for `start`.
+- Only add bars where comparing steps is useful. If every step costs the same,
+  a waterfall says nothing.
+- Bars are relative, so one huge step flattens the rest. That is usually the
+  point — but do not add a "total" bar spanning everything *and* the steps that
+  make it up unless the containment is what you want to show.
+- Very small bars are widened to a hairline so they stay visible, so the tiniest
+  bars are not strictly to scale. Put the real figure in `label`.
+- Keep `name` short (§ 8.3): while the column is open, step names are trimmed to
+  one line to hold the rows level with their bars.
+
+### 8.14 `scene` — which scene a step happens in
+
+Steps stay one flat list in flow order. A step tagged with `scene` happens inside
+that component's `detail`; a step with no `scene` is at the top level.
+
+```jsonc
+"steps": [
+  { "id": 0, "title": "Farm to shelf",  "highlight": [], "active_connections": [] },
+  { "id": 1, "title": "Grain ships",    "highlight": ["farm", "factory"], "active_connections": ["c_farm_factory"] },
+  { "id": 2, "scene": "factory", "title": "Into receiving", "highlight": ["receiving"], "active_connections": ["c_recv_mill"] },
+  { "id": 3, "scene": "mill",    "title": "Grinding",       "highlight": ["hopper", "grinder"], "active_connections": ["c_hop_grind"] },
+  { "id": 4, "scene": "factory", "title": "Packing",        "highlight": ["packing"], "active_connections": ["c_mill_pack"] },
+  { "id": 5, "title": "To the shelf", "highlight": ["factory", "store"], "active_connections": ["c_factory_store"] }
+]
+```
+
+Entering and leaving is implied by consecutive steps — there is no "enter" or
+"exit" step to write. Playback, the step list, waterfall bars and footers all
+work the same inside a scene as outside it.
+
+The transition waits for the outgoing step to finish before it starts, up to
+about 1.6 s, so a packet still in flight is not cut off mid-animation. You do not
+need to pad a scene's last step to protect it.
+
+**Rules:**
+- Everything a step names — `highlight`, `active_connections`, packets, streams,
+  annotation targets — must live in **that step's** scene. Referencing something
+  one scene over is a validation error, not a silent no-op.
+- `scene` must name a component that actually has a `detail`.
+- Group a scene's steps together. Bouncing in and out on alternating steps means
+  a camera dive on every step change.
+- Give the outer scene a step before and after the excursion, so the reader sees
+  where they went in and came back to.
+
+### 8.15 Aggregating repeated work
+
+A trace or log with hundreds of repeated operations must not become hundreds of
+steps. Collapse them:
+
+- One step per *kind* of repeated operation, with `packet.count` carrying how
+  many times it happened — not one step per repeat.
+- Put the aggregate in the `footer` (`"**25 queries**, 3,180 ms total"`) and the
+  spread in a `popout` if it matters (min / median / max).
+- Keep a repeat as its own step when it is the point of the diagram (an N+1
+  problem deserves its own step); fold it into a neighbouring step when it is
+  incidental.
+- Two repeats is not a storm. Below about five, just describe it.
 
 ---
 
@@ -892,10 +1134,12 @@ Step N+3: Retry or fallback (packet with arrivalStyle: warning)
     look up the Font Awesome icon name and remove the leading `fa`, keeping the
     rest in camelCase.
 
-12. **Using `streams` on a step that has no visual traffic.** Streams are for
-    continuous steady-state flow. Don't add them to steps that represent a pause,
-    an internal transformation, or a camera-focus moment — use `packet` or
-    `packets` for discrete one-shot transfers instead.
+12. **Using `streams` to show data moving.** Chevrons mean a long-lived open
+    connection carrying data continuously (streamed video, a WebSocket, a
+    telemetry feed) — nothing else. Movement of data is what the pipe and its
+    packet already show, so a step that just needs "something goes from A to B"
+    wants `packet` / `packets`. Don't add streams to a pause, an internal
+    transformation, or a camera-focus moment either.
 
 13. **`stream.connection` missing from `active_connections`.** If a step declares
     a stream on a connection, that connection should also appear in
@@ -931,7 +1175,6 @@ A minimal but complete example illustrating all features.
   "components": [
     {
       "id": "browser", "label": "Browser Client", "type": "client",
-      "shape": "desktop",
       "position": { "col": 1, "row": 3 },
       "meta": { "description": "React SPA. Fires analytics events on user interaction." }
     },
@@ -1039,7 +1282,35 @@ A minimal but complete example illustrating all features.
 
 ---
 
-## 13. Validation checklist
+## 13. Iterating in the browser
+
+You do not have to get the layout right in JSON on the first pass. Load the flow
+(`?flow=<file-name-without-json>`), press **Edit layout**, and the diagram becomes
+editable:
+
+| Action | How |
+|---|---|
+| Move a component | Drag it; it snaps to the grid on release |
+| Resize a zone | Drag any of its four corner handles |
+| Move a zone and everything in it | Drag the amber grip on its top edge |
+| Rename a zone | Click its label chip |
+| Rename a pipe | Click its label chip |
+| Change a component's size, shape, colour or icon | Click the component |
+| Move a routing waypoint | Drag the teal diamond on the pipe |
+| Delete a waypoint | Right-click the diamond — the route falls back to `auto` when the last one goes |
+
+Then press **Copy JSON** and paste over the flow file. The export carries
+component positions and sizes, zone bounds and labels, pipe labels, icons,
+colours, shapes and waypoints — so a layout worked out by hand in the browser
+survives as source.
+
+Two things worth knowing before you trust the round-trip:
+
+- Parent zones are auto-expanded to enclose their children when a flow loads, so
+  exporting a parent writes back the *expanded* bounds, not what you typed.
+- Editing is dev-server only. A built static site has nothing to write files.
+
+## 14. Validation checklist
 
 Before returning a flow JSON, verify each of these:
 
@@ -1062,17 +1333,26 @@ Before returning a flow JSON, verify each of these:
 - [ ] `icon` values are camelCase Font Awesome solid icon names (no `fa` prefix)
 - [ ] `logo` values are camelCase Font Awesome brands icon names (no `fa` prefix)
 - [ ] Packets with a meaningful outcome have `arrivalStyle` set
-- [ ] Overview step (id: 0) uses `streams` for any connections that carry constant traffic
+- [ ] Every id is unique across the whole flow, including inside `detail` scenes
+- [ ] Each step's references all live in that step's own scene
+- [ ] Steps for one scene are grouped, with an outer step either side
+- [ ] Repeated operations use one step with `packet.count`, not one step each
+- [ ] Every `waterfall.weight`/`start` in the flow measures the same thing, with the unit in `label`
+- [ ] `footer` notes carry their own units and are limited to one or two per step
+- [ ] `streams` appear only on long-lived open connections (streamed media, WebSockets, telemetry feeds) — never to show data merely moving
 - [ ] No unrelated component lies within 2 cells of a pipe midpoint on a crossing connection
 
 ---
 
-## 14. Feature status
+## 15. Feature status
 
 | Feature | Status |
 |---------|--------|
 | Component meshes (all 6 types) | ✅ Rendered |
-| Component `shape` override (8 shapes) | ✅ Rendered |
+| Component `shape` override (5 extruded prisms) | ✅ Rendered |
+| `packet.count` repeat bursts + `×N` pipe marker | ✅ Rendered |
+| Step `footer` notes (bold / italic / code) | ✅ Rendered |
+| Step `waterfall` bars, offset on a shared axis in the sidebar | ✅ Rendered |
 | Component `logo` (Font Awesome brands, camelCase) | ✅ Rendered |
 | Component `icon` (Font Awesome solid, camelCase) | ✅ Rendered |
 | Component `color` override | ✅ Rendered |
@@ -1090,11 +1370,18 @@ Before returning a flow JSON, verify each of these:
 | Chevron streams (`stream` / `streams[]`) | ✅ Rendered |
 | Annotation cards with leader lines | ✅ Rendered (`callout`, `transform`) |
 | Annotation `style` badge + icon (`info`, `success`, `warning`, `error`) | ✅ Rendered |
-| Camera pan + zoom per step | ✅ Rendered |
+| Camera pan + zoom per step (`step.camera`) | 🔲 Schema accepted, not applied — removed in #32 |
 | Scroll-wheel zoom | ✅ Interactive |
 | Component hover tooltip | ✅ Interactive |
 | Packet hover payload | ✅ Interactive |
 | Step sidebar with jump-to navigation | ✅ Interactive |
+| Nested scenes (`component.detail` + `step.scene`), any depth | ✅ Rendered |
+| Scene breadcrumb + indented steps for nested scenes | ✅ Rendered |
+| Copy JSON of edits made *inside* a nested scene | 🔲 Not yet — sub-scene edits are not exported |
+| Visualization switcher + `?flow=<id>` URL | ✅ Interactive |
+| Edit mode: drag components, resize/move zones, edit labels and waypoints | ✅ Interactive (dev server) |
+| Copy JSON export of an edited layout | ✅ Interactive (dev server) |
+| Delete a visualization from the list | ✅ Interactive (dev server) |
 | `step.name` sidebar label | ✅ Rendered (falls back to `title`) |
 | Popout panels | 🔲 Schema accepted, not yet rendered |
 | Elevation (`position.elevation`) | 🔲 Schema accepted, not yet rendered |

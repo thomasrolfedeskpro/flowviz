@@ -1,0 +1,292 @@
+{
+  "meta": {
+    "title": "ZZ Nested \u2014 farm to shelf",
+    "description": "Three components at the top level; the factory holds a scene of its own, and the mill inside it holds another."
+  },
+  "layout": {
+    "grid": {
+      "cols": 16,
+      "rows": 8
+    }
+  },
+  "zones": [],
+  "components": [
+    {
+      "id": "farm",
+      "label": "Farm",
+      "type": "external",
+      "icon": "wheatAwn",
+      "position": {
+        "col": 1,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      }
+    },
+    {
+      "id": "factory",
+      "label": "Factory",
+      "type": "service",
+      "icon": "industry",
+      "position": {
+        "col": 7,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "detail": {
+        "grid": {
+          "cols": 14,
+          "rows": 8
+        },
+        "zones": [
+          {
+            "id": "z_floor",
+            "label": "Production floor",
+            "color": "#4c7fbe",
+            "bounds": {
+              "col": 0,
+              "row": 2,
+              "width": 13,
+              "height": 4
+            }
+          }
+        ],
+        "components": [
+          {
+            "id": "receiving",
+            "label": "Receiving",
+            "type": "queue",
+            "icon": "boxesStacked",
+            "position": {
+              "col": 1,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            }
+          },
+          {
+            "id": "mill",
+            "label": "Mill",
+            "type": "function",
+            "icon": "gears",
+            "position": {
+              "col": 6,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "detail": {
+              "grid": {
+                "cols": 10,
+                "rows": 6
+              },
+              "components": [
+                {
+                  "id": "hopper",
+                  "label": "Hopper",
+                  "type": "queue",
+                  "icon": "filter",
+                  "position": {
+                    "col": 1,
+                    "row": 2
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  }
+                },
+                {
+                  "id": "grinder",
+                  "label": "Grinder",
+                  "type": "function",
+                  "icon": "gear",
+                  "position": {
+                    "col": 6,
+                    "row": 2
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  }
+                }
+              ],
+              "connections": [
+                {
+                  "id": "c_hop_grind",
+                  "from": "hopper",
+                  "to": "grinder",
+                  "label": "feed",
+                  "route": "auto"
+                }
+              ]
+            }
+          },
+          {
+            "id": "packing",
+            "label": "Packing",
+            "type": "service",
+            "icon": "boxOpen",
+            "position": {
+              "col": 11,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            }
+          }
+        ],
+        "connections": [
+          {
+            "id": "c_recv_mill",
+            "from": "receiving",
+            "to": "mill",
+            "label": "grain",
+            "route": "auto"
+          },
+          {
+            "id": "c_mill_pack",
+            "from": "mill",
+            "to": "packing",
+            "label": "flour",
+            "route": "auto"
+          }
+        ]
+      }
+    },
+    {
+      "id": "store",
+      "label": "Grocery store",
+      "type": "client",
+      "icon": "cartShopping",
+      "position": {
+        "col": 13,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "c_farm_factory",
+      "from": "farm",
+      "to": "factory",
+      "label": "grain lorry",
+      "route": "auto"
+    },
+    {
+      "id": "c_factory_store",
+      "from": "factory",
+      "to": "store",
+      "label": "pallets",
+      "route": "auto"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "name": "Overview",
+      "title": "Farm to shelf",
+      "description": "Three stops at the top level.",
+      "highlight": [],
+      "active_connections": []
+    },
+    {
+      "id": 1,
+      "name": "Harvest ships",
+      "title": "Grain leaves the farm",
+      "highlight": [
+        "farm",
+        "factory"
+      ],
+      "active_connections": [
+        "c_farm_factory"
+      ],
+      "packet": {
+        "connection": "c_farm_factory",
+        "shape": "blob"
+      }
+    },
+    {
+      "id": 2,
+      "scene": "factory",
+      "name": "Receiving",
+      "title": "Inside the factory",
+      "description": "The lorry tips into receiving.",
+      "highlight": [
+        "receiving",
+        "mill"
+      ],
+      "active_connections": [
+        "c_recv_mill"
+      ],
+      "packet": {
+        "connection": "c_recv_mill",
+        "shape": "blob"
+      }
+    },
+    {
+      "id": 3,
+      "scene": "mill",
+      "name": "Grinding",
+      "title": "Inside the mill",
+      "highlight": [
+        "hopper",
+        "grinder"
+      ],
+      "active_connections": [
+        "c_hop_grind"
+      ],
+      "packet": {
+        "connection": "c_hop_grind",
+        "shape": "sphere",
+        "count": 8
+      }
+    },
+    {
+      "id": 4,
+      "scene": "factory",
+      "name": "Packing",
+      "title": "Flour is packed",
+      "highlight": [
+        "mill",
+        "packing"
+      ],
+      "active_connections": [
+        "c_mill_pack"
+      ],
+      "packet": {
+        "connection": "c_mill_pack",
+        "shape": "document"
+      }
+    },
+    {
+      "id": 5,
+      "name": "To the shelf",
+      "title": "Pallets go to the store",
+      "highlight": [
+        "factory",
+        "store"
+      ],
+      "active_connections": [
+        "c_factory_store"
+      ],
+      "packet": {
+        "connection": "c_factory_store",
+        "shape": "document"
+      }
+    }
+  ]
+}

@@ -53,4 +53,6 @@ export interface InternalGraph {
   zones: InternalZone[]
   steps: Step[]
   gridBounds: { minX: number; maxX: number; minZ: number; maxZ: number }
+  /** Nested scenes, keyed by the id of the component whose `detail` they are. */
+  scenes: Map<string, InternalGraph>
 }

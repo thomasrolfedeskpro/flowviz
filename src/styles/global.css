@@ -48,6 +48,21 @@
   --callout-info-border:   var(--panel-border);
   --callout-info-accent:   var(--accent-blue);
   --callout-info-fg:       var(--text-primary);
+
+  /* ── UI kit tokens — shared by the sidebar, modal and controls ── */
+  --radius-sm:         0.35rem;
+  --radius-md:         0.5rem;
+  --radius-lg:         0.85rem;
+  --control-h:         1.85rem;
+  --surface-raised:    rgba(255, 255, 255, 0.04);
+  --surface-sunken:    rgba(0, 0, 0, 0.25);
+  --field-bg:          rgba(255, 255, 255, 0.06);
+  --field-border:      rgba(255, 255, 255, 0.14);
+  --ring:              0 0 0 3px rgba(100, 160, 255, 0.28);
+  --shadow-panel:      0 24px 60px rgba(0, 0, 0, 0.55);
+  --accent-fg:         #ffffff;
+  /* width the sidebar currently occupies — overlays centre against the rest */
+  --sidebar-w:         250px;
 }
 
 [data-theme="light"] {
@@ -94,6 +109,17 @@
   --callout-info-border:    var(--panel-border);
   --callout-info-accent:    var(--accent-blue);
   --callout-info-fg:        var(--text-primary);
+
+  --surface-raised:    rgba(0, 0, 0, 0.025);
+  --surface-sunken:    rgba(0, 0, 0, 0.04);
+  --field-bg:          #ffffff;
+  --field-border:      rgba(0, 0, 0, 0.16);
+  --ring:              0 0 0 3px rgba(30, 90, 220, 0.18);
+  --shadow-panel:      0 24px 60px rgba(20, 30, 60, 0.18);
+}
+
+[data-sidebar="wide"] {
+  --sidebar-w: 510px;   /* sidebar + waterfall column */
 }
 
 html, body, #root {

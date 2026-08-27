@@ -9,6 +9,8 @@ export interface StepState {
   step: Step
 }
 
+export const DEFAULT_PLAY_INTERVAL_MS = 3000
+
 export class StepEngine {
   private steps:          Step[]
   private playIntervalMs: number
@@ -17,7 +19,7 @@ export class StepEngine {
   private timer:          ReturnType<typeof setTimeout> | null = null
   private listeners:      Set<StepEngineListener> = new Set()
 
-  constructor(steps: Step[], playIntervalMs: number = 3000) {
+  constructor(steps: Step[], playIntervalMs: number = DEFAULT_PLAY_INTERVAL_MS) {
     this.steps          = steps
     this.playIntervalMs = playIntervalMs
   }
@@ -98,6 +100,9 @@ export class StepEngine {
 
   setPlayInterval(ms: number): void {
     this.playIntervalMs = ms
+    // Apply the new speed immediately rather than waiting for the
+    // in-flight timer (scheduled at the old speed) to fire.
+    if (this.playing) this.scheduleNext()
   }
 
   destroy(): void {

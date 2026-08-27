@@ -43,7 +43,7 @@ export class ConnectionPipe {
   private currentActive:     boolean = false
   private packetTraversing:  boolean = false
 
-  constructor(scene: THREE.Scene, connection: InternalConnection) {
+  constructor(scene: THREE.Object3D, connection: InternalConnection) {
     this.conn  = connection
     this.id    = connection.id
     this.curve = connection.curve
@@ -88,8 +88,9 @@ export class ConnectionPipe {
     this.conn.curve      = curve
     this.conn.tubePoints = tubePoints
     this.conn.renderTrim = renderTrim
-    this.curve    = curve
-    this.midpoint = curve.getPointAt(0.5)
+    this.curve = curve
+    // Mutate in place — overlays (PipeLabels) hold this Vector3 by reference.
+    this.midpoint.copy(curve.getPointAt(0.5))
     const { t0, t1 } = renderTrim
     const renderCurve = new TrimmedCurve(curve, t0, t1)
     const oldGeo = this.mesh.geometry
@@ -165,7 +166,7 @@ export class ConnectionPipe {
     })
   }
 
-  dispose(scene: THREE.Scene): void {
+  dispose(scene: THREE.Object3D): void {
     scene.remove(this.mesh)
     this.mesh.geometry.dispose()
     ;(this.mesh.material as THREE.Material).dispose()

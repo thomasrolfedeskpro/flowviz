@@ -1,0 +1,294 @@
+.dialog {
+  /* the app's CSS reset zeroes margins, which kills <dialog>'s default centring */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-lg);
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+
+/* Light dim, no blur: component edits apply live, so the scene behind the modal
+   is the preview and has to stay readable. */
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.dialog[open] {
+  animation: pop 0.14s ease-out;
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── header ─────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 0.8rem;
+  border-bottom: 1px solid var(--divider);
+  background: var(--surface-raised);
+}
+
+.title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 16rem;
+}
+
+.close {
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0.3rem;
+  transition: background 0.12s, color 0.12s;
+}
+
+.close:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+/* ── fields ─────────────────────────────────────────────── */
+
+.body {
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-h);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-family: inherit;
+  padding: 0 0.5rem;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: var(--ring);
+}
+
+.number {
+  width: 3.1rem;
+  text-align: center;
+}
+
+.times,
+.suffix {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+/* ── segmented shape picker ─────────────────────────────── */
+
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+
+.segment {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 1.6rem;
+  background: none;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.segment:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+.segmentOn,
+.segmentOn:hover {
+  background: var(--accent-blue);
+  color: var(--accent-fg);
+}
+
+/* ── colour ─────────────────────────────────────────────── */
+
+.color {
+  width: 2rem;
+  height: var(--control-h);
+  padding: 0;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+}
+
+.swatchValue {
+  flex: 1;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.hint {
+  margin: -0.15rem 0 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* ── footer ─────────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--divider);
+  background: var(--surface-raised);
+}
+
+.button,
+.buttonSm {
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.buttonSm {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.button:hover,
+.buttonSm:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+.primary {
+  background: var(--accent-blue);
+  border-color: transparent;
+  color: var(--accent-fg);
+}
+
+.primary:hover {
+  background: var(--accent-blue);
+  color: var(--accent-fg);
+  filter: brightness(1.12);
+}
+
+.button:focus-visible,
+.buttonSm:focus-visible,
+.segment:focus-visible,
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* ── confirm-delete body ────────────────────────────────── */
+
+.prose {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.prose strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.error {
+  margin: 0.6rem 0 0;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--callout-error-border);
+  border-radius: var(--radius-md);
+  background: var(--callout-error-bg);
+  color: var(--callout-error-fg);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.danger {
+  background: var(--callout-error-accent);
+  border-color: transparent;
+  color: #fff;
+}
+
+.danger:hover {
+  background: var(--callout-error-accent);
+  color: #fff;
+  filter: brightness(1.1);
+}

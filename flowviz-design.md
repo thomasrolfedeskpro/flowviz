@@ -664,7 +664,9 @@ Achieved by keying the component on `state.currentIndex`.
 
 ### 3.11 Flow loading
 
-Flows are loaded from `/public/flows/<name>.json`. In development, the filename
+Flows are loaded from `/public/flows/<dir>/<name>.json`, where `<dir>` is
+`examples/` (committed) or `custom/` (git-ignored); the manifest in
+`vite.config.ts` resolves an id to its path. In development, the filename
 is hardcoded. In a later iteration a URL query param (`?flow=oauth-pkce`) can
 select which file to load.
 

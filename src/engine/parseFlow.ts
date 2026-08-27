@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { FlowDefinition, Component, Connection } from '@/types/schema'
+import type { FlowDefinition, Component, Connection, Zone, Step } from '@/types/schema'
 import type { InternalGraph, InternalComponent, InternalConnection, InternalZone } from '@/types/internal'
 import { componentCenter, componentMeshSize, gridToWorld, CELL_SIZE } from '@/engine/layoutEngine'
 import { parseFlowSchema } from '@/engine/flowSchema'
@@ -33,6 +33,13 @@ function bakeRoute(
     )
     return new THREE.CatmullRomCurve3([startPt, ...waypoints, endPt])
   }
+}
+
+/** Drop one waypoint from a route. An emptied route falls back to auto-routing. */
+export function removeWaypoint(route: Connection['route'], index: number): Connection['route'] {
+  if (route === 'auto') return 'auto'
+  const next = route.filter((_, i) => i !== index)
+  return next.length > 0 ? next : 'auto'
 }
 
 // ── Tube render-trim helpers ─────────────────────────────────────────────────
@@ -129,7 +136,7 @@ const PORT_SPREAD = 0.55  // world-unit gap between adjacent attachment points
 type PortOffsets = Map<string, { start: THREE.Vector3; end: THREE.Vector3 }>
 
 function computePortOffsets(
-  def: FlowDefinition,
+  def: { connections: Connection[] },
   components: Map<string, InternalComponent>,
 ): PortOffsets {
   const offsets: PortOffsets = new Map()
@@ -212,6 +219,22 @@ function computePortOffsets(
 
 export function buildGraph(def: FlowDefinition): InternalGraph {
   validateFlow(def)
+  const graph = buildScene(def, def.steps)
+  return graph
+}
+
+/** One scene's geometry. Called for the flow itself and for every nested
+ *  `component.detail`, which is why it takes only the parts a scene has. */
+function buildScene(
+  def: {
+    layout: { grid: { cols: number; rows: number } }
+    zones?: Zone[]
+    components: Component[]
+    connections: Connection[]
+  },
+  steps: Step[],
+): InternalGraph {
+  const defZones = def.zones ?? []
 
   // Build InternalComponent map
   const components = new Map<string, InternalComponent>()
@@ -265,7 +288,7 @@ export function buildGraph(def: FlowDefinition): InternalGraph {
   }
 
   // Build InternalZone array
-  const zoneDefById = new Map(def.zones.map(z => [z.id, z]))
+  const zoneDefById = new Map(defZones.map(z => [z.id, z]))
   function zoneDepth(id: string, visited = new Set<string>()): number {
     if (visited.has(id)) return 0
     visited.add(id)
@@ -273,7 +296,7 @@ export function buildGraph(def: FlowDefinition): InternalGraph {
     return parent ? 1 + zoneDepth(parent, visited) : 0
   }
 
-  const zones: InternalZone[] = def.zones.map(z => {
+  const zones: InternalZone[] = defZones.map(z => {
     const min = new THREE.Vector3(
       z.bounds.col * CELL_SIZE,
       0,
@@ -332,12 +355,22 @@ export function buildGraph(def: FlowDefinition): InternalGraph {
     maxZ: rows * CELL_SIZE,
   }
 
+  // Nested scenes: each component's `detail` becomes a graph of its own, laid
+  // out from its own origin. Steps live on the root graph only.
+  const scenes = new Map<string, InternalGraph>()
+  for (const c of def.components) {
+    if (c.detail) {
+      scenes.set(c.id, buildScene({ layout: { grid: c.detail.grid }, ...c.detail }, []))
+    }
+  }
+
   return {
     components,
     connections,
     zones,
-    steps: def.steps,
+    steps,
     gridBounds,
+    scenes,
   }
 }
 

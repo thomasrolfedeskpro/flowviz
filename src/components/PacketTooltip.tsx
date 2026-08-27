@@ -24,7 +24,11 @@ export function PacketTooltip({ scene, bridge, hoveredId }: PacketTooltipProps) 
 
     const ud = mesh.userData as PacketMeshUserData
     if (labelRef.current) labelRef.current.textContent = ud.packetLabel
-    if (shapeRef.current) shapeRef.current.textContent = ud.packetShape
+    if (shapeRef.current) {
+      shapeRef.current.textContent = ud.packetCount
+        ? `${ud.packetShape} · ×${ud.packetCount}`
+        : ud.packetShape
+    }
     if (dataRef.current)  dataRef.current.textContent  = ud.packetData
       ? JSON.stringify(ud.packetData, null, 2)
       : '(no payload)'

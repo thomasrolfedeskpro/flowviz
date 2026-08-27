@@ -47,7 +47,6 @@
       "id": "client",
       "label": "REST Client",
       "type": "client",
-      "shape": "desktop",
       "position": { "col": 1, "row": 4 },
       "meta": { "description": "Browser or upstream service making HTTP calls to the domain APIs." }
     },

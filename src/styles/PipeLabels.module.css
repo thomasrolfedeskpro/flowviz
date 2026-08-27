@@ -9,7 +9,8 @@
   border:          1px solid var(--panel-border);
   background:      var(--panel-bg);
 
-  color:           var(--text-muted);
+  /* near-black in light mode, near-white in dark — --text-muted was too faint */
+  color:           var(--text-primary);
   font-size:       0.60rem;
   font-family:     ui-monospace, 'Cascadia Code', 'Fira Mono', monospace;
   letter-spacing:  0.04em;
@@ -17,5 +18,15 @@
   pointer-events:  none;
   user-select:     none;
 
-  opacity:         0.85;
+  opacity:         0.95;
+}
+
+/* repeat marker: "×25" for a step that fires the same request many times */
+.count {
+  margin-left: 0.3rem;
+  padding: 0 0.2rem;
+  border-radius: 3px;
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 600;
 }

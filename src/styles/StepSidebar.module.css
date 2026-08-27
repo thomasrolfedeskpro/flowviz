@@ -1,8 +1,9 @@
 .sidebar {
+  --row-h: 1.85rem;
   position: fixed;
   top: 0;
   right: 0;
-  width: 220px;
+  width: 250px;
   height: 100%;
   background: var(--panel-bg);
   border-left: 1px solid var(--panel-border);
@@ -12,73 +13,94 @@
   z-index: 150;
 }
 
-.header {
-  padding: 1.1rem 1rem 0.9rem;
-  border-bottom: 1px solid var(--divider);
+/* ── tabs ───────────────────────────────────────────────── */
+
+.tabs {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 2px;
+  margin: 0.6rem 0.6rem 0.5rem;
+  padding: 2px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 
-.headerLabel {
+.tab {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
+  padding: 0.4rem 0.3rem;
+  transition: background 0.12s, color 0.12s;
 }
 
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tabActive,
+.tabActive:hover {
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* ── header actions ─────────────────────────────────────── */
+
+.header {
+  padding: 0.15rem 0.7rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.editBtn,
 .themeBtn {
   background: var(--btn-bg);
   border: 1px solid var(--btn-border);
-  border-radius: 0.75rem;
-  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
   cursor: pointer;
+  font-family: inherit;
   font-size: 0.7rem;
-  padding: 0.25rem 0.6rem;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
+  font-weight: 500;
+  padding: 0.28rem 0.6rem;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
+.editBtn {
+  flex: 1;
+}
+
+.editBtn:hover,
 .themeBtn:hover {
   background: var(--btn-hover);
   color: var(--text-primary);
 }
 
-.editBtn {
-  background: var(--btn-bg);
-  border: 1px solid var(--btn-border);
-  border-radius: 0.75rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.7rem;
-  padding: 0.25rem 0.6rem;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  flex-shrink: 0;
-}
-
-.editBtn:hover {
-  background: var(--btn-hover);
-  color: var(--text-primary);
-}
-
-.editBtnActive {
-  background: var(--accent-blue);
-  border-color: var(--accent-blue);
-  color: #fff;
-}
-
+.editBtnActive,
 .editBtnActive:hover {
   background: var(--accent-blue);
-  color: #fff;
+  border-color: transparent;
+  color: var(--accent-fg);
 }
+
+/* ── list ───────────────────────────────────────────────── */
 
 .list {
   flex: 1;
   overflow-y: auto;
-  padding: 0.4rem 0;
+  padding: 0.15rem 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   scrollbar-width: thin;
   scrollbar-color: var(--panel-border) transparent;
 }
@@ -99,12 +121,11 @@
 .item {
   display: flex;
   align-items: flex-start;
-  gap: 0.55rem;
-  padding: 0.5rem 0.9rem 0.5rem 0;
-  padding-left: calc(1rem - 3px);
+  gap: 0.5rem;
+  padding: 0.42rem 0.5rem;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  border-left: 3px solid transparent;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s;
   user-select: none;
 }
 
@@ -112,24 +133,50 @@
   background: var(--btn-hover);
 }
 
+/* Waterfall open: uniform row heights are what keep the two columns level. */
+.itemFixed {
+  height: var(--row-h);
+  flex-shrink: 0;   /* in a flex column, a fixed height still shrinks without this */
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.stepNameTight {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-top: 0;
+}
+
 .item.active {
-  background: var(--btn-bg);
-  border-left-color: var(--accent-blue);
+  background: var(--surface-raised);
+  box-shadow: inset 2px 0 0 var(--accent-blue);
 }
 
 .stepNum {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   color: var(--text-muted);
-  min-width: 1.4rem;
-  padding-top: 0.1rem;
+  min-width: 1.25rem;
+  height: 1.15rem;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  font-family: 'SFMono-Regular', Consolas, monospace;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+
+.item.active .stepNum {
+  background: var(--accent-blue);
+  color: var(--accent-fg);
 }
 
 .stepName {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.35;
+  padding-top: 0.05rem;
 }
 
 .item.active .stepName {
@@ -137,9 +184,38 @@
   font-weight: 500;
 }
 
+/* ── flow list ──────────────────────────────────────────── */
+
+.flowTitle {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.item.active .flowTitle {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.flowDesc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 0.15rem;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── footer ─────────────────────────────────────────────── */
+
 .editFooter {
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.7rem;
   border-top: 1px solid var(--divider);
+  background: var(--surface-raised);
   flex-shrink: 0;
 }
 
@@ -147,15 +223,223 @@
   width: 100%;
   background: var(--btn-bg);
   border: 1px solid var(--btn-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   cursor: pointer;
+  font-family: inherit;
   font-size: 0.72rem;
-  padding: 0.35rem 0.75rem;
-  transition: background 0.15s, color 0.15s;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  transition: background 0.12s, color 0.12s;
 }
 
 .copyJsonBtn:hover {
   background: var(--btn-hover);
   color: var(--text-primary);
+}
+
+.tab:focus-visible,
+.editBtn:focus-visible,
+.themeBtn:focus-visible,
+.copyJsonBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* ── per-flow delete, revealed on hover ─────────────────── */
+
+.flowItem {
+  display: block;
+  position: relative;
+  padding: 0.5rem 1.9rem 0.5rem 0.5rem;
+}
+
+.deleteBtn {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  /* opacity alone would leave an invisible but still clickable target — one
+     stray click on that is a deleted file, so gate hit-testing too */
+  pointer-events: none;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+
+.flowItem:hover .deleteBtn,
+.deleteBtn:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.deleteBtn:hover {
+  background: var(--callout-error-bg);
+  border-color: var(--callout-error-border);
+  color: var(--callout-error-accent);
+}
+
+.deleteBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* ── waterfall: its own column, slid out from behind the sidebar ── */
+
+.waterfall {
+  --row-h: 1.85rem;
+  position: fixed;
+  right: 250px;          /* the sidebar's width — it emerges from under it */
+  top: 0;
+  bottom: 0;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
+  z-index: 149;          /* just under the sidebar, so it slides out behind it */
+  overflow: hidden;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.22s ease, opacity 0.16s ease;
+}
+
+.waterfallOpen {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.waterfallHeader {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 0.6rem 0.4rem;
+  flex-shrink: 0;
+}
+
+.waterfallTitle {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.waterfallList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.15rem 0.6rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  scrollbar-width: none;   /* the step list owns the visible scrollbar */
+}
+
+.waterfallList::-webkit-scrollbar {
+  width: 0;
+}
+
+.barRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--row-h);
+  flex-shrink: 0;
+  padding: 0 0.15rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.barRow:hover,
+.barRow.hovered,
+.item.hovered {
+  background: var(--btn-hover);
+}
+
+.barRow.active {
+  background: var(--surface-raised);
+}
+
+/* ── waterfall bars ─────────────────────────────────────── */
+
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.55rem;
+  flex-shrink: 0;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.iconBtn:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+.iconBtnActive,
+.iconBtnActive:hover {
+  background: var(--accent-blue);
+  border-color: transparent;
+  color: var(--accent-fg);
+}
+
+.iconBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.barTrack {
+  flex: 1;
+  min-width: 0;
+  height: 0.45rem;
+  border-radius: 0.22rem;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: 0.22rem;
+}
+
+.barValue {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-bg);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.62rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+.barRow:hover .barValue,
+.barRow.hovered .barValue {
+  opacity: 1;
 }
