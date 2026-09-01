@@ -4,7 +4,7 @@
   inset: 0;
   margin: auto;
   height: fit-content;
-  width: min(24rem, calc(100vw - 2rem));
+  width: min(36rem, calc(100vw - 3rem));
   padding: 0;
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-lg);
@@ -14,6 +14,12 @@
   font-size: 0.8rem;
   box-shadow: var(--shadow-panel);
   overflow: hidden;
+}
+
+/* After .dialog on purpose: same specificity, so whichever comes last wins —
+   declared above it, this width was silently ignored. */
+.wide {
+  width: min(56rem, calc(100vw - 3rem));
 }
 
 /* Light dim, no blur: component edits apply live, so the scene behind the modal
@@ -89,7 +95,7 @@
 
 .field {
   display: grid;
-  grid-template-columns: 4.25rem 1fr;
+  grid-template-columns: 5.5rem 1fr;
   align-items: center;
   gap: 0.75rem;
 }
@@ -127,7 +133,7 @@
 }
 
 .number {
-  width: 3.1rem;
+  width: 5.25rem;
   text-align: center;
 }
 
@@ -191,6 +197,12 @@
   font-size: 0.7rem;
   color: var(--text-muted);
   text-transform: uppercase;
+}
+
+/* A hint inside a field is the grid's third item, so without this it drops into
+   the narrow label column and wraps into a tall ribbon down the left. */
+.field > .hint {
+  grid-column: 2;
 }
 
 .hint {
@@ -291,4 +303,107 @@
   background: var(--callout-error-accent);
   color: #fff;
   filter: brightness(1.1);
+}
+
+/* Pushes Cancel/Apply right, leaving Delete on its own at the left. */
+.footerSpacer {
+  flex: 1;
+}
+
+.dangerGhost {
+  border-color: var(--callout-error-border);
+  color: var(--callout-error-accent);
+}
+
+.dangerGhost:hover {
+  background: var(--callout-error-bg);
+}
+
+/* What else a delete would change. */
+.cascadeList {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  scrollbar-width: thin;
+}
+
+.cascadeList li {
+  margin-bottom: 0.2rem;
+}
+
+/* Four durations, label-input-unit, aligned down the column. */
+.timingGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.timingRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.timingLabel {
+  flex: 1;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Fields ⇄ JSON, in the modal header. */
+.tabBtn {
+  padding: 0.2rem 0.5rem;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  cursor: pointer;
+}
+
+.tabBtn:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+.tabBtnOn,
+.tabBtnOn:hover {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: var(--accent-fg);
+}
+
+.code {
+  width: 100%;
+  min-height: 24rem;
+  max-height: 55vh;
+  padding: 0.5rem 0.6rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  resize: vertical;
+  /* JSON lines are long; wrapping them would hide the structure. */
+  white-space: pre;
+  overflow: auto;
+  tab-size: 2;
+}
+
+.code:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-color: var(--accent-blue);
 }

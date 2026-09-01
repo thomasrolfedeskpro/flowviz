@@ -16,9 +16,11 @@ interface PipeLabelsProps {
   bridge:  OverlayBridge
   /** connection id → repeat count for the current step, when above one. */
   counts?: Record<string, number>
+  /** Connection whose label pad is hovered in edit mode, if any. */
+  hoveredId?: string | null
 }
 
-export function PipeLabels({ pipes, bridge, counts = {} }: PipeLabelsProps) {
+export function PipeLabels({ pipes, bridge, counts = {}, hoveredId = null }: PipeLabelsProps) {
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   useAnimationFrame(() => {
@@ -42,7 +44,7 @@ export function PipeLabels({ pipes, bridge, counts = {} }: PipeLabelsProps) {
             if (el) itemRefs.current.set(pipe.id, el)
             else itemRefs.current.delete(pipe.id)
           }}
-          className={styles.badge}
+          className={pipe.id === hoveredId ? `${styles.badge} ${styles.hovered}` : styles.badge}
           style={{ transform: 'translate(-9999px, -9999px)' }}
         >
           {pipe.label}

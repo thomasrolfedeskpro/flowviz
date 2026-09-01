@@ -186,3 +186,39 @@ describe('StepEngine', () => {
     expect(engine.getSteps()[0].name).toBeUndefined()
   })
 })
+
+describe('setSteps', () => {
+  const steps = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: i, title: `Step ${i}`, highlight: [], active_connections: [],
+    }))
+
+  it('keeps your place when the list is edited', () => {
+    const engine = new StepEngine(steps(5))
+    engine.goTo(3)
+    engine.setSteps(steps(5))
+    expect(engine.getState().currentIndex).toBe(3)
+  })
+
+  it('clamps rather than resetting when steps are deleted', () => {
+    const engine = new StepEngine(steps(5))
+    engine.goTo(4)
+    engine.setSteps(steps(2))
+    expect(engine.getState().currentIndex).toBe(1)
+    expect(engine.getState().totalSteps).toBe(2)
+  })
+
+  it('tells subscribers, so the scene re-applies the edited step', () => {
+    const engine = new StepEngine(steps(3))
+    let seen = 0
+    engine.subscribe(() => { seen++ })
+    engine.setSteps(steps(3))
+    expect(seen).toBe(1)
+  })
+
+  it('ignores an empty list — there would be no step to show', () => {
+    const engine = new StepEngine(steps(3))
+    engine.setSteps([])
+    expect(engine.getState().totalSteps).toBe(3)
+  })
+})

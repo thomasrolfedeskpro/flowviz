@@ -1,0 +1,2937 @@
+{
+  "meta": {
+    "title": "A parcel, doorstep to doorstep",
+    "description": "One 2.4 kg parcel followed from a front door in Bristol to a front door in Osaka: forty-two hours, nine handovers, two nested facilities and one scuffed label. The top level is the journey; the regional hub, its tilt-tray sorter and the border post each open into a scene of their own.",
+    "timing": {
+      "step": 2600,
+      "packet": 1500,
+      "transition": 700,
+      "stream": 3000
+    }
+  },
+  "layout": {
+    "grid": {
+      "cols": 28,
+      "rows": 15
+    }
+  },
+  "zones": [
+    {
+      "id": "z_origin",
+      "label": "Origin country",
+      "color": "#4a9edd",
+      "bounds": {
+        "col": 0,
+        "row": 0,
+        "width": 27,
+        "height": 6
+      },
+      "meta": {
+        "description": "Everything up to the aircraft door. Domestic collection, depot sortation and night trunking into the regional hub.",
+        "notes": "Carriers call this the first mile. It is the least automated part of the journey and the part most often blamed for delay."
+      }
+    },
+    {
+      "id": "z_hub_campus",
+      "label": "Hub campus",
+      "color": "#2d9f6a",
+      "parentId": "z_origin",
+      "bounds": {
+        "col": 15,
+        "row": 1,
+        "width": 11,
+        "height": 4
+      },
+      "meta": {
+        "description": "The sorting hub and the airside cargo shed share a site so a parcel can move between them without a public road."
+      }
+    },
+    {
+      "id": "z_transit",
+      "label": "In transit",
+      "color": "#b06bd6",
+      "outline": "dashed",
+      "bounds": {
+        "col": 20,
+        "row": 7,
+        "width": 8,
+        "height": 3
+      },
+      "meta": {
+        "description": "A notional boundary, not a place. While the parcel is airborne it belongs to no country's network and no scan can be added to it.",
+        "notes": "Drawn dashed because nothing here is a building \u2014 it is eleven hours of nothing happening."
+      }
+    },
+    {
+      "id": "z_network",
+      "label": "Network IT",
+      "color": "#6b7a8f",
+      "outline": "dashed",
+      "bounds": {
+        "col": 0,
+        "row": 7,
+        "width": 5,
+        "height": 3
+      },
+      "meta": {
+        "description": "The tracking platform. Every scanner in every facility publishes to it, and it is the only thing the sender and recipient ever see."
+      }
+    },
+    {
+      "id": "z_dest",
+      "label": "Destination country",
+      "color": "#d98324",
+      "bounds": {
+        "col": 0,
+        "row": 11,
+        "width": 27,
+        "height": 4
+      },
+      "meta": {
+        "description": "Arrival, border clearance and the final mile. The parcel is handed to a partner carrier here \u2014 the sender's carrier has no vans in Japan.",
+        "notes": "Read this row right to left: the parcel lands on the right and walks back to a doorstep on the left."
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "sender",
+      "label": "Sender's doorstep",
+      "type": "client",
+      "icon": "houseChimney",
+      "color": "#4a9edd",
+      "position": {
+        "col": 1,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "A flat in Bristol. The parcel is booked online, the label printed at home and taped to the box.",
+        "notes": "The label carries three separate things: a human address, a carrier routing barcode, and a customs data set."
+      }
+    },
+    {
+      "id": "collection_courier",
+      "label": "Collection van",
+      "type": "external",
+      "icon": "truckFast",
+      "color": "#d98324",
+      "position": {
+        "col": 5,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "A driver working a fixed round of roughly forty collections between 14:00 and 18:00.",
+        "notes": "The van is a moving buffer. Nothing it picks up is sorted until it gets back to the depot."
+      }
+    },
+    {
+      "id": "local_depot",
+      "label": "Local depot",
+      "type": "service",
+      "icon": "warehouse",
+      "color": "#5dbe8a",
+      "position": {
+        "col": 9,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "A spoke. Sorts the evening's collections into cages by destination hub, then loads them onto a trunk trailer.",
+        "notes": "A depot never sorts to a final address \u2014 only to the next facility. That is the whole idea of hub-and-spoke."
+      }
+    },
+    {
+      "id": "linehaul",
+      "label": "Trunk trailer",
+      "type": "external",
+      "icon": "trailer",
+      "color": "#8a7a6d",
+      "position": {
+        "col": 13,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "A double-deck curtainsider running the depot-to-hub leg overnight.",
+        "notes": "Trunk departure times are the hardest constraint in the network. Miss the trailer and the parcel loses a full day."
+      }
+    },
+    {
+      "id": "regional_hub",
+      "label": "Regional sorting hub",
+      "type": "service",
+      "icon": "industry",
+      "color": "#2d9f6a",
+      "shape": "octagon",
+      "position": {
+        "col": 17,
+        "row": 2
+      },
+      "size": {
+        "w": 3,
+        "h": 2
+      },
+      "meta": {
+        "description": "The one place every parcel in the region passes through. Opens into a scene of its own.",
+        "notes": "Runs a single six-hour night shift. Empty at noon, 11,000 parcels an hour at 01:00."
+      },
+      "detail": {
+        "grid": {
+          "cols": 30,
+          "rows": 13
+        },
+        "zones": [
+          {
+            "id": "z_hub_inbound",
+            "label": "Inbound",
+            "color": "#4a9edd",
+            "bounds": {
+              "col": 0,
+              "row": 3,
+              "width": 7,
+              "height": 5
+            },
+            "meta": {
+              "description": "Where trailers are emptied. Unloading is still done by hand \u2014 nobody has beaten a person at pulling irregular boxes off a stacked deck."
+            }
+          },
+          {
+            "id": "z_hub_oversize",
+            "label": "Oversize lane",
+            "color": "#c9a227",
+            "bounds": {
+              "col": 3,
+              "row": 9,
+              "width": 5,
+              "height": 4
+            },
+            "meta": {
+              "description": "Anything the sorter cannot carry: over 31.5 kg, longer than 1.5 m, round, or unable to sit flat on a tray."
+            }
+          },
+          {
+            "id": "z_hub_sortation",
+            "label": "Sortation",
+            "color": "#2d9f6a",
+            "bounds": {
+              "col": 8,
+              "row": 0,
+              "width": 13,
+              "height": 8
+            },
+            "meta": {
+              "description": "Belt, gantry and sorter. From the moment a parcel is singulated to the moment it drops down a chute is about forty seconds."
+            }
+          },
+          {
+            "id": "z_hub_outbound",
+            "label": "Outbound",
+            "color": "#d98324",
+            "bounds": {
+              "col": 22,
+              "row": 0,
+              "width": 7,
+              "height": 4
+            },
+            "meta": {
+              "description": "Chutes feed bays; bays are cage-built and sealed against a departure time, not against a parcel count."
+            }
+          },
+          {
+            "id": "z_hub_reject",
+            "label": "Reject handling",
+            "color": "#ef4444",
+            "outline": "dashed",
+            "bounds": {
+              "col": 22,
+              "row": 8,
+              "width": 7,
+              "height": 4
+            },
+            "meta": {
+              "description": "Everything the sorter could not resolve. Between one and three parcels in a hundred end up here, almost all of them for a bad read rather than a bad address."
+            }
+          }
+        ],
+        "components": [
+          {
+            "id": "arrivals_yard",
+            "label": "Arrivals yard",
+            "type": "queue",
+            "icon": "truckMoving",
+            "color": "#4a9edd",
+            "position": {
+              "col": 1,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
+            "meta": {
+              "description": "Twenty-two trailer bays. Trailers are called onto a dock in departure-time order, not arrival order."
+            }
+          },
+          {
+            "id": "unload_dock",
+            "label": "Unload dock",
+            "type": "service",
+            "icon": "truckRampBox",
+            "color": "#4a9edd",
+            "position": {
+              "col": 4,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Two people and an extendable boom conveyor that reaches into the trailer.",
+              "notes": "A good pair clears a double-deck trailer in about fifty minutes."
+            }
+          },
+          {
+            "id": "oversize_lane",
+            "label": "Oversize lane",
+            "type": "queue",
+            "icon": "dolly",
+            "color": "#c9a227",
+            "position": {
+              "col": 4,
+              "row": 10
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Manual handling for anything outside the sorter's envelope. Scanned with a handheld and trolleyed straight to its outbound bay.",
+              "notes": "Oversize is a tiny share of volume and a large share of injuries and delay."
+            }
+          },
+          {
+            "id": "induction_line",
+            "label": "Induction line",
+            "type": "service",
+            "icon": "arrowsTurnRight",
+            "color": "#2d9f6a",
+            "position": {
+              "col": 9,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Singulates the flow: takes a shoulder-to-shoulder mass of boxes and turns it into one parcel at a time with a fixed gap between each.",
+              "notes": "Singulation is the real bottleneck of a hub. The sorter can always go faster than the induction can feed it."
+            }
+          },
+          {
+            "id": "barcode_gantry",
+            "label": "Barcode gantry",
+            "type": "service",
+            "icon": "barcode",
+            "color": "#2d9f6a",
+            "position": {
+              "col": 13,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "An arch of cameras reading every visible face of the parcel as it passes underneath at 2 m/s.",
+              "notes": "Reads the routing barcode, not the address. The address was resolved to a sortcode when the label was bought."
+            }
+          },
+          {
+            "id": "hub_control",
+            "label": "Hub control",
+            "type": "function",
+            "icon": "desktop",
+            "color": "#6b7a8f",
+            "position": {
+              "col": 13,
+              "row": 1
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Takes a continuous scan feed off every reader in the building and publishes it to the tracking platform.",
+              "notes": "This feed is also the shift's live throughput number on the wall board."
+            }
+          },
+          {
+            "id": "sorter",
+            "label": "Tilt-tray sorter",
+            "type": "service",
+            "icon": "gears",
+            "color": "#7c9f2d",
+            "shape": "hexagon",
+            "position": {
+              "col": 17,
+              "row": 4
+            },
+            "size": {
+              "w": 3,
+              "h": 3
+            },
+            "meta": {
+              "description": "A 220 m closed loop of trays circulating at 2.2 m/s. Opens into a scene of its own.",
+              "notes": "Rated at 12,000 parcels an hour. In practice the induction lines hold it to about 11,400."
+            },
+            "detail": {
+              "grid": {
+                "cols": 26,
+                "rows": 9
+              },
+              "zones": [
+                {
+                  "id": "z_sorter_deck",
+                  "label": "Read deck",
+                  "color": "#7c9f2d",
+                  "bounds": {
+                    "col": 0,
+                    "row": 2,
+                    "width": 20,
+                    "height": 5
+                  },
+                  "meta": {
+                    "description": "Everything between joining the loop and being tipped: gap control, reading, weighing and the chute decision."
+                  }
+                },
+                {
+                  "id": "z_sorter_out",
+                  "label": "Discharge",
+                  "color": "#d98324",
+                  "bounds": {
+                    "col": 21,
+                    "row": 0,
+                    "width": 5,
+                    "height": 9
+                  },
+                  "meta": {
+                    "description": "The two things a tray can do: tip left into a destination chute, or stay on the loop until the reject chute comes round."
+                  }
+                }
+              ],
+              "components": [
+                {
+                  "id": "gap_controller",
+                  "label": "Gap controller",
+                  "type": "function",
+                  "icon": "sliders",
+                  "color": "#7c9f2d",
+                  "position": {
+                    "col": 1,
+                    "row": 4
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
+                  "meta": {
+                    "description": "Times each parcel onto a free tray. Too early and it straddles two trays; too late and the tray goes round empty.",
+                    "notes": "The tolerance is about 40 milliseconds."
+                  }
+                },
+                {
+                  "id": "barcode_reader",
+                  "label": "Six-sided reader",
+                  "type": "service",
+                  "icon": "cameraRetro",
+                  "color": "#7c9f2d",
+                  "position": {
+                    "col": 5,
+                    "row": 4
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
+                  "meta": {
+                    "description": "Six cameras \u2014 four sides, top, and one shooting up through a gap in the trays \u2014 so the label can face any way.",
+                    "notes": "Even with six faces covered, one to three parcels in a hundred come back as a no-read."
+                  }
+                },
+                {
+                  "id": "weigh_cell",
+                  "label": "Weigh cell",
+                  "type": "function",
+                  "icon": "weightHanging",
+                  "color": "#7c9f2d",
+                  "position": {
+                    "col": 9,
+                    "row": 4
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
+                  "meta": {
+                    "description": "Weighs the tray in motion and subtracts the known tare. Accurate to about 20 g at full speed.",
+                    "notes": "Compared against the weight declared at booking. A large mismatch raises a revenue query, not a stoppage."
+                  }
+                },
+                {
+                  "id": "chute_selector",
+                  "label": "Chute selector",
+                  "type": "function",
+                  "icon": "arrowsSplitUpAndLeft",
+                  "color": "#7c9f2d",
+                  "position": {
+                    "col": 13,
+                    "row": 4
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
+                  "meta": {
+                    "description": "Turns a sortcode into a chute number, checks the chute is not backed up, and writes the tip command to the tray's controller.",
+                    "notes": "If the assigned chute is full it will recirculate the parcel rather than jam the chute."
+                  }
+                },
+                {
+                  "id": "tilt_tray",
+                  "label": "Tilt tray",
+                  "type": "service",
+                  "icon": "boxOpen",
+                  "color": "#5dbe8a",
+                  "shape": "cylinder",
+                  "position": {
+                    "col": 17,
+                    "row": 3
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 2
+                  },
+                  "meta": {
+                    "description": "One of 1,100 trays on the loop. Tips 35\u00b0 left or right on command and rights itself a metre later.",
+                    "notes": "Every tray is addressable. The loop is effectively a moving array with an index."
+                  }
+                },
+                {
+                  "id": "discharge_edge",
+                  "label": "Discharge edge",
+                  "type": "queue",
+                  "icon": "arrowsTurnToDots",
+                  "color": "#d98324",
+                  "position": {
+                    "col": 22,
+                    "row": 1
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
+                  "meta": {
+                    "description": "The lip of the destination chute. A parcel slides two metres down a steel slide into the chute below."
+                  }
+                },
+                {
+                  "id": "reject_arm",
+                  "label": "Reject chute",
+                  "type": "function",
+                  "icon": "triangleExclamation",
+                  "color": "#ef4444",
+                  "position": {
+                    "col": 22,
+                    "row": 7
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
+                  "meta": {
+                    "description": "The default destination for anything with no valid chute. Deliberately placed last on the loop so it only catches what nothing else claimed.",
+                    "notes": "A rising reject rate is the first sign a printer somewhere is producing bad labels."
+                  }
+                }
+              ],
+              "connections": [
+                {
+                  "id": "c_gap_read",
+                  "from": "gap_controller",
+                  "to": "barcode_reader",
+                  "label": "onto a tray",
+                  "route": "auto"
+                },
+                {
+                  "id": "c_read_weigh",
+                  "from": "barcode_reader",
+                  "to": "weigh_cell",
+                  "label": "read attempt",
+                  "route": "auto"
+                },
+                {
+                  "id": "c_weigh_select",
+                  "from": "weigh_cell",
+                  "to": "chute_selector",
+                  "label": "2.41 kg",
+                  "route": "auto"
+                },
+                {
+                  "id": "c_select_tray",
+                  "from": "chute_selector",
+                  "to": "tilt_tray",
+                  "label": "tip command",
+                  "route": "auto"
+                },
+                {
+                  "id": "c_tray_discharge",
+                  "from": "tilt_tray",
+                  "to": "discharge_edge",
+                  "label": "tip left",
+                  "route": "auto"
+                },
+                {
+                  "id": "c_tray_reject",
+                  "from": "tilt_tray",
+                  "to": "reject_arm",
+                  "label": "tip to reject",
+                  "route": "auto",
+                  "color": "#ef4444"
+                }
+              ]
+            }
+          },
+          {
+            "id": "output_chutes",
+            "label": "Output chutes",
+            "type": "queue",
+            "icon": "boxesStacked",
+            "color": "#d98324",
+            "position": {
+              "col": 23,
+              "row": 1
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "One chute per outbound destination \u2014 188 of them around the loop. A chute holds about ninety parcels before it backs up."
+            }
+          },
+          {
+            "id": "outbound_bays",
+            "label": "Outbound bays",
+            "type": "service",
+            "icon": "pallet",
+            "color": "#d98324",
+            "position": {
+              "col": 26,
+              "row": 1
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
+            "meta": {
+              "description": "Chutes are emptied into roll cages, cages are sealed and tagged, and the trailer leaves on its clock whether it is full or not.",
+              "notes": "A cage seal number is the unit of custody from here to the aircraft."
+            }
+          },
+          {
+            "id": "reject_line",
+            "label": "Reject line",
+            "type": "queue",
+            "icon": "circleExclamation",
+            "color": "#ef4444",
+            "position": {
+              "col": 23,
+              "row": 9
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "A short belt under the reject chute feeding two manual encoding desks."
+            }
+          },
+          {
+            "id": "manual_encoding",
+            "label": "Manual encoding",
+            "type": "service",
+            "icon": "userCheck",
+            "color": "#ef4444",
+            "position": {
+              "col": 26,
+              "row": 9
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "A person reads the label, keys the tracking number, and the parcel goes back to the induction line for a second pass.",
+              "notes": "About twenty seconds of work, but the parcel waits its turn in a queue that can run to twenty minutes at peak."
+            }
+          }
+        ],
+        "connections": [
+          {
+            "id": "c_yard_dock",
+            "from": "arrivals_yard",
+            "to": "unload_dock",
+            "label": "trailer called on",
+            "route": "auto"
+          },
+          {
+            "id": "c_dock_oversize",
+            "from": "unload_dock",
+            "to": "oversize_lane",
+            "label": "over envelope",
+            "route": "auto"
+          },
+          {
+            "id": "c_dock_induction",
+            "from": "unload_dock",
+            "to": "induction_line",
+            "label": "boom conveyor",
+            "route": "auto"
+          },
+          {
+            "id": "c_induction_gantry",
+            "from": "induction_line",
+            "to": "barcode_gantry",
+            "label": "singulated belt",
+            "route": "auto"
+          },
+          {
+            "id": "c_gantry_control",
+            "from": "barcode_gantry",
+            "to": "hub_control",
+            "label": "scan feed",
+            "route": "auto"
+          },
+          {
+            "id": "c_gantry_sorter",
+            "from": "barcode_gantry",
+            "to": "sorter",
+            "label": "onto the loop",
+            "route": "auto"
+          },
+          {
+            "id": "c_sorter_chutes",
+            "from": "sorter",
+            "to": "output_chutes",
+            "label": "chute 114",
+            "route": "auto"
+          },
+          {
+            "id": "c_sorter_reject",
+            "from": "sorter",
+            "to": "reject_line",
+            "label": "no valid chute",
+            "route": "auto",
+            "color": "#ef4444"
+          },
+          {
+            "id": "c_chutes_bays",
+            "from": "output_chutes",
+            "to": "outbound_bays",
+            "label": "cage build",
+            "route": "auto"
+          },
+          {
+            "id": "c_reject_encode",
+            "from": "reject_line",
+            "to": "manual_encoding",
+            "label": "to the desk",
+            "route": "auto",
+            "color": "#ef4444"
+          },
+          {
+            "id": "c_encode_induction",
+            "from": "manual_encoding",
+            "to": "induction_line",
+            "label": "recirculated",
+            "route": [
+              {
+                "col": 20,
+                "row": 12
+              },
+              {
+                "col": 10,
+                "row": 12
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "origin_airport",
+      "label": "Origin air cargo",
+      "type": "service",
+      "icon": "planeDeparture",
+      "color": "#4c7fbe",
+      "position": {
+        "col": 23,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "The cargo shed. Cages are broken down and rebuilt into aircraft containers against a load plan.",
+        "notes": "Cut-off for a long-haul freighter is typically six hours before departure, not one."
+      }
+    },
+    {
+      "id": "flight",
+      "label": "Freighter",
+      "type": "external",
+      "icon": "plane",
+      "color": "#b06bd6",
+      "shape": "hexagon",
+      "position": {
+        "col": 23,
+        "row": 8
+      },
+      "size": {
+        "w": 3,
+        "h": 1
+      },
+      "meta": {
+        "description": "A widebody freighter running the sector nightly. Eleven hours in the air, no scans, no visibility.",
+        "notes": "The longest single event in the whole journey and the one nobody can shorten."
+      }
+    },
+    {
+      "id": "dest_airport",
+      "label": "Arrival cargo shed",
+      "type": "service",
+      "icon": "planeArrival",
+      "color": "#4c7fbe",
+      "position": {
+        "col": 23,
+        "row": 12
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "Containers are unloaded and broken down, but nothing leaves the airport perimeter until the border releases it."
+      }
+    },
+    {
+      "id": "customs",
+      "label": "Customs & border",
+      "type": "service",
+      "icon": "buildingColumns",
+      "color": "#c9a227",
+      "shape": "octagon",
+      "position": {
+        "col": 17,
+        "row": 12
+      },
+      "size": {
+        "w": 3,
+        "h": 2
+      },
+      "meta": {
+        "description": "The import border post. Opens into a scene of its own.",
+        "notes": "Legally the parcel is not in the country yet. It is in a bonded area, which is treated as outside the customs territory."
+      },
+      "detail": {
+        "grid": {
+          "cols": 25,
+          "rows": 12
+        },
+        "zones": [
+          {
+            "id": "z_cust_entry",
+            "label": "Entry & risk",
+            "color": "#4a9edd",
+            "bounds": {
+              "col": 0,
+              "row": 0,
+              "width": 7,
+              "height": 8
+            },
+            "meta": {
+              "description": "Paperwork first, goods second. Almost every decision the border makes is made on data lodged before the aircraft landed."
+            }
+          },
+          {
+            "id": "z_cust_screening",
+            "label": "Screening",
+            "color": "#c9a227",
+            "bounds": {
+              "col": 8,
+              "row": 3,
+              "width": 4,
+              "height": 4
+            },
+            "meta": {
+              "description": "Non-intrusive inspection. An operator sees a density image, not a list of contents."
+            }
+          },
+          {
+            "id": "z_cust_green",
+            "label": "Green channel",
+            "color": "#2d9f6a",
+            "bounds": {
+              "col": 13,
+              "row": 0,
+              "width": 5,
+              "height": 3
+            },
+            "meta": {
+              "description": "Cleared on the data alone. Nine parcels in ten never stop moving."
+            }
+          },
+          {
+            "id": "z_cust_red",
+            "label": "Red channel",
+            "color": "#ef4444",
+            "outline": "dashed",
+            "bounds": {
+              "col": 13,
+              "row": 8,
+              "width": 7,
+              "height": 4
+            },
+            "meta": {
+              "description": "Held, opened and examined. Two to three per cent of parcels, chosen by the risk engine rather than at random.",
+              "notes": "Storage in the hold area is chargeable to the importer after the first free day."
+            }
+          },
+          {
+            "id": "z_cust_release",
+            "label": "Release",
+            "color": "#5dbe8a",
+            "bounds": {
+              "col": 21,
+              "row": 3,
+              "width": 4,
+              "height": 6
+            },
+            "meta": {
+              "description": "The single gate every route converges on. Until it fires, the parcel cannot legally leave the bonded area."
+            }
+          }
+        ],
+        "components": [
+          {
+            "id": "entry_system",
+            "label": "Import entry system",
+            "type": "external",
+            "icon": "fileInvoiceDollar",
+            "color": "#6b7a8f",
+            "position": {
+              "col": 1,
+              "row": 1
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "The national customs computer. The carrier lodges an electronic declaration against the flight manifest, usually before wheels-up.",
+              "notes": "Pre-lodgement is why most parcels clear in minutes rather than days."
+            }
+          },
+          {
+            "id": "doc_check",
+            "label": "Document check",
+            "type": "service",
+            "icon": "fileLines",
+            "color": "#4a9edd",
+            "position": {
+              "col": 1,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Matches the declaration to the airway bill: commodity code, declared value, origin, consignee.",
+              "notes": "A wrong commodity code is the most common reason a low-value parcel gets stuck."
+            }
+          },
+          {
+            "id": "risk_engine",
+            "label": "Risk engine",
+            "type": "function",
+            "icon": "bolt",
+            "color": "#c9a227",
+            "position": {
+              "col": 4,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Scores every declaration against commodity, route, consignor history and value. The score picks the channel.",
+              "notes": "Scoring runs on the data, not the box. It has already decided the channel while the parcel is still airborne."
+            }
+          },
+          {
+            "id": "xray",
+            "label": "X-ray",
+            "type": "service",
+            "icon": "xRay",
+            "color": "#c9a227",
+            "position": {
+              "col": 9,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Dual-energy scanner. Colours the image by material density so organics, metals and electronics look different.",
+              "notes": "Scanning is fast and cheap; it exists to keep the number of boxes actually opened low."
+            }
+          },
+          {
+            "id": "duty_assessment",
+            "label": "Duty assessment",
+            "type": "service",
+            "icon": "calculator",
+            "color": "#2d9f6a",
+            "position": {
+              "col": 14,
+              "row": 1
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "Applies the tariff for the commodity code and adds import consumption tax on the value plus freight plus insurance.",
+              "notes": "Duty is charged on the landed cost, not the sale price \u2014 freight is part of the taxable base."
+            }
+          },
+          {
+            "id": "hold_area",
+            "label": "Hold area",
+            "type": "queue",
+            "icon": "boxesStacked",
+            "color": "#ef4444",
+            "position": {
+              "col": 14,
+              "row": 9
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "A caged bonded store. The parcel waits here for an officer, not for a machine.",
+              "notes": "Nothing in this cage has entered the country. It can be re-exported from here without ever clearing."
+            }
+          },
+          {
+            "id": "physical_inspection",
+            "label": "Physical inspection",
+            "type": "service",
+            "icon": "magnifyingGlass",
+            "color": "#ef4444",
+            "position": {
+              "col": 17,
+              "row": 9
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "An officer opens the box, checks the goods against the declaration, and reseals it with tamper tape.",
+              "notes": "The examination is recorded against the entry, so the same consignor is scored differently next time."
+            }
+          },
+          {
+            "id": "release",
+            "label": "Release",
+            "type": "service",
+            "icon": "stamp",
+            "color": "#5dbe8a",
+            "shape": "cylinder",
+            "position": {
+              "col": 22,
+              "row": 5
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
+            "meta": {
+              "description": "The entry is cleared and the bond lifted. Only now is the parcel legally in the country and free to move.",
+              "notes": "Release is a status change in a database. The physical parcel may not move for hours afterwards."
+            }
+          }
+        ],
+        "connections": [
+          {
+            "id": "c_entry_doc",
+            "from": "entry_system",
+            "to": "doc_check",
+            "label": "declaration",
+            "route": "auto"
+          },
+          {
+            "id": "c_doc_risk",
+            "from": "doc_check",
+            "to": "risk_engine",
+            "label": "entry accepted",
+            "route": "auto"
+          },
+          {
+            "id": "c_risk_xray",
+            "from": "risk_engine",
+            "to": "xray",
+            "label": "selected for scan",
+            "route": "auto"
+          },
+          {
+            "id": "c_xray_duty",
+            "from": "xray",
+            "to": "duty_assessment",
+            "label": "green channel",
+            "route": "auto"
+          },
+          {
+            "id": "c_xray_hold",
+            "from": "xray",
+            "to": "hold_area",
+            "label": "anomaly \u2014 hold",
+            "route": "auto"
+          },
+          {
+            "id": "c_hold_physical",
+            "from": "hold_area",
+            "to": "physical_inspection",
+            "label": "called for exam",
+            "route": "auto"
+          },
+          {
+            "id": "c_physical_duty",
+            "from": "physical_inspection",
+            "to": "duty_assessment",
+            "label": "exam satisfactory",
+            "route": "auto"
+          },
+          {
+            "id": "c_duty_release",
+            "from": "duty_assessment",
+            "to": "release",
+            "label": "charges settled",
+            "route": "auto"
+          }
+        ]
+      }
+    },
+    {
+      "id": "dest_hub",
+      "label": "Destination hub",
+      "type": "service",
+      "icon": "warehouse",
+      "color": "#2d9f6a",
+      "position": {
+        "col": 12,
+        "row": 12
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "The partner carrier's national hub. The parcel is now on a domestic label and a domestic sortcode.",
+        "notes": "The handover between carriers is a data handover as much as a physical one \u2014 two tracking numbers, one parcel."
+      }
+    },
+    {
+      "id": "delivery_depot",
+      "label": "Delivery depot",
+      "type": "service",
+      "icon": "boxesStacked",
+      "color": "#5dbe8a",
+      "position": {
+        "col": 8,
+        "row": 12
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "The last building. Parcels are sorted into rounds overnight and staged by van bay before the drivers arrive.",
+        "notes": "Sorting to a round is different from sorting to an address: the sequence within the round is decided later."
+      }
+    },
+    {
+      "id": "delivery_courier",
+      "label": "Delivery courier",
+      "type": "external",
+      "icon": "truckRampBox",
+      "color": "#d98324",
+      "position": {
+        "col": 4,
+        "row": 12
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "A driver with 96 stops and a route the handheld re-sequences as the day goes on.",
+        "notes": "The final mile is roughly half the cost of the whole journey and the only leg the customer ever sees."
+      }
+    },
+    {
+      "id": "recipient",
+      "label": "Recipient's doorstep",
+      "type": "client",
+      "icon": "doorOpen",
+      "color": "#4a9edd",
+      "position": {
+        "col": 1,
+        "row": 12
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "An apartment in Osaka. The doorstep scan closes the tracking record and stops the clock."
+      }
+    },
+    {
+      "id": "tracking_platform",
+      "label": "Tracking platform",
+      "type": "database",
+      "icon": "mapLocationDot",
+      "color": "#6b7a8f",
+      "position": {
+        "col": 1,
+        "row": 8
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Every scanner in every facility publishes to it. It is the only part of the network the sender and recipient ever interact with.",
+        "notes": "Tracking is a stream of events, not a location. Between two scans the platform genuinely does not know where the parcel is."
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "c_send_courier",
+      "from": "sender",
+      "to": "collection_courier",
+      "label": "collection scan",
+      "route": "auto"
+    },
+    {
+      "id": "c_courier_depot",
+      "from": "collection_courier",
+      "to": "local_depot",
+      "label": "round tipped out",
+      "route": "auto"
+    },
+    {
+      "id": "c_depot_tracking",
+      "from": "local_depot",
+      "to": "tracking_platform",
+      "label": "scan events",
+      "route": "auto"
+    },
+    {
+      "id": "c_depot_linehaul",
+      "from": "local_depot",
+      "to": "linehaul",
+      "label": "cages loaded",
+      "route": "auto"
+    },
+    {
+      "id": "c_linehaul_hub",
+      "from": "linehaul",
+      "to": "regional_hub",
+      "label": "night trunk",
+      "route": "auto"
+    },
+    {
+      "id": "c_hub_airport",
+      "from": "regional_hub",
+      "to": "origin_airport",
+      "label": "airside feeder",
+      "route": "auto"
+    },
+    {
+      "id": "c_airport_flight",
+      "from": "origin_airport",
+      "to": "flight",
+      "label": "ULDs loaded",
+      "route": "auto"
+    },
+    {
+      "id": "c_flight_arrival",
+      "from": "flight",
+      "to": "dest_airport",
+      "label": "sector 11 h 00",
+      "route": "auto"
+    },
+    {
+      "id": "c_arrival_customs",
+      "from": "dest_airport",
+      "to": "customs",
+      "label": "presented to border",
+      "route": "auto"
+    },
+    {
+      "id": "c_customs_hub",
+      "from": "customs",
+      "to": "dest_hub",
+      "label": "bond released",
+      "route": "auto"
+    },
+    {
+      "id": "c_hub_depot",
+      "from": "dest_hub",
+      "to": "delivery_depot",
+      "label": "overnight trunk",
+      "route": "auto"
+    },
+    {
+      "id": "c_depot_courier",
+      "from": "delivery_depot",
+      "to": "delivery_courier",
+      "label": "round loaded",
+      "route": "auto"
+    },
+    {
+      "id": "c_tracking_recipient",
+      "from": "tracking_platform",
+      "to": "recipient",
+      "label": "SMS: out for delivery",
+      "route": "auto"
+    },
+    {
+      "id": "c_courier_recipient",
+      "from": "delivery_courier",
+      "to": "recipient",
+      "label": "doorstep scan",
+      "route": "auto"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "name": "Overview",
+      "title": "Doorstep to doorstep, 42 hours",
+      "description": "One parcel, Bristol to Osaka. Nine handovers across two countries, three of which are whole facilities in their own right: the regional sorting hub, the tilt-tray sorter inside it, and the border post at the far end. Nothing about this journey is unusual \u2014 it is what happens to a few million boxes a night.",
+      "highlight": [],
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      }
+    },
+    {
+      "id": 1,
+      "name": "Label printed",
+      "title": "The label is bought before the parcel moves",
+      "description": "Booking online resolves the destination address to a sortcode and mints a tracking number. From this point the network routes on the barcode; the printed address is only there for the human at the end.",
+      "highlight": [
+        "sender"
+      ],
+      "active_connections": [],
+      "camera": {
+        "focus": "sender",
+        "zoom": 1.6
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "sender",
+          "text": "book(dest='530-0001 Osaka JP', kg=2.4) \u2192 GB84712299 03",
+          "style": "info"
+        }
+      ],
+      "footer": [
+        {
+          "text": "The customs data set is captured **here**, at booking \u2014 not at the border.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 0.2,
+        "label": "12 min \u2014 booked and labelled",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Collection scan",
+      "title": "The van arrives and the clock starts",
+      "description": "The driver scans the barcode on the doorstep. That first scan is what makes the parcel exist to the network \u2014 until then the booking is just a row in a database with no box attached to it.",
+      "highlight": [
+        "sender",
+        "collection_courier"
+      ],
+      "active_connections": [
+        "c_send_courier"
+      ],
+      "packet": {
+        "connection": "c_send_courier",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "tracking": "GB84712299 03",
+          "event": "COLLECTED",
+          "weight_kg": 2.4,
+          "dims_cm": "40 \u00d7 30 \u00d7 12",
+          "destination": "Osaka, JP 530-0001",
+          "hs_code": "8517.62",
+          "declared_value": "GBP 180.00"
+        }
+      },
+      "waterfall": {
+        "start": 5.0,
+        "weight": 0.1,
+        "label": "6 min at the door",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Round tipped out",
+      "title": "The van finishes its round",
+      "description": "The parcel now sits in a van doing another 39 collections before it goes anywhere useful. A collection van is a moving buffer: nothing on board is sorted, and the last pickup of the day travels the same distance as the first.",
+      "highlight": [
+        "collection_courier",
+        "local_depot"
+      ],
+      "active_connections": [
+        "c_courier_depot"
+      ],
+      "packet": {
+        "connection": "c_courier_depot",
+        "shape": "blob",
+        "count": 18,
+        "arrivalStyle": "success",
+        "data": {
+          "round": "BRS-14",
+          "stops_completed": 40,
+          "parcels_on_board": 212
+        }
+      },
+      "footer": [
+        {
+          "text": "**40 stops, 212 parcels** \u2014 our box is one of them and gets no special treatment.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 5.1,
+        "weight": 2.4,
+        "label": "2 h 24 m \u2014 rest of the round",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Depot sortation",
+      "title": "The depot sorts to the next building, not the address",
+      "description": "A spoke depot has no idea how to reach Osaka. It only knows which hub the sortcode belongs to, so it drops the parcel into a cage labelled with a hub, not a country. Every hop in a hub-and-spoke network is a decision about the next facility and nothing further.",
+      "highlight": [
+        "local_depot"
+      ],
+      "active_connections": [],
+      "camera": {
+        "focus": "local_depot",
+        "zoom": 1.5
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "local_depot",
+          "text": "sortcode('530-0001 JP') \u2192 cage(hub=HUB-MID, service=AIR-EXPRESS)"
+        }
+      ],
+      "waterfall": {
+        "start": 7.5,
+        "weight": 1.5,
+        "label": "1 h 30 m \u2014 depot sort",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 5,
+      "name": "Tracking feed",
+      "title": "Every scanner publishes, continuously",
+      "description": "The depot's handhelds and belt scanners hold an open connection to the tracking platform and push events as they happen. What a customer reads as a location is really a stream of scan records \u2014 between two of them, nobody knows where the box is.",
+      "highlight": [
+        "local_depot",
+        "tracking_platform"
+      ],
+      "active_connections": [
+        "c_depot_tracking"
+      ],
+      "stream": {
+        "connection": "c_depot_tracking",
+        "color": "#6b7a8f"
+      },
+      "footer": [
+        {
+          "text": "Tracking is an *event log*, not a position. Long gaps mean no scanners, not a lost parcel.",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Cages loaded",
+      "title": "Cages go onto the trunk trailer",
+      "description": "Nine sealed cages for the same hub are wheeled onto a double-deck trailer. The seal number is the unit of custody from here on \u2014 the network stops tracking individual parcels and starts tracking the container they are in.",
+      "highlight": [
+        "local_depot",
+        "linehaul"
+      ],
+      "active_connections": [
+        "c_depot_linehaul"
+      ],
+      "packet": {
+        "connection": "c_depot_linehaul",
+        "shape": "blob",
+        "count": 9,
+        "arrivalStyle": "success",
+        "data": {
+          "cages": 9,
+          "seal": "BRS-0091447",
+          "trunk": "T-2210 BRS\u2192HUB-MID"
+        }
+      },
+      "waterfall": {
+        "start": 9.0,
+        "weight": 0.5,
+        "label": "30 min \u2014 load and seal",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 7,
+      "name": "Night trunk",
+      "title": "The overnight leg to the hub",
+      "description": "Trunking runs at night because the hub only runs at night. Every parcel in the region has to be in the same building at the same time for a single sort to work, and that window is roughly 22:00 to 04:00.",
+      "highlight": [
+        "linehaul",
+        "regional_hub"
+      ],
+      "active_connections": [
+        "c_linehaul_hub"
+      ],
+      "packet": {
+        "connection": "c_linehaul_hub",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "trunk": "T-2210",
+          "departed": "21:30",
+          "booked_arrival": "00:00"
+        }
+      },
+      "footer": [
+        {
+          "text": "Miss the trunk departure and the parcel loses a **full 24 hours** \u2014 the next one is tomorrow night.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 9.5,
+        "weight": 2.5,
+        "label": "2 h 30 m \u2014 148 miles",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 8,
+      "scene": "regional_hub",
+      "name": "Trailer docks",
+      "title": "Inside the hub: the trailer is called on",
+      "description": "Trailers are not unloaded in the order they arrive. They are called onto a dock in the order their contents need to depart, so a trailer whose parcels all leave at 02:00 waits behind one that feeds a 00:45 departure.",
+      "highlight": [
+        "arrivals_yard",
+        "unload_dock"
+      ],
+      "active_connections": [
+        "c_yard_dock"
+      ],
+      "camera": {
+        "focus": "unload_dock",
+        "zoom": 1.3
+      },
+      "packet": {
+        "connection": "c_yard_dock",
+        "shape": "blob",
+        "count": 14,
+        "arrivalStyle": "success",
+        "data": {
+          "trailer": "T-2210",
+          "dock": 17,
+          "cages": 9
+        }
+      },
+      "waterfall": {
+        "start": 12.0,
+        "weight": 0.4,
+        "label": "24 min \u2014 yard wait",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 9,
+      "scene": "regional_hub",
+      "name": "Oversize pulled",
+      "title": "Anything the sorter cannot carry comes off first",
+      "description": "Over 31.5 kg, longer than 1.5 m, round, or unable to sit flat on a tray \u2014 that goes down the oversize lane and is handled by people the whole way. It is a small share of volume and a large share of the injuries and the delay.",
+      "highlight": [
+        "unload_dock",
+        "oversize_lane"
+      ],
+      "active_connections": [
+        "c_dock_oversize"
+      ],
+      "packet": {
+        "connection": "c_dock_oversize",
+        "shape": "blob",
+        "count": 3,
+        "arrivalStyle": "warning",
+        "data": {
+          "reason": "length 1.9 m",
+          "handling": "manual",
+          "parcels": 3
+        }
+      },
+      "footer": [
+        {
+          "text": "**Not our parcel** \u2014 at 40 \u00d7 30 \u00d7 12 cm it is comfortably inside the sorter envelope.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 12.4,
+        "weight": 0.1,
+        "label": "6 min \u2014 oversize pull-off",
+        "color": "#c9a227"
+      }
+    },
+    {
+      "id": 10,
+      "scene": "regional_hub",
+      "name": "Onto the belt",
+      "title": "A boom conveyor reaches into the trailer",
+      "description": "An extendable conveyor runs right up to the trailer wall so the unloaders never carry a box more than a metre. The belt runs continuously from the moment the trailer is opened until it is empty.",
+      "highlight": [
+        "unload_dock",
+        "induction_line"
+      ],
+      "active_connections": [
+        "c_dock_induction"
+      ],
+      "streams": [
+        {
+          "connection": "c_dock_induction",
+          "color": "#2d9f6a"
+        }
+      ],
+      "waterfall": {
+        "start": 12.42,
+        "weight": 0.05,
+        "label": "3 min on the belt",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 11,
+      "scene": "regional_hub",
+      "name": "Singulation",
+      "title": "A mass of boxes becomes a single file",
+      "description": "Singulation is the real bottleneck of any hub. Taking a shoulder-to-shoulder mass of parcels and turning it into one box at a time with a fixed gap between each is harder than sorting them, and the sorter can always go faster than the induction can feed it.",
+      "highlight": [
+        "induction_line",
+        "barcode_gantry"
+      ],
+      "active_connections": [
+        "c_induction_gantry"
+      ],
+      "camera": {
+        "focus": "induction_line",
+        "zoom": 1.5
+      },
+      "streams": [
+        {
+          "connection": "c_induction_gantry",
+          "color": "#2d9f6a"
+        }
+      ],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "induction_line",
+          "text": "singulate(gap=350mm, speed=2.0 m/s) \u2192 11,400 pph"
+        }
+      ],
+      "footer": [
+        {
+          "text": "The sorter is rated **12,000 parcels/hour**; induction holds the real number to about **11,400**.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 12.47,
+        "weight": 0.02,
+        "label": "72 s \u2014 induction queue",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 12,
+      "scene": "regional_hub",
+      "name": "Scan telemetry",
+      "title": "The gantry feeds hub control continuously",
+      "description": "The reader arch holds an open connection to hub control, which forwards every read to the tracking platform and puts the running throughput on the wall board. It is the same feed that tells a manager, at 01:30, that the reject rate has doubled.",
+      "highlight": [
+        "barcode_gantry",
+        "hub_control"
+      ],
+      "active_connections": [
+        "c_gantry_control"
+      ],
+      "stream": {
+        "connection": "c_gantry_control",
+        "color": "#6b7a8f"
+      },
+      "footer": [
+        {
+          "text": "A rising no-read rate is almost always **one bad label printer**, not the readers.",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "scene": "regional_hub",
+      "name": "Into the sorter",
+      "title": "The belt hands over to the loop",
+      "description": "Past the gantry the parcel leaves flat belt and joins a 220 m closed loop of tilt trays circulating at 2.2 m/s. Everything from here is timed to the tray, not to the belt.",
+      "highlight": [
+        "barcode_gantry",
+        "sorter"
+      ],
+      "active_connections": [
+        "c_gantry_sorter"
+      ],
+      "streams": [
+        {
+          "connection": "c_gantry_sorter",
+          "color": "#7c9f2d"
+        }
+      ],
+      "waterfall": {
+        "start": 12.49,
+        "weight": 0.01,
+        "label": "36 s \u2014 transfer",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 14,
+      "scene": "sorter",
+      "name": "Gap control",
+      "title": "Inside the sorter: timed onto a free tray",
+      "description": "The gap controller decides which of the 1,100 trays this parcel lands on. Too early and it straddles two trays and jams the discharge; too late and a tray goes round empty. The tolerance is about forty milliseconds.",
+      "highlight": [
+        "gap_controller",
+        "barcode_reader"
+      ],
+      "active_connections": [
+        "c_gap_read"
+      ],
+      "camera": {
+        "focus": "gap_controller",
+        "zoom": 1.5
+      },
+      "packet": {
+        "connection": "c_gap_read",
+        "shape": "sphere",
+        "arrivalStyle": "success",
+        "data": {
+          "tray": 738,
+          "loop_speed": "2.2 m/s",
+          "window_ms": 40
+        }
+      },
+      "waterfall": {
+        "start": 12.5,
+        "weight": 0.002,
+        "label": "7 s \u2014 onto the loop",
+        "color": "#7c9f2d"
+      }
+    },
+    {
+      "id": 15,
+      "scene": "sorter",
+      "name": "Six-sided read",
+      "title": "Six cameras, and still a no-read",
+      "description": "Four sides, the top, and one camera shooting up through the gap between trays, so the label can face any direction. Even so, one to three parcels in a hundred come back unreadable \u2014 and a taped-over, rain-scuffed home-printed label is exactly the kind that fails.",
+      "highlight": [
+        "barcode_reader",
+        "weigh_cell"
+      ],
+      "active_connections": [
+        "c_read_weigh"
+      ],
+      "packet": {
+        "connection": "c_read_weigh",
+        "shape": "token",
+        "arrivalStyle": "warning",
+        "data": {
+          "faces_attempted": 6,
+          "result": "NO_READ",
+          "confidence": 0.31,
+          "tray": 738
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "barcode_reader",
+          "text": "read(tray=738) \u2192 NO_READ after 6 faces",
+          "style": "warning"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**No-read rate: 1\u20133%.** At 11,400 parcels an hour that is up to 340 an hour needing a human.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 12.502,
+        "weight": 0.002,
+        "label": "7 s \u2014 read attempt",
+        "color": "#7c9f2d"
+      }
+    },
+    {
+      "id": 16,
+      "scene": "sorter",
+      "name": "Weigh and cube",
+      "title": "Weighed in motion regardless",
+      "description": "The weigh cell weighs the moving tray and subtracts its known tare, accurate to about 20 g at full speed. Chargeable weight is the greater of actual weight and volumetric weight \u2014 length \u00d7 width \u00d7 height \u00f7 5000 \u2014 which is why a big light box costs the same as a small heavy one.",
+      "highlight": [
+        "weigh_cell",
+        "chute_selector"
+      ],
+      "active_connections": [
+        "c_weigh_select"
+      ],
+      "packet": {
+        "connection": "c_weigh_select",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "actual_kg": 2.41,
+          "volumetric_kg": 2.88,
+          "chargeable_kg": 2.88,
+          "declared_kg": 2.4,
+          "barcode": null
+        }
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "weigh_cell",
+          "text": "chargeable = max(2.41, (40\u00d730\u00d712)/5000) = 2.88 kg"
+        }
+      ],
+      "waterfall": {
+        "start": 12.504,
+        "weight": 0.001,
+        "label": "4 s \u2014 weigh cell",
+        "color": "#7c9f2d"
+      }
+    },
+    {
+      "id": 17,
+      "scene": "sorter",
+      "name": "No chute",
+      "title": "No barcode, no chute",
+      "description": "The selector's whole job is turning a sortcode into a chute number. With no readable barcode there is no sortcode, so there is nothing to look up \u2014 it cannot guess from the weight, and it will not hold the tray while somebody works it out.",
+      "highlight": [
+        "chute_selector",
+        "tilt_tray"
+      ],
+      "active_connections": [
+        "c_select_tray"
+      ],
+      "camera": {
+        "focus": "chute_selector",
+        "zoom": 1.6
+      },
+      "packet": {
+        "connection": "c_select_tray",
+        "shape": "token",
+        "arrivalStyle": "error",
+        "data": {
+          "sortcode": null,
+          "chute": "REJECT",
+          "tray": 738,
+          "reason": "NO_READ"
+        }
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "chute_selector",
+          "text": "chute(sortcode=null) \u2192 REJECT",
+          "style": "error"
+        }
+      ],
+      "footer": [
+        {
+          "text": "The sorter never stops for one parcel. **Unresolvable means rejected**, not paused.",
+          "style": "error"
+        }
+      ],
+      "waterfall": {
+        "start": 12.505,
+        "weight": 0.001,
+        "label": "4 s \u2014 chute decision",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 18,
+      "scene": "sorter",
+      "name": "Tipped to reject",
+      "title": "The tray carries it to the reject chute",
+      "description": "The reject chute is deliberately the last one on the loop, so it only catches what no other chute claimed. The tray tips 35\u00b0, the parcel slides out, and the tray rights itself a metre later ready for the next induction.",
+      "highlight": [
+        "tilt_tray",
+        "reject_arm"
+      ],
+      "active_connections": [
+        "c_tray_reject"
+      ],
+      "packet": {
+        "connection": "c_tray_reject",
+        "shape": "blob",
+        "arrivalStyle": "error",
+        "data": {
+          "tray": 738,
+          "tilt": "35\u00b0 left",
+          "chute": "REJECT-2"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "reject_arm",
+          "text": "tip(tray=738, chute='REJECT-2') \u2014 1 of ~300 this hour",
+          "style": "error"
+        }
+      ],
+      "waterfall": {
+        "start": 12.506,
+        "weight": 0.001,
+        "label": "4 s \u2014 tip",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 19,
+      "scene": "sorter",
+      "name": "The other 11,000",
+      "title": "What should have happened",
+      "description": "For everything with a readable label the tray tips the other way, onto a steel slide two metres down into the destination chute. That is the entire sorter for 99% of parcels: forty seconds from induction to chute, no human involved at any point.",
+      "highlight": [
+        "tilt_tray",
+        "discharge_edge"
+      ],
+      "active_connections": [
+        "c_tray_discharge"
+      ],
+      "packet": {
+        "connection": "c_tray_discharge",
+        "shape": "blob",
+        "count": 12,
+        "arrivalStyle": "success",
+        "data": {
+          "throughput_pph": 11400,
+          "avg_loop_time_s": 41,
+          "chutes": 188
+        }
+      },
+      "footer": [
+        {
+          "text": "**11,400 parcels an hour** go this way. The bar beside this step is four minutes of normal running.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 12.5,
+        "weight": 0.067,
+        "label": "4 min \u00b7 760 parcels \u2014 normal running",
+        "color": "#5dbe8a"
+      }
+    },
+    {
+      "id": 20,
+      "scene": "regional_hub",
+      "name": "Down the reject line",
+      "title": "Back out in the hub: the reject line",
+      "description": "A short belt under the reject chute carries the parcel to two manual encoding desks. Everything on this belt is here for a bad read, a torn label or a chute that was backed up \u2014 almost never for a bad address.",
+      "highlight": [
+        "sorter",
+        "reject_line"
+      ],
+      "active_connections": [
+        "c_sorter_reject"
+      ],
+      "camera": {
+        "focus": "reject_line",
+        "zoom": 1.4
+      },
+      "packet": {
+        "connection": "c_sorter_reject",
+        "shape": "blob",
+        "arrivalStyle": "error",
+        "data": {
+          "reason": "NO_READ",
+          "reject_rate_this_shift": "1.8%",
+          "queue_depth": 41
+        }
+      },
+      "footer": [
+        {
+          "text": "**41 parcels queued** at the desks. Our box has just joined the back of it.",
+          "style": "error"
+        }
+      ],
+      "waterfall": {
+        "start": 12.58,
+        "weight": 0.12,
+        "label": "7 min \u2014 reject belt",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 21,
+      "scene": "regional_hub",
+      "name": "Manual encode",
+      "title": "A person reads what the cameras could not",
+      "description": "Twenty seconds of work: read the tracking number off the label, key it in, and the system prints and applies a fresh machine-readable barcode. The work is trivial; the queue in front of it is not.",
+      "highlight": [
+        "reject_line",
+        "manual_encoding"
+      ],
+      "active_connections": [
+        "c_reject_encode"
+      ],
+      "packet": {
+        "connection": "c_reject_encode",
+        "shape": "document",
+        "arrivalStyle": "warning",
+        "data": {
+          "keyed": "GB84712299 03",
+          "operator": "encode-desk-2",
+          "new_label": "applied"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "manual_encoding",
+          "text": "encode('GB84712299 03') \u2192 reprint + apply",
+          "style": "warning"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**21 minutes waiting, 20 seconds of work.** Reject handling is queueing, not labour.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 12.7,
+        "weight": 0.35,
+        "label": "21 min \u2014 encode queue",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 22,
+      "scene": "regional_hub",
+      "name": "Recirculated",
+      "title": "Back to the start of the line",
+      "description": "There is no shortcut back onto the loop \u2014 a recirculated parcel rejoins at induction and goes through the whole sequence again. Recovery is real, but it costs a second full pass and it is why a single scuffed label can cost half an hour.",
+      "highlight": [
+        "manual_encoding",
+        "induction_line"
+      ],
+      "active_connections": [
+        "c_encode_induction"
+      ],
+      "packet": {
+        "connection": "c_encode_induction",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "pass": 2,
+          "barcode": "GB84712299 03",
+          "status": "RECOVERED"
+        }
+      },
+      "footer": [
+        {
+          "text": "Recovered \u2014 and still inside the trunk cut-off, with **47 minutes** to spare.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 13.05,
+        "weight": 0.05,
+        "label": "3 min \u2014 walk back",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 23,
+      "scene": "regional_hub",
+      "name": "Clean read",
+      "title": "Second pass, clean read",
+      "description": "The fresh label reads first time and the parcel gets a real sortcode. Everything the network knows about this box is unchanged \u2014 same tracking number, same booking \u2014 it simply now has a barcode a camera can see.",
+      "highlight": [
+        "barcode_gantry",
+        "sorter"
+      ],
+      "active_connections": [
+        "c_gantry_sorter"
+      ],
+      "camera": {
+        "focus": "barcode_gantry",
+        "zoom": 1.4
+      },
+      "packet": {
+        "connection": "c_gantry_sorter",
+        "shape": "token",
+        "arrivalStyle": "success",
+        "data": {
+          "result": "READ_OK",
+          "confidence": 0.99,
+          "sortcode": "JP-KIX-EXP"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "barcode_gantry",
+          "text": "read(pass=2) \u2192 'GB84712299 03' conf 0.99",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 13.1,
+        "weight": 0.01,
+        "label": "36 s \u2014 second read",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 24,
+      "scene": "regional_hub",
+      "name": "Chute assigned",
+      "title": "Chute 114 \u2014 airfreight export",
+      "description": "The sortcode resolves to one of 188 chutes. There is no chute for 'Japan' \u2014 there is a chute for the airside feeder that leaves at 03:40, and getting on that vehicle is the only decision being made here.",
+      "highlight": [
+        "sorter",
+        "output_chutes"
+      ],
+      "active_connections": [
+        "c_sorter_chutes"
+      ],
+      "packet": {
+        "connection": "c_sorter_chutes",
+        "shape": "blob",
+        "count": 12,
+        "arrivalStyle": "success",
+        "data": {
+          "chute": 114,
+          "destination": "AIRSIDE-EXPORT",
+          "cut_off": "03:40"
+        }
+      },
+      "waterfall": {
+        "start": 13.11,
+        "weight": 0.02,
+        "label": "72 s \u2014 sorted",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 25,
+      "scene": "regional_hub",
+      "name": "Cage built",
+      "title": "Chute emptied into a cage and sealed",
+      "description": "Chutes hold about ninety parcels before they back up, so they are emptied into roll cages continuously through the shift. The cage is sealed against a departure time, not a parcel count \u2014 a half-empty cage still leaves at 03:40.",
+      "highlight": [
+        "output_chutes",
+        "outbound_bays"
+      ],
+      "active_connections": [
+        "c_chutes_bays"
+      ],
+      "packet": {
+        "connection": "c_chutes_bays",
+        "shape": "blob",
+        "count": 6,
+        "arrivalStyle": "success",
+        "data": {
+          "cage": "HM-4471",
+          "seal": "0091902",
+          "parcels": 74,
+          "departs": "03:40"
+        }
+      },
+      "waterfall": {
+        "start": 13.13,
+        "weight": 0.1,
+        "label": "6 min \u2014 cage build",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 26,
+      "name": "Airside feeder",
+      "title": "Back at the top level: across the campus",
+      "description": "The hub and the cargo shed share a site, so the feeder never touches a public road \u2014 which matters, because the moment goods are destined for export they are handled under a different set of controls.",
+      "highlight": [
+        "regional_hub",
+        "origin_airport"
+      ],
+      "active_connections": [
+        "c_hub_airport"
+      ],
+      "camera": {
+        "focus": "origin_airport",
+        "zoom": 1.3
+      },
+      "packet": {
+        "connection": "c_hub_airport",
+        "shape": "blob",
+        "count": 6,
+        "arrivalStyle": "success",
+        "data": {
+          "cages": 6,
+          "vehicle": "shunter-3",
+          "airside_pass": "valid"
+        }
+      },
+      "footer": [
+        {
+          "text": "**23 minutes idle** before this leg \u2014 the feeder waits for its slot, not for the parcel.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 13.6,
+        "weight": 1.4,
+        "label": "1 h 24 m \u2014 feeder and acceptance",
+        "color": "#4c7fbe"
+      }
+    },
+    {
+      "id": 27,
+      "name": "ULD build",
+      "title": "Cages become aircraft containers",
+      "description": "Roll cages cannot go on a plane. Parcels are broken out and rebuilt into ULDs \u2014 aluminium containers shaped to the curve of the fuselage \u2014 against a load plan that balances the aircraft as much as it fills it.",
+      "highlight": [
+        "origin_airport"
+      ],
+      "active_connections": [],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "origin_airport",
+          "text": "build(cages=6) \u2192 AKE-41882-BA, pos 21L, 1,140 kg"
+        }
+      ],
+      "footer": [
+        {
+          "text": "Cut-off for a long-haul freighter is **six hours** before departure, not one.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 15.0,
+        "weight": 1.2,
+        "label": "1 h 12 m \u2014 ULD build-up",
+        "color": "#4c7fbe"
+      }
+    },
+    {
+      "id": 28,
+      "name": "Loaded and away",
+      "title": "Containers go up the loader",
+      "description": "Six ULDs go through the main-deck door on a scissor loader and are locked to the floor rails. The last scan on this side of the world is the container's, not the parcel's \u2014 the box itself is now invisible until it lands.",
+      "highlight": [
+        "origin_airport",
+        "flight"
+      ],
+      "active_connections": [
+        "c_airport_flight"
+      ],
+      "packet": {
+        "connection": "c_airport_flight",
+        "shape": "blob",
+        "count": 6,
+        "arrivalStyle": "success",
+        "data": {
+          "uld": "AKE-41882-BA",
+          "position": "21L",
+          "flight": "CG-8817",
+          "mawb": "125-88471203"
+        }
+      },
+      "waterfall": {
+        "start": 16.2,
+        "weight": 0.8,
+        "label": "48 min \u2014 loading",
+        "color": "#4c7fbe"
+      }
+    },
+    {
+      "id": 29,
+      "name": "Eleven hours",
+      "title": "The longest event in the journey",
+      "description": "Eleven hours in which nothing can be scanned, nothing can be re-routed and no question can be answered. It is a quarter of the total transit time and the only leg of the whole journey that cannot be improved by better operations.",
+      "highlight": [
+        "flight",
+        "dest_airport"
+      ],
+      "active_connections": [
+        "c_flight_arrival"
+      ],
+      "camera": {
+        "focus": "flight",
+        "zoom": 1.4
+      },
+      "stream": {
+        "connection": "c_flight_arrival",
+        "color": "#b06bd6"
+      },
+      "packet": {
+        "connection": "c_flight_arrival",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "flight": "CG-8817",
+          "sector": "LHR \u2192 KIX",
+          "block_time": "11 h 00",
+          "scans_en_route": 0
+        }
+      },
+      "footer": [
+        {
+          "text": "**11 h 00 airborne** \u2014 26% of the total 42-hour journey, in one bar.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 17.0,
+        "weight": 11.0,
+        "label": "11 h 00 \u2014 airborne, zero scans",
+        "color": "#b06bd6"
+      }
+    },
+    {
+      "id": 30,
+      "name": "Presented to border",
+      "title": "Wheels down, but not in the country yet",
+      "description": "The ULD is broken down in the arrival shed and the parcels are scanned back into existence. Legally none of them have entered Japan: they are in a bonded area, treated as outside the customs territory until the border says otherwise.",
+      "highlight": [
+        "dest_airport",
+        "customs"
+      ],
+      "active_connections": [
+        "c_arrival_customs"
+      ],
+      "packet": {
+        "connection": "c_arrival_customs",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "event": "ARRIVED_AT_BORDER",
+          "mawb": "125-88471203",
+          "status": "IN_BOND"
+        }
+      },
+      "waterfall": {
+        "start": 28.0,
+        "weight": 0.2,
+        "label": "12 min \u2014 breakdown and scan",
+        "color": "#4c7fbe"
+      }
+    },
+    {
+      "id": 31,
+      "scene": "customs",
+      "name": "Entry lodged",
+      "title": "Inside the border post: the paperwork got here first",
+      "description": "The carrier lodged an electronic declaration against the flight manifest before the aircraft even left. Pre-lodgement is the single reason most parcels clear in minutes rather than days \u2014 the border has had eleven hours to think about this box.",
+      "highlight": [
+        "entry_system",
+        "doc_check"
+      ],
+      "active_connections": [
+        "c_entry_doc"
+      ],
+      "packet": {
+        "connection": "c_entry_doc",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "entry_no": "JP-2291-884712",
+          "hs_code": "8517.62",
+          "goods": "portable audio interface",
+          "value_cif": "JPY 34,900",
+          "lodged": "before wheels-up"
+        }
+      },
+      "footer": [
+        {
+          "text": "This bar **overlaps the flight** \u2014 the declaration was cleared for processing while the parcel was still airborne.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 16.0,
+        "weight": 0.4,
+        "label": "24 min \u2014 pre-lodged, mid-flight",
+        "color": "#c9a227"
+      }
+    },
+    {
+      "id": 32,
+      "scene": "customs",
+      "name": "Document check",
+      "title": "The declaration is matched to the airway bill",
+      "description": "Commodity code, declared value, country of origin and consignee are checked against the airway bill. A wrong commodity code is by far the most common reason a low-value parcel gets stuck \u2014 the goods are fine, the four digits describing them are not.",
+      "highlight": [
+        "doc_check",
+        "risk_engine"
+      ],
+      "active_connections": [
+        "c_doc_risk"
+      ],
+      "packet": {
+        "connection": "c_doc_risk",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "check": "AWB \u2194 entry match",
+          "discrepancies": 0,
+          "origin": "GB"
+        }
+      },
+      "waterfall": {
+        "start": 28.2,
+        "weight": 0.3,
+        "label": "18 min \u2014 document check",
+        "color": "#c9a227"
+      }
+    },
+    {
+      "id": 33,
+      "scene": "customs",
+      "name": "Risk scored",
+      "title": "The channel is chosen by a score, not a person",
+      "description": "Commodity, route, consignor history and declared value produce a risk score, and the score picks the channel. Nobody looks at the box to decide whether to look at the box.",
+      "highlight": [
+        "risk_engine",
+        "xray"
+      ],
+      "active_connections": [
+        "c_risk_xray"
+      ],
+      "camera": {
+        "focus": "risk_engine",
+        "zoom": 1.6
+      },
+      "packet": {
+        "connection": "c_risk_xray",
+        "shape": "token",
+        "arrivalStyle": "warning",
+        "data": {
+          "score": 62,
+          "threshold_scan": 40,
+          "threshold_open": 75,
+          "flags": [
+            "lithium-cell declaration"
+          ]
+        }
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "risk_engine",
+          "text": "score(hs=8517.62, origin=GB, value=34900) \u2192 62 \u2192 SCAN",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 28.5,
+        "weight": 0.2,
+        "label": "12 min \u2014 scored and queued",
+        "color": "#c9a227"
+      }
+    },
+    {
+      "id": 34,
+      "scene": "customs",
+      "name": "Green channel",
+      "title": "Most parcels never stop",
+      "description": "A dual-energy scanner colours the image by material density, so an operator can tell paper from metal from electronics without opening anything. Nine in ten parcels go straight from the scanner to duty assessment, in the time it takes to walk past the machine.",
+      "highlight": [
+        "xray",
+        "duty_assessment"
+      ],
+      "active_connections": [
+        "c_xray_duty"
+      ],
+      "packet": {
+        "connection": "c_xray_duty",
+        "shape": "sphere",
+        "count": 20,
+        "arrivalStyle": "success",
+        "data": {
+          "channel": "GREEN",
+          "share_of_volume": "90%",
+          "avg_dwell": "under 15 min"
+        }
+      },
+      "footer": [
+        {
+          "text": "**~90% green.** Scanning is cheap and exists purely to keep the number of boxes actually opened low.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 28.5,
+        "weight": 0.25,
+        "label": "15 min \u2014 green channel (parallel)",
+        "color": "#5dbe8a"
+      }
+    },
+    {
+      "id": 35,
+      "scene": "customs",
+      "name": "Flagged",
+      "title": "This one is not one of them",
+      "description": "The image shows a dense rectangular block the declaration does not obviously account for \u2014 in this case the interface's power supply. That is enough to move the parcel to the red channel and into a bonded cage to wait for an officer.",
+      "highlight": [
+        "xray",
+        "hold_area"
+      ],
+      "active_connections": [
+        "c_xray_hold"
+      ],
+      "packet": {
+        "connection": "c_xray_hold",
+        "shape": "blob",
+        "arrivalStyle": "warning",
+        "data": {
+          "channel": "RED",
+          "anomaly": "dense mass, unmatched",
+          "action": "HOLD_FOR_EXAM"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "hold_area",
+          "text": "hold(entry='JP-2291-884712', reason='NII anomaly')",
+          "style": "warning"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**2\u20133% of parcels** are physically examined, and the selection is a score \u2014 not a lottery.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 28.7,
+        "weight": 0.1,
+        "label": "6 min \u2014 moved to hold",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 36,
+      "scene": "customs",
+      "name": "Opened",
+      "title": "An officer opens the box",
+      "description": "The goods are checked against the declaration, photographed, and the box resealed with tamper tape. The result is recorded against the consignor, so a clean examination today lowers the score on their next hundred shipments.",
+      "highlight": [
+        "hold_area",
+        "physical_inspection"
+      ],
+      "active_connections": [
+        "c_hold_physical"
+      ],
+      "camera": {
+        "focus": "physical_inspection",
+        "zoom": 1.5
+      },
+      "packet": {
+        "connection": "c_hold_physical",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "exam": "full open",
+          "result": "as declared",
+          "resealed": "CUSTOMS-JP tape",
+          "photos": 4
+        }
+      },
+      "footer": [
+        {
+          "text": "**1 h 24 m in the cage** \u2014 nearly all of it waiting for an officer, not being examined.",
+          "style": "error"
+        }
+      ],
+      "waterfall": {
+        "start": 28.8,
+        "weight": 1.4,
+        "label": "1 h 24 m \u2014 hold and examine",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 37,
+      "scene": "customs",
+      "name": "Duty assessed",
+      "title": "Tariff and import tax on the landed cost",
+      "description": "Duty is charged on cost plus insurance plus freight, not on what the sender paid for the item \u2014 so the shipping cost is itself taxable. Import consumption tax is then applied on top of the duty-inclusive value.",
+      "highlight": [
+        "physical_inspection",
+        "duty_assessment"
+      ],
+      "active_connections": [
+        "c_physical_duty"
+      ],
+      "packet": {
+        "connection": "c_physical_duty",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "cif_value": "JPY 34,900",
+          "duty_rate": "0%",
+          "consumption_tax": "JPY 3,490",
+          "clearance_fee": "JPY 1,100",
+          "payable_by": "recipient on delivery"
+        }
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "duty_assessment",
+          "text": "tax = (cost + insurance + freight) \u00d7 10% = \u00a53,490"
+        }
+      ],
+      "waterfall": {
+        "start": 30.2,
+        "weight": 0.6,
+        "label": "36 min \u2014 assessment",
+        "color": "#c9a227"
+      }
+    },
+    {
+      "id": 38,
+      "scene": "customs",
+      "name": "Released",
+      "title": "The bond is lifted",
+      "description": "Release is a status change in a database, and only now has the parcel legally entered the country. The box has not moved a metre \u2014 but everything downstream was waiting on this one flag.",
+      "highlight": [
+        "duty_assessment",
+        "release"
+      ],
+      "active_connections": [
+        "c_duty_release"
+      ],
+      "packet": {
+        "connection": "c_duty_release",
+        "shape": "token",
+        "arrivalStyle": "success",
+        "data": {
+          "entry_no": "JP-2291-884712",
+          "status": "RELEASED",
+          "bond": "lifted",
+          "dwell_total": "2 h 48 m"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "release",
+          "text": "release(entry='JP-2291-884712') \u2192 CLEARED",
+          "style": "success"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**2 h 48 m at the border** against a 15-minute green-channel norm \u2014 the exam cost most of it.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 30.8,
+        "weight": 0.2,
+        "label": "12 min \u2014 release",
+        "color": "#5dbe8a"
+      }
+    },
+    {
+      "id": 39,
+      "name": "Into the domestic network",
+      "title": "Back outside: handed to the partner carrier",
+      "description": "The origin carrier has no vans in Japan, so the parcel is handed to a domestic partner. It gets a second tracking number and a domestic sortcode; the two numbers are linked so the sender's tracking page keeps working.",
+      "highlight": [
+        "customs",
+        "dest_hub"
+      ],
+      "active_connections": [
+        "c_customs_hub"
+      ],
+      "camera": {
+        "focus": "dest_hub",
+        "zoom": 1.3
+      },
+      "packet": {
+        "connection": "c_customs_hub",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "domestic_tracking": "JP-5540-11827",
+          "linked_to": "GB84712299 03",
+          "service": "next-day"
+        }
+      },
+      "footer": [
+        {
+          "text": "One parcel, **two tracking numbers**. The handover is as much a data join as a physical one.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 31.0,
+        "weight": 2.0,
+        "label": "2 h 00 \u2014 road to the hub",
+        "color": "#d98324"
+      }
+    },
+    {
+      "id": 40,
+      "name": "Overnight trunk",
+      "title": "One more hub, one more night",
+      "description": "The destination country runs the same hub-and-spoke shape as the origin, so the parcel spends another night on a trunk trailer being sorted with everything else going to the same city. Two national networks, the same physics.",
+      "highlight": [
+        "dest_hub",
+        "delivery_depot"
+      ],
+      "active_connections": [
+        "c_hub_depot"
+      ],
+      "packet": {
+        "connection": "c_hub_depot",
+        "shape": "blob",
+        "count": 22,
+        "arrivalStyle": "success",
+        "data": {
+          "trunk": "KIX-OSA-04",
+          "cages": 22,
+          "sorted_to": "depot OSA-3"
+        }
+      },
+      "waterfall": {
+        "start": 33.0,
+        "weight": 4.5,
+        "label": "4 h 30 m \u2014 sort and trunk",
+        "color": "#d98324"
+      }
+    },
+    {
+      "id": 41,
+      "name": "Round loaded",
+      "title": "Sorted to a round, then to a van",
+      "description": "The depot sorts to a round, not to an address \u2014 the order of stops within the round is decided later by the driver's handheld and re-decided all morning as traffic and failed deliveries change it.",
+      "highlight": [
+        "delivery_depot",
+        "delivery_courier"
+      ],
+      "active_connections": [
+        "c_depot_courier"
+      ],
+      "packet": {
+        "connection": "c_depot_courier",
+        "shape": "blob",
+        "count": 20,
+        "arrivalStyle": "success",
+        "data": {
+          "round": "OSA-3-14",
+          "stops": 96,
+          "parcels": 143,
+          "our_stop_position": 61
+        }
+      },
+      "footer": [
+        {
+          "text": "The final mile is roughly **half the cost** of the entire journey.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 37.5,
+        "weight": 1.0,
+        "label": "1 h 00 \u2014 round build and load",
+        "color": "#d98324"
+      }
+    },
+    {
+      "id": 42,
+      "name": "Out for delivery",
+      "title": "The first message the recipient gets",
+      "description": "A single scan at the van bay triggers the only notification most people ever receive. Forty hours of network activity produce one text message, and everything before it was invisible.",
+      "highlight": [
+        "tracking_platform",
+        "recipient"
+      ],
+      "active_connections": [
+        "c_tracking_recipient"
+      ],
+      "packet": {
+        "connection": "c_tracking_recipient",
+        "shape": "envelope",
+        "arrivalStyle": "success",
+        "data": {
+          "channel": "SMS",
+          "text": "Your parcel is out for delivery today, 61st stop",
+          "eta_window": "13:40\u201315:40"
+        }
+      },
+      "waterfall": {
+        "start": 38.5,
+        "weight": 0.02,
+        "label": "1 min \u2014 notification",
+        "color": "#6b7a8f"
+      }
+    },
+    {
+      "id": 43,
+      "name": "Doorstep",
+      "title": "Stop 61 of 96",
+      "description": "The driver scans the barcode at the door, collects the import tax on a card reader and takes a photograph. That scan is the same kind of event as the very first one in Bristol \u2014 the network's whole life is barcodes and timestamps.",
+      "highlight": [
+        "delivery_courier",
+        "recipient"
+      ],
+      "active_connections": [
+        "c_courier_recipient"
+      ],
+      "camera": {
+        "focus": "recipient",
+        "zoom": 1.6
+      },
+      "packet": {
+        "connection": "c_courier_recipient",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "event": "DELIVERED",
+          "tracking": "GB84712299 03",
+          "collected": "JPY 4,590",
+          "proof": "photo + signature",
+          "time": "14:12"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "recipient",
+          "text": "scan(GB84712299 03, 'DELIVERED', pod='photo')",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 38.5,
+        "weight": 3.2,
+        "label": "3 h 12 m \u2014 60 stops before ours",
+        "color": "#d98324"
+      }
+    },
+    {
+      "id": 44,
+      "name": "Delivered",
+      "title": "41 hours 45 minutes, 62 scan events",
+      "description": "Of the total journey, eleven hours were airborne, three were spent at the border and under an hour was spent actually being sorted. Nearly everything else was the parcel waiting for a vehicle that leaves on a timetable \u2014 which is what a parcel network really is: a set of departure times with boxes queued behind them.",
+      "highlight": [
+        "recipient"
+      ],
+      "active_connections": [],
+      "footer": [
+        {
+          "text": "**41 h 45 m door to door**, of which about **50 minutes** was machine handling.",
+          "style": "success"
+        },
+        {
+          "text": "The scuffed label cost **31 minutes** \u2014 one no-read, one queue, one second pass.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 41.7,
+        "weight": 0.05,
+        "label": "3 min \u2014 signature and photo",
+        "color": "#5dbe8a"
+      }
+    }
+  ]
+}

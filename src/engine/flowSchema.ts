@@ -84,6 +84,7 @@ const ConnectionSchema = z.object({
   from:  z.string(),
   to:    z.string(),
   label: z.string().optional(),
+  color: z.string().optional(),
   route: z.union([z.literal('auto'), z.array(WayPointSchema)]),
 })
 
@@ -151,6 +152,7 @@ const StepSchema = z.object({
   camera: z.object({
     focus: z.string().nullable().optional(),
     zoom:  z.number().optional(),
+    fit:   z.boolean().optional(),
   }).optional(),
   annotations: z.array(AnnotationSchema).optional(),
   footer:      z.array(FooterNoteSchema).optional(),
@@ -165,7 +167,18 @@ const StepSchema = z.object({
 // ── Root schema with cross-reference checks ───────────────────────────────────
 
 export const FlowDefinitionSchema = z.object({
-  meta:        z.object({ title: z.string(), description: z.string().optional() }),
+  meta: z.object({
+    title:       z.string(),
+    description: z.string().optional(),
+    // Durations in milliseconds. Zero would mean "instant", which reads as a
+    // rendering bug rather than a choice, so they have to be positive.
+    timing: z.object({
+      step:       z.number().positive('meta.timing.step must be above zero').optional(),
+      packet:     z.number().positive('meta.timing.packet must be above zero').optional(),
+      transition: z.number().positive('meta.timing.transition must be above zero').optional(),
+      stream:     z.number().positive('meta.timing.stream must be above zero').optional(),
+    }).optional(),
+  }),
   layout:      z.object({ grid: z.object({ cols: z.number(), rows: z.number() }) }),
   zones:       z.array(ZoneSchema),
   components:  z.array(ComponentSchema),

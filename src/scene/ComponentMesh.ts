@@ -7,6 +7,13 @@ import { buildShapeMeshes } from '@/scene/shapeRegistry'
 import { buildLogoMeshes } from '@/scene/LogoMesh'
 import { buildSolidIconMeshes } from '@/scene/IconMesh'
 import type { ComponentMeshUserData } from '@/scene/meshUserData'
+import {
+  attachHoverOutline,
+  cancelHoverOutline,
+  disposeHoverOutline,
+  setHoverOutline,
+  setHoverOutlineScale,
+} from '@/scene/hoverOutline'
 
 export type MeshState = 'idle' | 'highlighted' | 'dimmed'
 
@@ -36,6 +43,9 @@ export const PENETRATED_OPACITY = 0.30
 
 export class ComponentMesh {
   group:     THREE.Group
+  /** Resting height of the group. Drag and hover both offset from this rather
+   *  than from the live position, which would drift mid-tween. */
+  baseY:     number
   hitMesh:   THREE.Mesh
   topCenter: THREE.Vector3
   id:        string
@@ -43,6 +53,9 @@ export class ComponentMesh {
   private mat:              THREE.MeshStandardMaterial
   private iconMat:          THREE.MeshBasicMaterial
   private currentState:     MeshState = 'idle'
+  private editHovered:      boolean   = false
+  /** The mesh the hover outline hangs off — the component's body. */
+  private body:             THREE.Mesh
   private penetrated:       boolean   = false
   private penetrationTween: Tween<{ opacity: number }> | null = null
 
@@ -53,6 +66,7 @@ export class ComponentMesh {
     const { x: w, y: h, z: d } = component.meshSize
 
     this.group = new THREE.Group()
+    this.baseY = component.center.y + h / 2
     this.group.position.set(
       component.center.x,
       component.center.y + h / 2,
@@ -84,6 +98,13 @@ export class ComponentMesh {
       m.receiveShadow = true
       this.group.add(m)
     }
+
+    // Edit-mode hover outline: the same screen-constant ring the edit handles
+    // use, so hovering a component and hovering a handle read as one thing.
+    // Was a fixed 1.03 inflate of an EdgesGeometry, which drifted with zoom —
+    // a visible gap around the body when zoomed in, invisible when zoomed out.
+    this.body = visualMeshes[0]
+    attachHoverOutline(this.body)
 
     // Invisible hit box for raycasting
     this.hitMesh = new THREE.Mesh(
@@ -122,6 +143,29 @@ export class ComponentMesh {
     })
   }
 
+  /**
+   * Edit-mode hover: outlines the component so it reads as grabbable before you
+   * press, without moving or resizing it. Deliberately separate from the step states
+   * (highlighted / dimmed) — those say "this matters now", this says "this is
+   * what you're about to drag", and a step change must not clear it.
+   */
+  setEditHover(hover: boolean): void {
+    if (this.editHovered === hover) return
+    this.editHovered = hover
+    setHoverOutline(this.body, hover)
+  }
+
+  /** Keep the ring a constant few pixels wide as the camera zooms. */
+  updateEditHoverScale(unitsPerPixel: number): void {
+    setHoverOutlineScale(this.body, unitsPerPixel)
+  }
+
+  /** Drop the outline immediately — used when a drag takes over from a hover. */
+  cancelEditHover(): void {
+    this.editHovered = false
+    cancelHoverOutline(this.body)
+  }
+
   setPenetrated(penetrated: boolean): void {
     if (this.penetrated === penetrated) return
     this.penetrated = penetrated
@@ -150,6 +194,9 @@ export class ComponentMesh {
   }
 
   dispose(scene: THREE.Object3D): void {
+    // Before removing the group: the outline is a child of the body, and its
+    // geometry is the body's, disposed by the loop below.
+    disposeHoverOutline(this.body)
     scene.remove(this.group)
     this.hitMesh.geometry.dispose()
     ;(this.hitMesh.material as THREE.Material).dispose()

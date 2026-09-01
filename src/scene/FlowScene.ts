@@ -2,18 +2,23 @@ import * as THREE from 'three'
 import { SceneManager } from '@/scene/SceneManager'
 import { OverlayBridge } from '@/scene/OverlayBridge'
 import { GridFloor } from '@/scene/GridFloor'
-import { applyZoneCorner, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
+import { applyZoneCorner, clampZoneDelta, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
 import type { ZoneCorner, ZoneRenderer } from '@/scene/ZoneRenderer'
 import { SceneLayer } from '@/scene/SceneLayer'
 import { HoverSystem } from '@/scene/HoverSystem'
+import { setHoverOutline, setHoverOutlineScale, setHoverOutlineTheme } from '@/scene/hoverOutline'
 import { setupLighting, updateLighting } from '@/scene/LightingSetup'
 import type { SceneLights } from '@/scene/LightingSetup'
 import { THEME_COLORS } from '@/scene/ThemeColors'
 import type { Theme } from '@/scene/ThemeColors'
 import type { InternalGraph } from '@/types/internal'
-import type { ComponentShape, Step } from '@/types/schema'
+import type { Step } from '@/types/schema'
 import { CELL_SIZE, COMPONENT_GAP, gridToWorld, worldToGrid } from '@/engine/layoutEngine'
 import { PIPE_HEIGHT, removeWaypoint } from '@/engine/parseFlow'
+import type { ComponentPatch, FlowAction } from '@/state/flowActions'
+import { componentGridPosition, gridFromBounds, zoneGridBounds } from '@/state/gridUnits'
+import { DEFAULT_TIMING } from '@/engine/timing'
+import type { Timing } from '@/engine/timing'
 import { Tween, Easing } from '@tweenjs/tween.js'
 import { tweenGroup } from '@/scene/tweenGroup'
 
@@ -37,6 +42,12 @@ const SCENE_EXIT_MAX_WAIT_MS = 1600  // never stall the walkthrough longer than 
 // Waypoint handles float above the pipe: sitting at pipe height buried half the
 // handle inside the tube, which made them hard to see and to grab.
 const WAYPOINT_HANDLE_Y    = PIPE_HEIGHT + 0.6
+
+/** What a press on the canvas means. `connect` remembers the first end picked. */
+export type SceneMode =
+  | { kind: 'select' }
+  | { kind: 'place'; what: 'component' | 'zone' }
+  | { kind: 'connect'; from?: string }
 
 export class FlowScene extends SceneManager {
   /** Every scene in the flow, keyed by owning component id (null = top level). */
@@ -86,11 +97,27 @@ export class FlowScene extends SceneManager {
   private moveZoneSnapshot: Array<{ zr: ZoneRenderer; min: THREE.Vector3; max: THREE.Vector3 }> = []
   private moveCompSnapshot: Array<{ id: string; center: THREE.Vector3 }> = []
   // ── Waypoint handle state ──
+  // ── Edit-mode hover feedback ──
+  private hoverHandle:     THREE.Mesh | null = null
+  private hoverComponent:  string | null = null
   private sceneChangeCallback: ((sceneId: string | null) => void) | null = null
   private transitionCallback: ((phase: 'out' | 'in', ms: number) => void) | null = null
   private transitionTimer: ReturnType<typeof setTimeout> | null = null
   private cameraTween: Tween<{ x: number; z: number; f: number }> | null = null
+  private playbackSpeed: number = 1
+  /** Steps may move the camera. Off means the view is yours. */
+  private cameraFollow: boolean = true
+  private timing: Timing = DEFAULT_TIMING
   private pipeLabelEditCallback: ((connectionId: string, current: string) => void) | null = null
+  private commitCallback: ((actions: FlowAction[]) => void) | null = null
+  private pipeLabelHoverCallback: ((connectionId: string | null) => void) | null = null
+  private hoverPipeLabel:  string | null = null
+  // ── Placing / connecting ──
+  private mode:            SceneMode = { kind: 'select' }
+  private placeGhost:      THREE.Mesh | null = null
+  private placeCallback:   ((what: 'component' | 'zone', cell: { col: number; row: number }) => void) | null = null
+  private connectCallback: ((from: string, to: string) => void) | null = null
+  private modeCallback:    ((mode: SceneMode) => void) | null = null
   private dragWaypoint:    { connId: string; index: number; mesh: THREE.Mesh } | null = null
   private zoneLabelEditCallback: ((zoneId: string, current: string) => void) | null = null
   private componentSelectCallback: ((componentId: string) => void) | null = null
@@ -129,7 +156,7 @@ export class FlowScene extends SceneManager {
     for (const mesh of this.layer.hoverTargets()) this.hoverSystem.addTarget(mesh)
 
     this.overviewTarget  = this.layer.overviewTarget.clone()
-    this.overviewFrustum = this.layer.overviewFrustum
+    this.overviewFrustum = this.overviewFrustumOf(this.layer)
     this.cameraTarget    = this.overviewTarget.clone()
     this.currentFrustum  = this.overviewFrustum
     const frustumNeeded  = this.overviewFrustum
@@ -160,6 +187,8 @@ export class FlowScene extends SceneManager {
 
   private onWheel = (e: WheelEvent): void => {
     e.preventDefault()
+    // Whatever the step wanted, you are holding the controls now.
+    this.cameraTween?.stop()
     const factor = e.deltaY > 0 ? WHEEL_ZOOM_OUT : WHEEL_ZOOM_IN
     const next = Math.min(
       Math.max(this.currentFrustum * factor, this.overviewFrustum * FRUSTUM_MIN_RATIO),
@@ -177,8 +206,35 @@ export class FlowScene extends SceneManager {
   private onPointerDown = (e: PointerEvent): void => {
     if (e.button !== 0) return
 
+    // Placing and connecting take the whole canvas: while either is armed, a
+    // press means "here" or "this one", never a drag or a pan.
+    if (this.editMode && this.mode.kind === 'place') {
+      // Read what is being placed before disarming — `setMode` overwrites it.
+      const what = this.mode.what
+      const cell = this.pointerToCell(e.clientX, e.clientY)
+      this.setMode({ kind: 'select' })
+      this.placeCallback?.(what, cell)
+      return
+    }
+    if (this.editMode && this.mode.kind === 'connect') {
+      const id = this.pickComponent(e.clientX, e.clientY)
+      if (!id) return
+      if (!this.mode.from) {
+        this.setMode({ kind: 'connect', from: id })
+        this.components.get(id)?.setEditHover(true)
+        return
+      }
+      const from = this.mode.from
+      this.components.get(from)?.setEditHover(false)
+      this.setMode({ kind: 'select' })
+      // A pipe from something to itself renders as nothing useful.
+      if (id !== from) this.connectCallback?.(from, id)
+      return
+    }
+
     // Edit mode: waypoints, then zone handles, then components; empty space pans.
     if (this.editMode) {
+      this.clearEditHover()
       const wp = this.pickWaypointHandle(e.clientX, e.clientY)
       if (wp) {
         this.dragWaypoint = {
@@ -232,7 +288,8 @@ export class FlowScene extends SceneManager {
         this.dragId        = id
         this.dragGroup     = cm.group
         this.dragPointerId = e.pointerId
-        this.dragOriginY   = cm.group.position.y
+        cm.cancelEditHover()
+        this.dragOriginY   = cm.baseY
         this.dragMoved     = false
         this.dragStartClient.set(e.clientX, e.clientY)
         const ground = this.pointerToGround(e.clientX, e.clientY)
@@ -266,8 +323,15 @@ export class FlowScene extends SceneManager {
     // Zone corner resize
     if (this.resizeZone && this.resizeCorner) {
       const ground = this.pointerToGround(e.clientX, e.clientY)
+      // Stop at the grid origin while dragging, not on release. `snapZoneToGrid`
+      // clamps the committed bounds to zero either way, so without this the zone
+      // follows the pointer into negative space and then springs back the moment
+      // you let go — which reads as the whole resize being rejected. Zones that
+      // start at col 0 or row 0 could never be resized outward at all.
+      const x = Math.max(0, ground.x)
+      const z = Math.max(0, ground.z)
       // Dragging a corner past its opposite edge flips which corner is held.
-      this.resizeCorner = applyZoneCorner(this.resizeZone.zone, this.resizeCorner, ground.x, ground.z)
+      this.resizeCorner = applyZoneCorner(this.resizeZone.zone, this.resizeCorner, x, z)
       this.resizeZone.rebuild()
       return
     }
@@ -309,7 +373,27 @@ export class FlowScene extends SceneManager {
       return
     }
 
+    if (this.editMode && this.mode.kind === 'place') {
+      this.updateGhost(this.pointerToCell(e.clientX, e.clientY))
+      return
+    }
+    if (this.editMode && this.mode.kind === 'connect') {
+      // Only components can be joined, so only they light up while connecting.
+      const id = this.pickComponent(e.clientX, e.clientY)
+      this.setEditHover(null, id ?? this.mode.from ?? null, id ? 'crosshair' : 'default')
+      return
+    }
+
+    // Nothing is being dragged: show what a press would grab. Doing this on the
+    // same pick order as onPointerDown is what makes the highlight honest —
+    // whatever lights up is what you would actually get.
+    if (this.editMode && !this.isPanning) {
+      this.updateEditHover(e.clientX, e.clientY)
+      return
+    }
+
     if (!this.isPanning) return
+    this.cameraTween?.stop()
     const dx = e.clientX - this.panLast.x
     const dy = e.clientY - this.panLast.y
     this.panLast.set(e.clientX, e.clientY)
@@ -346,6 +430,7 @@ export class FlowScene extends SceneManager {
         const wp = conn.route[this.dragWaypoint.index]
         // Commit on whole cells, same as a component drop.
         this.setWaypoint(this.dragWaypoint, Math.round(wp.col), Math.round(wp.row))
+        this.commit([this.routeAction(this.dragWaypoint.connId)])
       }
       this.dragWaypoint = null
       if (this.dragPointerId !== null) {
@@ -363,6 +448,15 @@ export class FlowScene extends SceneManager {
       snapZoneToGrid(this.resizeZone.zone)
       this.resizeZone.rebuild()
       this.growGridToZones()
+      this.commit([
+        {
+          type:   'zone/setBounds',
+          scene:  this.activeSceneId,
+          id:     this.resizeZone.zone.id,
+          bounds: zoneGridBounds(this.resizeZone.zone),
+        },
+        this.gridAction(),
+      ])
       this.resizeZone   = null
       this.resizeCorner = null
       if (this.dragPointerId !== null) {
@@ -377,7 +471,79 @@ export class FlowScene extends SceneManager {
       return
     }
     this.isPanning = false
-    this.renderer.domElement.style.cursor = this.editMode ? 'move' : 'grab'
+    this.clearEditHover()
+  }
+
+  /** Highlight (and set the cursor for) whichever edit target is under the pointer. */
+  private updateEditHover(clientX: number, clientY: number): void {
+    const wp = this.pickWaypointHandle(clientX, clientY)
+    if (wp) return this.setEditHover(wp as THREE.Mesh, null, 'grab')
+
+    const zoneHandle = this.pickZoneHandle(clientX, clientY)
+    if (zoneHandle) {
+      const cursor = zoneHandle.userData.zoneMove ? 'move' : 'nwse-resize'
+      return this.setEditHover(zoneHandle as THREE.Mesh, null, cursor)
+    }
+
+    const labelPad = this.pickLabelHandle(clientX, clientY)
+    if (labelPad) return this.setEditHover(labelPad as THREE.Mesh, null, 'text')
+
+    const zoneLabelId = this.pickZoneLabel(clientX, clientY)
+    if (zoneLabelId) {
+      const chip = this.zoneById.get(zoneLabelId)?.labelMesh ?? null
+      return this.setEditHover(chip, null, 'text')
+    }
+
+    const componentId = this.pickComponent(clientX, clientY)
+    if (componentId) return this.setEditHover(null, componentId, 'grab')
+
+    this.setEditHover(null, null, 'move')
+  }
+
+  private setEditHover(
+    handle: THREE.Mesh | null,
+    componentId: string | null,
+    cursor: string,
+  ): void {
+    if (handle !== this.hoverHandle) {
+      // Same treatment as components: an outline, not a size or colour change,
+      // so a handle always shows its true position and hit area.
+      if (this.hoverHandle) setHoverOutline(this.hoverHandle, false)
+      if (handle) {
+        setHoverOutline(handle, true)
+        setHoverOutlineScale(handle, this.worldUnitsPerPixel())
+      }
+      this.hoverHandle = handle
+
+      // A label pad is the one handle whose highlight lives in the DOM, on the
+      // chip above it — derived from the handle rather than passed in, so every
+      // caller of setEditHover gets it right for free.
+      const u = handle?.userData as { connId?: string; waypointIndex?: number } | undefined
+      const pipeLabel = u?.connId !== undefined && u.waypointIndex === undefined ? u.connId : null
+      if (pipeLabel !== this.hoverPipeLabel) {
+        this.hoverPipeLabel = pipeLabel
+        this.pipeLabelHoverCallback?.(pipeLabel)
+      }
+    }
+
+    if (componentId !== this.hoverComponent) {
+      if (this.hoverComponent && this.hoverComponent !== this.dragId) {
+        this.components.get(this.hoverComponent)?.setEditHover(false)
+      }
+      if (componentId) {
+        const cm = this.components.get(componentId)
+        cm?.setEditHover(true)
+        cm?.updateEditHoverScale(this.worldUnitsPerPixel())
+      }
+      this.hoverComponent = componentId
+    }
+
+    this.renderer.domElement.style.cursor = cursor
+  }
+
+  /** Drop any hover styling — on leaving edit mode, or when a drag takes over. */
+  private clearEditHover(): void {
+    this.setEditHover(null, null, this.editMode ? 'move' : 'grab')
   }
 
   private onContextMenu = (e: MouseEvent): void => {
@@ -423,16 +589,66 @@ export class FlowScene extends SceneManager {
     conn.route = removeWaypoint(conn.route, index)
     this.pipes.get(connId)?.update()
     this.layer.buildWaypointHandles()   // indices shift, so rebuild rather than patch
+    this.commit([this.routeAction(connId)])
+  }
+
+  private routeAction(connId: string): FlowAction {
+    return {
+      type:  'connection/setRoute',
+      scene: this.activeSceneId,
+      id:    connId,
+      // The reducer copies it — this array keeps being mutated as you drag.
+      route: this.graph.connections.get(connId)?.route ?? 'auto',
+    }
   }
 
   // ── Edit-mode drag helpers ────────────────────────────────────────────────
 
   setEditMode(enabled: boolean): void {
     this.editMode = enabled
+    if (!enabled) this.setMode({ kind: 'select' })
     // Leaving edit mode mid-drag commits the in-progress move rather than orphaning state.
     if (!enabled && this.dragId) this.endDrag()
     this.layer.setEditMode(enabled)
     this.renderer.domElement.style.cursor = enabled ? 'move' : 'grab'
+  }
+
+  /**
+   * Called with the edits a finished gesture made, in flow-definition terms.
+   *
+   * The scene mutates its own graph while you drag so rendering stays at frame
+   * rate; this fires once at the end, and is how an edit reaches the file. One
+   * gesture can touch several objects — moving a zone carries its components —
+   * hence a batch.
+   */
+  setEditCommitCallback(fn: (actions: FlowAction[]) => void): void {
+    this.commitCallback = fn
+  }
+
+  private commit(actions: FlowAction[]): void {
+    if (actions.length) this.commitCallback?.(actions)
+  }
+
+  /** Where a component ended up, as the file records it. */
+  private componentPositionAction(id: string): FlowAction | null {
+    const ic = this.graph.components.get(id)
+    if (!ic) return null
+    return {
+      type:     'component/setPosition',
+      scene:    this.activeSceneId,
+      id,
+      position: componentGridPosition(ic),
+    }
+  }
+
+  /** Emitted after a zone edit: the grid grows to cover zones dragged past its
+   *  edge, and that growth has to reach the file or the layout won't reload. */
+  private gridAction(): FlowAction {
+    return {
+      type:  'layout/setGrid',
+      scene: this.activeSceneId,
+      grid:  gridFromBounds(this.graph.gridBounds),
+    }
   }
 
   /** Called when a component is clicked (not dragged) in edit mode. */
@@ -441,22 +657,40 @@ export class FlowScene extends SceneManager {
   }
 
   /** Apply an edit-mode config change to one component and rebuild its mesh. */
-  updateComponent(
-    id: string,
-    patch: { size?: { w: number; h: number }; icon?: string; color?: string; shape?: ComponentShape },
-  ): void {
+  /**
+   * Apply a component patch to the meshes and nothing else.
+   *
+   * Deliberately does not commit: this is the inspector's live preview, and a
+   * commit per keystroke would fill the undo stack with half-chosen colours and
+   * leave the definition holding an edit the user then cancelled. The form
+   * commits once, on Apply.
+   */
+  previewComponent(id: string, patch: ComponentPatch): void {
     this.layer.rebuildComponent(id, patch)
   }
 
   /** Rename a connection; PipeLabels renders the text, this keeps the model in sync. */
   renameConnection(connectionId: string, label: string): void {
     const conn = this.graph.connections.get(connectionId)
-    if (conn) conn.label = label
+    if (!conn) return
+    conn.label = label
+    this.commit([{ type: 'connection/setLabel', scene: this.activeSceneId, id: connectionId, label }])
   }
 
   /** Called when a pipe's label chip is clicked in edit mode. */
   setPipeLabelEditCallback(fn: (connectionId: string, current: string) => void): void {
     this.pipeLabelEditCallback = fn
+  }
+
+  /**
+   * Called with the connection whose label pad is hovered, or null.
+   *
+   * The pad's own ring is invisible in practice: the label the user sees is an
+   * HTML chip on the overlay, painted over the canvas and wider than the pad
+   * beneath it. So the highlight has to be applied to the chip, in CSS.
+   */
+  setPipeLabelHoverCallback(fn: (connectionId: string | null) => void): void {
+    this.pipeLabelHoverCallback = fn
   }
 
   /** Called when a zone label is clicked in edit mode; the app supplies the rename UI. */
@@ -465,7 +699,10 @@ export class FlowScene extends SceneManager {
   }
 
   renameZone(zoneId: string, label: string): void {
-    this.zoneById.get(zoneId)?.setLabel(label)
+    const zr = this.zoneById.get(zoneId)
+    if (!zr) return
+    zr.setLabel(label)
+    this.commit([{ type: 'zone/setLabel', scene: this.activeSceneId, id: zoneId, label }])
   }
 
   /** Raycast the visible zone corner handles; returns the topmost hit or null. */
@@ -537,6 +774,18 @@ export class FlowScene extends SceneManager {
   }
 
   private applyZoneMove(dx: number, dz: number): void {
+    // Stop at the origin, for the same reason a resize does — but here it also
+    // protects the contents: the grip carries the zone's components with it, and
+    // a component dragged to a negative cell can't be dragged back, because a
+    // component drag clamps itself to the grid.
+    let minX = Infinity
+    let minZ = Infinity
+    for (const snap of this.moveZoneSnapshot) {
+      minX = Math.min(minX, snap.min.x)
+      minZ = Math.min(minZ, snap.min.z)
+    }
+    ;({ dx, dz } = clampZoneDelta(minX, minZ, dx, dz))
+
     for (const snap of this.moveZoneSnapshot) {
       snap.zr.zone.min.set(snap.min.x + dx, snap.min.y, snap.min.z + dz)
       snap.zr.zone.max.set(snap.max.x + dx, snap.max.y, snap.max.z + dz)
@@ -564,6 +813,22 @@ export class FlowScene extends SceneManager {
         snapDelta(first.zr.zone.min.z - first.min.z),
       )
       this.growGridToZones()
+
+      // The grip moves the zone, every zone nested inside it, and every
+      // component standing on it — all of that has to reach the file, or a
+      // reload puts the components back where the zone used to be.
+      const actions: FlowAction[] = this.moveZoneSnapshot.map((snap) => ({
+        type:   'zone/setBounds',
+        scene:  this.activeSceneId,
+        id:     snap.zr.zone.id,
+        bounds: zoneGridBounds(snap.zr.zone),
+      }))
+      for (const snap of this.moveCompSnapshot) {
+        const moved = this.componentPositionAction(snap.id)
+        if (moved) actions.push(moved)
+      }
+      actions.push(this.gridAction())
+      this.commit(actions)
     }
     this.moveGrabbed      = false
     this.moveZoneSnapshot = []
@@ -620,6 +885,9 @@ export class FlowScene extends SceneManager {
         if (conn.from.id === id || conn.to.id === id) this.pipes.get(connId)?.update()
       }
 
+      const moved = this.componentPositionAction(id)
+      if (moved) this.commit([moved])
+
       // Brief scale-bounce to signal the snap commit
       new Tween({ t: 0 }, tweenGroup)
         .to({ t: 1 }, 300)
@@ -659,8 +927,23 @@ export class FlowScene extends SceneManager {
     this.packetArrivalCallback = fn
   }
 
+  /** Playback speed from the controls. Scales every animation, not just the step
+   *  interval — otherwise a 4x walkthrough clips every packet mid-flight. */
+  /** The flow's own pace. Fans out to every layer, including ones not on screen,
+   *  so a scene entered later doesn't start at the previous flow's tempo. */
+  setTiming(timing: Timing): void {
+    this.timing = timing
+    for (const l of this.layers.values()) l.setTiming(timing)
+  }
+
+  setPlaybackSpeed(speed: number): void {
+    this.playbackSpeed = Math.max(0.1, speed)
+    for (const l of this.layers.values()) l.setSpeed(this.playbackSpeed)
+  }
+
   setTheme(theme: Theme): void {
     this.currentTheme = theme
+    setHoverOutlineTheme(theme)
     this.renderer.setClearColor(THEME_COLORS[theme].clearColor)
     updateLighting(this.lights, theme)
     this.grid.setTheme(theme)
@@ -671,16 +954,223 @@ export class FlowScene extends SceneManager {
     const target = this.layers.get(step.scene ?? null) ?? this.rootLayer
     if (target === this.layer) {
       target.applyStep(step, durationMs)
+      this.applyStepCamera(step, durationMs)
       return
     }
     // Hold the step back until the layers have swapped, or its packets would be
     // halfway down their pipes by the time the new scene is revealed.
-    this.enterLayer(target, durationMs, () => target.applyStep(step, durationMs))
+    this.enterLayer(target, durationMs, () => {
+      target.applyStep(step, durationMs)
+      this.applyStepCamera(step, durationMs)
+    })
+  }
+
+  /**
+   * Move the camera for a step that asks for it.
+   *
+   * Only steps naming a component move the view. This behaviour was removed
+   * once before for being disruptive, and the reason is visible in the flows:
+   * as many steps carry `"focus": null` as name something, and treating that as
+   * "snap back to the overview" meant the camera lurched on almost every step
+   * and fought any panning you did. Here, `null` and a missing camera both mean
+   * "leave it alone" — the view stays where the last step, or you, put it.
+   */
+  private applyStepCamera(step: Step, durationMs: number): void {
+    if (!this.cameraFollow) return
+
+    // `fit` is how a step asks for the whole scene back. Without it there is no
+    // way to undo an earlier focus, since both a missing camera and an explicit
+    // `focus: null` deliberately leave the view where it is.
+    if (step.camera?.fit) {
+      this.tweenCamera(
+        this.layer.overviewTarget.clone(),
+        this.overviewFrustumOf(this.layer),
+        durationMs,
+      )
+      return
+    }
+
+    const focus = step.camera?.focus
+    if (!focus) return
+
+    const component = this.graph.components.get(focus)
+    if (!component) return
+
+    // zoom is a magnification of the scene's own overview framing, so the same
+    // value means the same thing in a big flow and a small one.
+    const zoom = step.camera?.zoom
+    const frustum = zoom ? this.overviewFrustumOf(this.layer) / zoom : this.currentFrustum
+    this.tweenCamera(component.center.clone(), frustum, durationMs)
+  }
+
+  /**
+   * Whether steps are allowed to move the camera.
+   *
+   * Turning it off leaves you free to pan and zoom around a flow while it plays
+   * without every step snatching the view back.
+   */
+  setCameraFollow(enabled: boolean): void {
+    this.cameraFollow = enabled
+    if (!enabled) this.cameraTween?.stop()
+  }
+
+  // ── Placing and connecting ────────────────────────────────────────────────
+
+  /**
+   * What a press on the canvas means.
+   *
+   * Everything the pointer does used to be inferred from what was under it.
+   * Adding "drop a new thing here" and "join these two" needs the opposite:
+   * the target says nothing, the armed mode does.
+   */
+  setMode(mode: SceneMode): void {
+    if (this.mode.kind === 'connect' && this.mode.from) {
+      this.components.get(this.mode.from)?.setEditHover(false)
+    }
+    this.mode = mode
+    this.clearEditHover()
+    this.updateGhost()
+    this.renderer.domElement.style.cursor =
+      mode.kind === 'place'   ? 'copy'
+      : mode.kind === 'connect' ? 'crosshair'
+      : this.editMode ? 'move' : 'grab'
+    this.modeCallback?.(mode)
+  }
+
+  get currentMode(): SceneMode {
+    return this.mode
+  }
+
+  /** Called when a placement lands, with the grid cell that was clicked. */
+  setPlaceCallback(fn: (what: 'component' | 'zone', cell: { col: number; row: number }) => void): void {
+    this.placeCallback = fn
+  }
+
+  /** Called with the two ends of a new connection. */
+  setConnectCallback(fn: (from: string, to: string) => void): void {
+    this.connectCallback = fn
+  }
+
+  /** Called whenever the mode changes, including when the scene cancels it. */
+  setModeCallback(fn: (mode: SceneMode) => void): void {
+    this.modeCallback = fn
+  }
+
+  private pointerToCell(clientX: number, clientY: number): { col: number; row: number } {
+    const ground = this.pointerToGround(clientX, clientY)
+    return {
+      col: Math.max(0, Math.floor(ground.x / CELL_SIZE)),
+      row: Math.max(0, Math.floor(ground.z / CELL_SIZE)),
+    }
+  }
+
+  /** A hollow box on the cell under the pointer, so a placement is aimed rather
+   *  than guessed at. */
+  private updateGhost(cell?: { col: number; row: number }): void {
+    const placing = this.mode.kind === 'place'
+    if (!placing) {
+      if (this.placeGhost) {
+        this.scene.remove(this.placeGhost)
+        this.placeGhost.geometry.dispose()
+        ;(this.placeGhost.material as THREE.Material).dispose()
+        this.placeGhost = null
+      }
+      return
+    }
+    if (!this.placeGhost) {
+      const geo = new THREE.BoxGeometry(CELL_SIZE * 0.9, 0.05, CELL_SIZE * 0.9)
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x4488ff, wireframe: true, transparent: true, opacity: 0.9, depthTest: false,
+      })
+      this.placeGhost = new THREE.Mesh(geo, mat)
+      this.placeGhost.renderOrder = 30
+      this.scene.add(this.placeGhost)
+    }
+    if (cell) {
+      this.placeGhost.position.set(
+        (cell.col + 0.5) * CELL_SIZE,
+        0.05,
+        (cell.row + 0.5) * CELL_SIZE,
+      )
+    }
+  }
+
+  /**
+   * The frustum that frames a layer in the canvas as it is right now.
+   *
+   * Half-height is what an orthographic camera takes, and the viewport's aspect
+   * decides whether the grid's projected width or its height is the binding
+   * constraint — so this can't be precomputed on the layer.
+   */
+  private overviewFrustumOf(layer: SceneLayer): number {
+    const el = this.renderer.domElement
+    const aspect = el.clientWidth / el.clientHeight || 1
+    return Math.max(layer.overviewHalfHeight, layer.overviewHalfWidth / aspect)
   }
 
   /** Which scene is on screen: null for the top level, else a component id. */
   get activeSceneId(): string | null {
     return this.layer.id
+  }
+
+  /**
+   * Throw away every layer and rebuild from a fresh graph.
+   *
+   * Undo works on the flow definition, but the meshes were mutated directly by
+   * whatever gesture is being undone — so rebuilding from the definition is the
+   * only honest way to show the result. Camera, current scene and edit mode are
+   * kept: an undo that also threw away where you were looking would be an edit
+   * of its own.
+   *
+   * No fade, because nothing is meant to look like it moved.
+   */
+  reloadGraph(graph: InternalGraph, step: Step | null): void {
+    const sceneId = this.activeSceneId
+    const wasEditing = this.editMode
+
+    // Anything holding a mesh has to let go before the meshes are disposed.
+    this.clearEditHover()
+    this.clearDrag()
+    this.dragWaypoint = null
+    this.resizeZone = null
+    this.resizeCorner = null
+    this.moveGrabbed = false
+    this.moveZoneSnapshot = []
+    this.moveCompSnapshot = []
+    for (const mesh of this.layer.hoverTargets()) this.hoverSystem.removeTarget(mesh)
+
+    this.rootLayer.dispose()
+    this.layers.clear()
+
+    this.rootLayer = new SceneLayer(
+      this.scene,
+      graph,
+      null,
+      this.currentTheme,
+      this.renderer.capabilities.getMaxAnisotropy(),
+      {
+        addHoverTarget:    (mesh) => this.hoverSystem.addTarget(mesh),
+        removeHoverTarget: (mesh) => this.hoverSystem.removeTarget(mesh),
+        onPacketArrival:   (id)   => this.packetArrivalCallback?.(id),
+      },
+    )
+    for (const l of this.rootLayer.flatten()) this.layers.set(l.id, l)
+
+    // Back to the scene you were in, if it still exists after the edit.
+    this.layer = this.layers.get(sceneId) ?? this.rootLayer
+    for (const l of this.layers.values()) l.setVisible(l === this.layer)
+    for (const mesh of this.layer.hoverTargets()) this.hoverSystem.addTarget(mesh)
+
+    this.overviewTarget  = this.layer.overviewTarget.clone()
+    this.overviewFrustum = this.overviewFrustumOf(this.layer)
+    this.layer.setEditMode(wasEditing)
+    this.layer.setSpeed(this.playbackSpeed)
+    this.layer.setTiming(this.timing)
+
+    // Straight to the layer: applyStep would try to transition into a scene we
+    // are already standing in.
+    if (step) this.layer.applyStep(step, 0)
+    this.sceneChangeCallback?.(this.layer.id)
   }
 
   setSceneChangeCallback(fn: (sceneId: string | null) => void): void {
@@ -718,14 +1208,14 @@ export class FlowScene extends SceneManager {
 
       this.layer = next
       this.overviewTarget.copy(next.overviewTarget)
-      this.overviewFrustum = next.overviewFrustum
+      this.overviewFrustum = this.overviewFrustumOf(next)
       this.sceneChangeCallback?.(next.id)
     }
 
     if (durationMs <= 0) {
       swap()
       this.cameraTarget.copy(next.overviewTarget)
-      this.currentFrustum = next.overviewFrustum
+      this.currentFrustum = this.overviewFrustumOf(next)
       this.applyCamera()
       onSwapped()
       return
@@ -745,22 +1235,22 @@ export class FlowScene extends SceneManager {
     let outTarget  = this.cameraTarget.clone()
     let outFrustum = this.currentFrustum * 0.9
     let inTarget   = next.overviewTarget.clone()
-    let inFrustum  = next.overviewFrustum * 1.1
+    let inFrustum  = this.overviewFrustumOf(next) * 1.1
 
     if (descending) {
       // Push in towards the component being entered, then open up inside it.
       if (anchorNow) outTarget = anchorNow.clone()
       outFrustum = this.currentFrustum * SCENE_ZOOM_IN
-      inFrustum  = next.overviewFrustum * SCENE_SETTLE_WIDE
+      inFrustum  = this.overviewFrustumOf(next) * SCENE_SETTLE_WIDE
     } else if (ascending) {
       // Pull back out of the scene, then reappear tight on the component we were
       // inside and widen to the parent's framing — the descent, played backwards.
       outFrustum = this.currentFrustum * SCENE_ZOOM_OUT
       if (anchorNext) inTarget = anchorNext.clone()
-      inFrustum  = next.overviewFrustum * SCENE_SETTLE_TIGHT
+      inFrustum  = this.overviewFrustumOf(next) * SCENE_SETTLE_TIGHT
     }
 
-    const fade = Math.max(SCENE_FADE_MIN_MS, durationMs * SCENE_FADE_RATIO)
+    const fade = Math.max(SCENE_FADE_MIN_MS / this.playbackSpeed, durationMs * SCENE_FADE_RATIO)
 
     const begin = () => {
       this.transitionCallback?.('out', fade)
@@ -780,7 +1270,7 @@ export class FlowScene extends SceneManager {
 
       onSwapped()
       this.transitionCallback?.('in', fade)
-      this.tweenCamera(next.overviewTarget.clone(), next.overviewFrustum, fade * 1.4)
+      this.tweenCamera(next.overviewTarget.clone(), this.overviewFrustumOf(next), fade * 1.4)
     }
 
     // Let the scene we are leaving finish what it was saying. Fading over a
@@ -789,7 +1279,10 @@ export class FlowScene extends SceneManager {
     // it, capped so a long burst cannot stall the walkthrough.
     const inFlight = prev.remainingAnimationMs(performance.now())
     const lead = inFlight > 0
-      ? Math.min(SCENE_EXIT_MAX_WAIT_MS, inFlight + SCENE_EXIT_PAD_MS)
+      ? Math.min(
+          SCENE_EXIT_MAX_WAIT_MS / this.playbackSpeed,
+          inFlight + SCENE_EXIT_PAD_MS / this.playbackSpeed,
+        )
       : 0
 
     if (lead > 0) this.transitionTimer = setTimeout(begin, lead)
@@ -853,8 +1346,20 @@ export class FlowScene extends SceneManager {
     return this.layer.activePackets.find(p => p.mesh.userData.componentId === id)?.mesh ?? null
   }
 
+  /** World units covered by one screen pixel at the current zoom. */
+  private worldUnitsPerPixel(): number {
+    const h = this.renderer.domElement.clientHeight || 1
+    return (this.currentFrustum * 2) / h
+  }
+
   protected onFrame(_deltaMs: number): void {
     if (!this.isPanning) this.hoverSystem.update()
+    // Re-fit the hovered ring: zooming changes what a pixel is worth.
+    if (this.hoverHandle || this.hoverComponent) {
+      const upp = this.worldUnitsPerPixel()
+      if (this.hoverHandle) setHoverOutlineScale(this.hoverHandle, upp)
+      if (this.hoverComponent) this.components.get(this.hoverComponent)?.updateEditHoverScale(upp)
+    }
     this.layer.update(performance.now())
   }
 
@@ -868,6 +1373,7 @@ export class FlowScene extends SceneManager {
     if (this.transitionTimer !== null) clearTimeout(this.transitionTimer)
     this.stopLoop()
     this.hoverSystem.dispose()
+    this.updateGhost()   // drops the placement ghost if one is up
     this.grid.dispose(this.scene)
     this.rootLayer.dispose()
     this.layers.clear()

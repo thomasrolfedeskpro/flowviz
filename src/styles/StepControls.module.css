@@ -56,3 +56,19 @@
 .speedSelect:hover {
   background: var(--btn-hover);
 }
+
+/* Hands the camera back: steps stop pulling the view around. */
+.follow {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.follow input {
+  cursor: pointer;
+}

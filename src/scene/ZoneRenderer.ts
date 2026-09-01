@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import type { InternalGraph, InternalZone } from '@/types/internal'
 import type { ZoneLabelMeshUserData } from '@/scene/meshUserData'
 import { CELL_SIZE } from '@/engine/layoutEngine'
+import { attachHoverOutline, disposeHoverOutline, EDIT_ACCENT } from '@/scene/hoverOutline'
 
 /** Corner ids: 'n' = min z edge, 'w' = min x edge. */
 export type ZoneCorner = 'nw' | 'ne' | 'sw' | 'se'
@@ -69,6 +70,27 @@ export function componentsInZone(graph: InternalGraph, zone: InternalZone): stri
     ) ids.push(id)
   }
   return ids
+}
+
+/**
+ * Trim a whole-zone drag so nothing crosses the grid origin.
+ *
+ * `minX`/`minZ` are the leading edges of everything being moved. The grip
+ * carries the zone's components with it, and a component left on a negative
+ * cell can't be dragged back — a component drag clamps itself to the grid.
+ */
+export function clampZoneDelta(
+  minX: number,
+  minZ: number,
+  dx: number,
+  dz: number,
+): { dx: number; dz: number } {
+  // Math.max(-5, -0) is -0, and negative zero has no business in a coordinate.
+  const trim = (d: number, min: number) => {
+    const v = Math.max(d, -min)
+    return v === 0 ? 0 : v
+  }
+  return { dx: trim(dx, minX), dz: trim(dz, minZ) }
 }
 
 /** Round a drag delta to whole cells, so a moved zone stays grid-aligned. */
@@ -191,6 +213,7 @@ export class ZoneRenderer {
       mesh.userData = { zoneId: this.zone.id, zoneCorner: corner }
       mesh.visible  = false   // edit mode only
       mesh.renderOrder = 11
+      attachHoverOutline(mesh)
       this.scene.add(mesh)
       this.handles.push(mesh)
     }
@@ -204,6 +227,7 @@ export class ZoneRenderer {
     grip.userData = { zoneId: this.zone.id, zoneMove: true }
     grip.visible  = false
     grip.renderOrder = 11
+    attachHoverOutline(grip)
     this.scene.add(grip)
     this.handles.push(grip)
 
@@ -284,6 +308,11 @@ export class ZoneRenderer {
     this.labelMesh.geometry.dispose()
     this.labelMesh.geometry = geo
 
+    // The outline shares the chip's geometry, so a relabel — which replaces that
+    // geometry — has to rebuild it, or the halo keeps the old text's dimensions.
+    disposeHoverOutline(this.labelMesh)
+    attachHoverOutline(this.labelMesh, { flat: true, color: EDIT_ACCENT })
+
     this.positionLabel()
   }
 
@@ -310,11 +339,13 @@ export class ZoneRenderer {
 
   dispose(scene: THREE.Object3D): void {
     this.disposeSurfaces()
+    disposeHoverOutline(this.labelMesh)
     scene.remove(this.labelMesh)
     this.labelMesh.geometry.dispose()
     ;(this.labelMesh.material as THREE.MeshBasicMaterial).map?.dispose()
     ;(this.labelMesh.material as THREE.Material).dispose()
     for (const h of this.handles) {
+      disposeHoverOutline(h)
       scene.remove(h)
       h.geometry.dispose()
       ;(h.material as THREE.Material).dispose()

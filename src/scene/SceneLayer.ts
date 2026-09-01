@@ -1,4 +1,7 @@
 import * as THREE from 'three'
+import { SceneBoundary } from '@/scene/SceneBoundary'
+import { DEFAULT_TIMING } from '@/engine/timing'
+import type { Timing } from '@/engine/timing'
 import { ZoneRenderer } from '@/scene/ZoneRenderer'
 import { ComponentMesh } from '@/scene/ComponentMesh'
 import type { MeshState } from '@/scene/ComponentMesh'
@@ -12,8 +15,8 @@ import type { InternalGraph } from '@/types/internal'
 import type { ComponentShape, Step } from '@/types/schema'
 import { CELL_SIZE, COMPONENT_GAP, COMPONENT_HEIGHT, gridToWorld } from '@/engine/layoutEngine'
 import { PIPE_HEIGHT } from '@/engine/parseFlow'
+import { attachHoverOutline, disposeHoverOutline } from '@/scene/hoverOutline'
 
-const PACKET_TRAVEL_MS    = 2000
 const PIPE_DIM_DELAY_MS   = 600
 const PACKET_BURST_MAX    = 40    // hard cap on meshes for one repeat burst
 const PACKET_BURST_WINDOW = 1400  // ms the whole burst is spread across
@@ -64,11 +67,28 @@ export class SceneLayer {
 
   /** Camera framing that shows this layer's whole grid. */
   readonly overviewTarget: THREE.Vector3
-  readonly overviewFrustum: number
+  /**
+   * Half-extents of the grid *as projected on screen*, not as measured on the
+   * ground. The view is isometric, so a wide shallow grid becomes a wide
+   * shallow diamond — framing it by its larger ground axis leaves a third of
+   * the canvas empty. The camera's aspect decides which of the two binds, and
+   * only FlowScene knows that, so both are published here.
+   */
+  readonly overviewHalfWidth: number
+  readonly overviewHalfHeight: number
 
   private hooks: SceneLayerHooks
   private theme: Theme
+  private anisotropy: number
+  /** Nested scenes are ringed and named, so it is obvious you are inside one.
+   *  The top level has the whole grid to itself and needs no such explanation. */
+  private boundary: SceneBoundary | null = null
   private editMode = false
+  /** Playback multiplier: 4 means everything animates four times faster, so a
+   *  4x walkthrough shows whole animations instead of clipped starts. */
+  private speed = 1
+  /** The flow's own pace; the speed selector divides it. */
+  private timing: Timing = DEFAULT_TIMING
 
   constructor(
     parent: THREE.Object3D,
@@ -78,16 +98,26 @@ export class SceneLayer {
     anisotropy: number,
     hooks: SceneLayerHooks,
     depth = 0,
+    /** The owning component's label — what this scene is called. */
+    label = '',
   ) {
     this.id    = id
     this.graph = graph
     this.theme = theme
     this.hooks = hooks
     this.depth = depth
+    this.anisotropy = anisotropy
 
     this.group = new THREE.Group()
     this.group.name = `scene:${id ?? 'root'}`
     parent.add(this.group)
+
+    if (depth > 0) {
+      // Bounded to what is actually in the scene, not to the grid the author
+      // declared: grids are routinely oversized, and an outline with an empty
+      // third hanging off it looks like a mistake rather than a boundary.
+      this.boundary = new SceneBoundary(this.group, contentBounds(graph), label, theme, anisotropy)
+    }
 
     this.zones = graph.zones.map(z => new ZoneRenderer(this.group, z, anisotropy))
     for (const z of this.zones) {
@@ -110,12 +140,22 @@ export class SceneLayer {
     const { minX, maxX, minZ, maxZ } = graph.gridBounds
     const extentX = (maxX - minX) / 2 + CELL_SIZE
     const extentZ = (maxZ - minZ) / 2 + CELL_SIZE
-    this.overviewTarget  = new THREE.Vector3((minX + maxX) / 2, 0, (minZ + maxZ) / 2)
-    this.overviewFrustum = Math.max(extentX, extentZ) * 1.2
+    this.overviewTarget = new THREE.Vector3((minX + maxX) / 2, 0, (minZ + maxZ) / 2)
+
+    // With the camera on the (1,1,1) axis, a ground point (x, z) lands at
+    // screen ((x - z)/√2, -(x + z)/√6). Both corners of the grid are at the
+    // extremes, so the projected half-extents are these sums. The pad leaves a
+    // margin and covers the height of the meshes standing on the grid.
+    const PAD = 1.08
+    this.overviewHalfWidth  = ((extentX + extentZ) / Math.SQRT2) * PAD
+    this.overviewHalfHeight = ((extentX + extentZ) / Math.sqrt(6)) * PAD
 
     // Nested scenes build alongside, hidden until a step names them.
     for (const [childId, childGraph] of graph.scenes) {
-      const child = new SceneLayer(parent, childGraph, childId, theme, anisotropy, hooks, depth + 1)
+      const child = new SceneLayer(
+        parent, childGraph, childId, theme, anisotropy, hooks, depth + 1,
+        graph.components.get(childId)?.label ?? childId,
+      )
       child.setVisible(false)
       this.children.set(childId, child)
     }
@@ -143,10 +183,23 @@ export class SceneLayer {
     return out
   }
 
+  setTiming(timing: Timing): void {
+    this.timing = timing
+    for (const s of this.activeStreams) s.setPeriod(timing.stream / this.speed)
+  }
+
+  setSpeed(speed: number): void {
+    this.speed = Math.max(0.1, speed)
+    // Streams already on screen retime immediately; packets in flight keep the
+    // duration they launched with, and the next step picks up the new speed.
+    for (const s of this.activeStreams) s.setPeriod(this.timing.stream / this.speed)
+  }
+
   setTheme(theme: Theme): void {
     this.theme = theme
     for (const pipe of this.pipes.values()) pipe.setTheme(theme)
     for (const packet of this.activePackets) packet.setTheme(theme)
+    this.boundary?.setTheme(theme, this.anisotropy)
   }
 
   setEditMode(enabled: boolean): void {
@@ -214,7 +267,7 @@ export class SceneLayer {
       // burst of 3 and a burst of 30 both finish in about the same time.
       const requested = Math.max(1, Math.floor(def.count ?? 1))
       const burst     = Math.min(requested, PACKET_BURST_MAX)
-      const stagger   = burst > 1 ? PACKET_BURST_WINDOW / (burst - 1) : 0
+      const stagger   = burst > 1 ? PACKET_BURST_WINDOW / this.speed / (burst - 1) : 0
 
       for (let n = 0; n < burst; n++) {
         const packet = new DataPacket(this.group, def.shape, this.theme)
@@ -230,7 +283,7 @@ export class SceneLayer {
         this.hooks.addHoverTarget(packet.mesh)
         this.activePackets.push(packet)
         this.packetPipeMap.set(packet, def.connection)
-        packet.travel(pipe.curve, PACKET_TRAVEL_MS, def.direction === 'reverse', n * stagger)
+        packet.travel(pipe.curve, this.timing.packet / this.speed, def.direction === 'reverse', n * stagger)
       }
       pipe.setPacketTraversing(true, 200)
     }
@@ -246,7 +299,7 @@ export class SceneLayer {
       const color = def.color
         ? new THREE.Color(def.color).getHex()
         : THEME_COLORS[this.theme].packetColor
-      this.activeStreams.push(new ChevronStream(this.group, pipe, color))
+      this.activeStreams.push(new ChevronStream(this.group, pipe, color, this.timing.stream / this.speed))
     }
   }
 
@@ -275,7 +328,9 @@ export class SceneLayer {
           const stillTraveling = this.activePackets.some(
             p => !p.arrived && this.packetPipeMap.get(p) === pipeId
           )
-          if (!stillTraveling) this.pipes.get(pipeId)?.setPacketTraversing(false, PIPE_DIM_DELAY_MS)
+          if (!stillTraveling) {
+            this.pipes.get(pipeId)?.setPacketTraversing(false, PIPE_DIM_DELAY_MS / this.speed)
+          }
 
           const conn   = this.graph.connections.get(pipeId)
           const destId = packet.reversed ? conn?.from.id : conn?.to.id
@@ -341,6 +396,7 @@ export class SceneLayer {
         mesh.userData = { connId, waypointIndex }
         mesh.visible = this.editMode
         mesh.renderOrder = 12
+        attachHoverOutline(mesh)
         mesh.position.copy(gridToWorld(wp.col, wp.row).setY(WAYPOINT_HANDLE_Y))
         this.group.add(mesh)
         this.waypointHandles.push(mesh)
@@ -364,6 +420,7 @@ export class SceneLayer {
       mesh.userData = { connId }
       mesh.visible = this.editMode
       mesh.renderOrder = 12
+      attachHoverOutline(mesh)
       this.group.add(mesh)
       this.labelHandles.push(mesh)
     }
@@ -422,6 +479,7 @@ export class SceneLayer {
   }
 
   private disposeMesh(m: THREE.Mesh): void {
+    disposeHoverOutline(m)
     this.group.remove(m)
     m.geometry.dispose()
     ;(m.material as THREE.Material).dispose()
@@ -430,6 +488,8 @@ export class SceneLayer {
   dispose(): void {
     for (const child of this.children.values()) child.dispose()
     this.children.clear()
+    this.boundary?.dispose()
+    this.boundary = null
 
     for (const z of this.zones) z.dispose(this.group)
     for (const cm of this.components.values()) cm.dispose(this.group)
@@ -447,4 +507,24 @@ export class SceneLayer {
     this.penetratedIds.clear()
     this.group.parent?.remove(this.group)
   }
+}
+
+/** The ground a scene actually occupies: its components and zones, not the grid
+ *  it was declared with. Falls back to the grid when a scene is empty. */
+function contentBounds(graph: InternalGraph): { minX: number; maxX: number; minZ: number; maxZ: number } {
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity
+
+  for (const c of graph.components.values()) {
+    minX = Math.min(minX, c.center.x - c.meshSize.x / 2)
+    maxX = Math.max(maxX, c.center.x + c.meshSize.x / 2)
+    minZ = Math.min(minZ, c.center.z - c.meshSize.z / 2)
+    maxZ = Math.max(maxZ, c.center.z + c.meshSize.z / 2)
+  }
+  for (const z of graph.zones) {
+    minX = Math.min(minX, z.min.x);  maxX = Math.max(maxX, z.max.x)
+    minZ = Math.min(minZ, z.min.z);  maxZ = Math.max(maxZ, z.max.z)
+  }
+
+  if (!Number.isFinite(minX)) return graph.gridBounds
+  return { minX, maxX, minZ, maxZ }
 }

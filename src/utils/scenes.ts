@@ -1,4 +1,4 @@
-import type { Component, FlowDefinition } from '@/types/schema'
+import type { Component, Connection, FlowDefinition, Zone } from '@/types/schema'
 import type { InternalGraph } from '@/types/internal'
 
 export interface SceneInfo {
@@ -32,6 +32,62 @@ export function sceneIndex(def: Pick<FlowDefinition, 'components'>): Map<string,
 
   walk(def.components, 1, [])
   return out
+}
+
+/** One scene's contents as the file stores them — the root, or any `detail`. */
+export interface SceneContents {
+  grid:        { cols: number; rows: number }
+  zones?:      Zone[]
+  components:  Component[]
+  connections: Connection[]
+}
+
+/** The scene a given id names, or null if nothing owns it. `null` id = the root. */
+export function sceneOf(def: FlowDefinition, sceneId: string | null | undefined): SceneContents | null {
+  if (!sceneId) {
+    return {
+      grid:        def.layout.grid,
+      zones:       def.zones,
+      components:  def.components,
+      connections: def.connections,
+    }
+  }
+  const find = (components: Component[]): Component | null => {
+    for (const c of components) {
+      if (c.id === sceneId) return c
+      const hit = c.detail ? find(c.detail.components) : null
+      if (hit) return hit
+    }
+    return null
+  }
+  const detail = find(def.components)?.detail
+  return detail ?? null
+}
+
+export interface SceneChoices {
+  components:  Array<{ id: string; label: string }>
+  connections: Array<{ id: string; label: string }>
+}
+
+/**
+ * What a step in this scene is allowed to reference.
+ *
+ * Read from the definition rather than the built graph: only one scene's meshes
+ * exist on screen at a time, but the editor has to offer the contents of
+ * whichever scene the step being edited belongs to.
+ */
+export function sceneChoices(def: FlowDefinition, sceneId: string | null | undefined): SceneChoices {
+  const scene = sceneOf(def, sceneId)
+  if (!scene) return { components: [], connections: [] }
+
+  return {
+    components: scene.components.map((c) => ({ id: c.id, label: c.label })),
+    // A pipe's label is optional, so fall back to something a human can pick from.
+    connections: scene.connections.map((c) => ({
+      id:    c.id,
+      label: c.label ? `${c.label} (${c.from} → ${c.to})` : `${c.from} → ${c.to}`,
+    })),
+  }
 }
 
 /** The graph for a scene id, searched depth-first. `undefined` id = the root. */

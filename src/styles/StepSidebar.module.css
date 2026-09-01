@@ -51,6 +51,23 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
+/* ── current flow title ─────────────────────────────────── */
+
+.flowHeading {
+  margin: 0 0.7rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+  /* two lines then ellipsis: titles carry meaning, but the panel is narrow */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
 /* ── header actions ─────────────────────────────────────── */
 
 .header {
@@ -291,6 +308,179 @@
   box-shadow: var(--ring);
 }
 
+/* ── step editing: reorder + per-row actions, edit mode only ── */
+
+/* Room on the right for the actions, so revealing them never reflows the row
+   (and never breaks the waterfall column's alignment). */
+.stepItemEditable {
+  position: relative;
+  padding-right: 4.6rem;
+  cursor: grab;
+}
+
+.stepItemEditable:active {
+  cursor: grabbing;
+}
+
+/* Where the dragged row would land. */
+.dropBefore {
+  box-shadow: inset 0 2px 0 var(--accent-blue);
+}
+
+.stepActions {
+  position: absolute;
+  top: 50%;
+  right: 0.3rem;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 0.15rem;
+  opacity: 0;
+  /* Same reason as the flow delete button: an invisible target that still takes
+     clicks is a step deleted by accident. */
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+.item:hover .stepActions,
+.stepActions:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.stepActionBtn {
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  padding: 0;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.stepActionBtn:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.stepActionBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.stepActionDanger:hover {
+  background: var(--callout-error-bg);
+  border-color: var(--callout-error-border);
+  color: var(--callout-error-accent);
+}
+
+.addStepBtn {
+  margin-top: 0.35rem;
+  padding: 0.4rem;
+  background: transparent;
+  border: 1px dashed var(--btn-border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.addStepBtn:hover {
+  background: var(--btn-hover);
+  border-color: var(--accent-blue);
+  color: var(--text-primary);
+}
+
+/* ── history + validation, in the edit footer ── */
+
+.historyRow {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.historyBtn {
+  flex: 1;
+  padding: 0.32rem;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.historyBtn:hover:not(:disabled) {
+  background: var(--btn-hover);
+}
+
+.historyBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.problems {
+  margin-bottom: 0.45rem;
+  border: 1px solid var(--callout-error-border);
+  border-radius: var(--radius-md);
+  background: var(--callout-error-bg);
+  overflow: hidden;
+}
+
+.problemsHead {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  background: none;
+  border: none;
+  color: var(--callout-error-accent);
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.problemsCount {
+  display: grid;
+  place-items: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.2rem;
+  border-radius: var(--radius-sm);
+  background: var(--callout-error-accent);
+  color: var(--panel-bg);
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.chevron {
+  margin-left: auto;
+}
+
+.problemList {
+  margin: 0;
+  padding: 0.1rem 0.5rem 0.45rem 1.4rem;
+  max-height: 9rem;
+  overflow-y: auto;
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  scrollbar-width: thin;
+}
+
+.problemList li {
+  /* Paths like steps.12.packets.0.connection must not force the sidebar wider. */
+  overflow-wrap: anywhere;
+  margin-bottom: 0.15rem;
+}
+
 /* ── waterfall: its own column, slid out from behind the sidebar ── */
 
 .waterfall {
@@ -442,4 +632,101 @@
 .barRow:hover .barValue,
 .barRow.hovered .barValue {
   opacity: 1;
+}
+
+/* ── edit-mode footer actions ───────────────────────────── */
+
+.editActions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.saveBtn {
+  flex: 1;
+  background: var(--accent-blue);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--accent-fg);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  transition: filter 0.12s, opacity 0.12s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.saveBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.editActions .copyJsonBtn {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.saveNote {
+  margin-top: 0.4rem;
+  font-size: 0.66rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.saveOk {
+  color: var(--callout-success-accent);
+}
+
+.saveError {
+  color: var(--callout-error-accent);
+}
+
+/* ── add / connect toolbar, edit mode only ── */
+
+.toolbar {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0 0.5rem 0.4rem;
+  flex-shrink: 0;
+}
+
+.toolBtn {
+  flex: 1;
+  padding: 0.3rem 0.2rem;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.68rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.toolBtn:hover {
+  background: var(--btn-hover);
+}
+
+/* An armed mode changes what a click on the canvas does, so it has to be
+   obvious that one is on. */
+.toolBtnOn,
+.toolBtnOn:hover {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: var(--accent-fg);
+}
+
+/* Divides the bundled examples from personal flows in the list. */
+.groupRule {
+  margin: 0.45rem 0.3rem;
+  border: none;
+  border-top: 1px solid var(--panel-border);
 }

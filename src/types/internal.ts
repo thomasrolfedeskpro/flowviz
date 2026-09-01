@@ -25,6 +25,8 @@ export interface InternalConnection {
   from: InternalComponent
   to: InternalComponent
   label?: string
+  /** Author's pipe colour, if they set one. */
+  color?: string
   curve: THREE.Curve<THREE.Vector3>
   tubePoints: THREE.Vector3[]
   /** t-range [t0, t1] used for the visible TubeGeometry — clipped to component edges */

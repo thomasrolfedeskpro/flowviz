@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { readdirSync, readFileSync, rmSync } from 'node:fs'
+import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import type { ViteDevServer } from 'vite'
+// The app's own validator, so a save can never write a flow the app can't load.
+// Only a type import reaches for the `@` alias, and those are erased at build.
+import { parseFlowSchema } from './src/engine/flowSchema'
 
 // Exposes `virtual:flows` — every flow under public/flows with its title and the
 // path to fetch it from. Flows live in subdirectories: `examples/` ships with the
@@ -50,15 +53,20 @@ function flowManifest() {
           description: json.meta?.description ?? '',
         }
       })
-      flows.sort((a, b) => a.title.localeCompare(b.title))
+      // Bundled examples first, then everything else, each alphabetical. The
+      // sidebar draws a rule at the boundary, so the order has to be stable
+      // rather than incidental.
+      const rank = (group: string) => (group === 'examples' ? 0 : 1)
+      flows.sort((a, b) => rank(a.group) - rank(b.group) || a.title.localeCompare(b.title))
       return `export const flows = ${JSON.stringify(flows)}`
     },
 
-    // DELETE /api/flows/<id> removes public/flows/<id>.json. Dev server only —
-    // authoring happens locally, and a built static site has nobody to serve it.
+    // DELETE and PUT /api/flows/<id> remove or overwrite a flow file. Dev server
+    // only — authoring happens locally, and a built static site has nobody to
+    // serve it.
     configureServer(server: ViteDevServer) {
       server.middlewares.use('/api/flows', (req, res, next) => {
-        if (req.method !== 'DELETE') return next()
+        if (req.method !== 'DELETE' && req.method !== 'PUT') return next()
 
         const id = decodeURIComponent((req.url ?? '').replace(/^\//, '').split('?')[0])
         res.setHeader('Content-Type', 'application/json')
@@ -77,6 +85,57 @@ function flowManifest() {
           return res.end(JSON.stringify({ error: `No such flow: ${id}` }))
         }
 
+        const invalidateManifest = () => {
+          const mod = server.moduleGraph.getModuleById(resolvedId)
+          if (mod) server.moduleGraph.invalidateModule(mod)
+        }
+
+        if (req.method === 'PUT') {
+          const chunks: Buffer[] = []
+          req.on('data', (c: Buffer) => chunks.push(c))
+          req.on('end', () => {
+            let parsed: unknown
+            try {
+              parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+            } catch (err) {
+              res.statusCode = 400
+              return res.end(JSON.stringify({ error: `Body is not JSON: ${String(err)}` }))
+            }
+
+            // Validate before writing. An edit-mode bug that produced a broken
+            // flow would otherwise overwrite a good file with an unloadable one.
+            const result = parseFlowSchema(parsed)
+            if (!result.success) {
+              res.statusCode = 422
+              return res.end(JSON.stringify({ error: 'Invalid flow', errors: result.errors }))
+            }
+
+            try {
+              writeFileSync(`${FLOW_ROOT}/${match}`, JSON.stringify(parsed, null, 2) + '\n')
+            } catch (err) {
+              res.statusCode = 500
+              return res.end(JSON.stringify({ error: String(err) }))
+            }
+
+            invalidateManifest()
+            res.statusCode = 200
+            res.end(JSON.stringify({ saved: `${FLOW_ROOT}/${match}` }))
+          })
+          return
+        }
+
+        // examples/ is committed reference material shared by everyone. Deleting
+        // one is almost always a misclick, and the UI hides the button — this is
+        // the check that actually holds, including for a stray curl. Saving is
+        // allowed: a bad save is one `git checkout` away, a delete is not.
+        if (match.startsWith('examples/')) {
+          res.statusCode = 403
+          return res.end(JSON.stringify({
+            error: `"${id}" is a bundled example and cannot be deleted. `
+              + `Only flows in public/flows/custom/ can be removed.`,
+          }))
+        }
+
         try {
           rmSync(`${FLOW_ROOT}/${match}`)
         } catch (err) {
@@ -84,10 +143,7 @@ function flowManifest() {
           return res.end(JSON.stringify({ error: String(err) }))
         }
 
-        // Drop the cached manifest so a reload sees the shorter list.
-        const mod = server.moduleGraph.getModuleById(resolvedId)
-        if (mod) server.moduleGraph.invalidateModule(mod)
-
+        invalidateManifest()
         res.statusCode = 200
         return res.end(JSON.stringify({ deleted: id }))
       })

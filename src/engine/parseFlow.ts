@@ -278,6 +278,7 @@ function buildScene(
       from,
       to,
       label: conn.label,
+      color: conn.color,
       curve,
       tubePoints,
       renderTrim,

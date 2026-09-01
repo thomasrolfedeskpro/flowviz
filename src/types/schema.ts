@@ -1,6 +1,14 @@
 export interface FlowMeta {
   title: string
   description?: string
+  /** How fast this flow plays. Anything omitted uses the built-in default; the
+   *  viewer's speed selector scales whatever ends up here. */
+  timing?: {
+    step?:       number
+    packet?:     number
+    transition?: number
+    stream?:     number
+  }
 }
 
 export interface LayoutConfig {
@@ -86,6 +94,9 @@ export interface Connection {
   from: string
   to: string
   label?: string
+  /** Overrides the theme's pipe colour. The glass stays glass: the same
+   *  idle/active/traversing opacity ladder applies, in this hue. */
+  color?: string
   route: 'auto' | WayPoint[]
 }
 
@@ -159,6 +170,9 @@ export interface Step {
   camera?: {
     focus?: string | null
     zoom?: number
+    /** Frame the whole scene again. The only way to undo an earlier focus:
+     *  a step with no camera, or with `focus: null`, leaves the view alone. */
+    fit?: boolean
   }
   annotations?: Annotation[]
   footer?: FooterNote[]

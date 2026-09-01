@@ -14,7 +14,7 @@ An animated isometric 3D data-flow diagram tool. Describe a system architecture 
 - Chevron stream animation for genuine continuous data flows (Kafka, video, WebSockets)
 - **Nested scenes:** a component can contain a scene of its own, to any depth. Steps inside it are rendered in that scene, with the camera diving in and pulling back out
 - **Waterfall column:** give steps a measured bar and the sidebar slides out a waterfall showing where the time, rows, retries or cost went — the unit is yours, the renderer assumes nothing
-- **Edit mode:** drag components, resize and move zones, edit routing waypoints, change a component's size / shape / colour / icon, rename zone and pipe labels, then Copy JSON back into the flow file
+- **Edit mode:** drag components, resize and move zones, edit routing waypoints, change a component's size / shape / colour / icon, rename zone and pipe labels — then **Save to file** writes it straight back to the flow's JSON (or Copy JSON if you'd rather paste it somewhere)
 - Light and dark themes
 
 ## Authoring flows with an LLM
@@ -23,7 +23,7 @@ Flows are plain JSON files under `public/flows/`, in one of two directories:
 
 | Directory | What goes there |
 |---|---|
-| `public/flows/examples/` | Committed to the repo. The flows that ship as reference material. |
+| `public/flows/examples/` | Committed to the repo. The flows that ship as reference material — read-only in the UI, they cannot be deleted. |
 | `public/flows/custom/` | **Git-ignored.** Your own and your product's flows — they stay on your machine. |
 
 New flows belong in `custom/` unless you specifically mean to add a shipped
@@ -41,12 +41,26 @@ filename, so `?flow=oauth` works wherever the file sits.
 
 These ship in `public/flows/examples/`:
 
-| File | Description |
-|------|-------------|
-| `hexagonal-architecture.json` | Three bounded contexts with a shared EventBridge event bus |
-| `blood-circulation.json` | Not software at all — the double circuit, laid out as a body |
-| `zz-nested.json` | Nested scenes: a factory with a mill inside it |
-| `zz-demo.json` | Repeat bursts, footer notes and waterfall bars |
+Between them they exercise every feature the renderer has. Start with the coffee
+shop; it is deliberately the simplest thing the tool can draw.
+
+| File | Size | What it shows |
+|------|------|---------------|
+| `coffee-shop-order.json` | 6 / 6 | The ten-second read: components, icons, one packet per step |
+| `water-cycle.json` | 7 / 8 | Streams vs packets, a reverse flow, a closed loop, `elevation` |
+| `blood-circulation.json` | 8 / 11 | Not software at all — the double circuit, laid out as a body |
+| `farm-to-shelf.json` | 8 / 6 | The smallest nested-scene example, three levels deep |
+| `slow-checkout.json` | 10 / 15 | A trace: the waterfall, an N+1 burst, a coloured slow pipe |
+| `card-payment.json` | 11 / 12 | A decline then a retry — error arrivals, brand logos, ms waterfall |
+| `hexagonal-architecture.json` | 14 / 9 | Three bounded contexts with a shared EventBridge event bus |
+| `airport-departure.json` | 20 / 18 | Two sub-scenes; passenger and suitcase reconverging |
+| `uk-power.json` | 33 / 34 | Pipe colour carrying meaning: a voltage ramp, then real cable colours |
+| `parcel-network.json` | 40 / 45 | The big one: four scenes three levels deep, 42 waterfall bars |
+
+*Size is components / steps, counting every nested scene.*
+
+Flows in `public/flows/custom/` are git-ignored, for personal and
+product-specific diagrams that should not be committed.
 
 ## Screenshots
 
@@ -71,8 +85,11 @@ The port is pinned to **5175** in `vite.config.ts`. A flow loads automatically;
 append `?flow=<name>` (any filename under `public/flows/`, without its extension)
 to load a specific one.
 
-Editing and deleting flows needs the dev server — both write to `public/flows/`
-through it, so neither is available in a static build.
+Editing, saving and deleting flows all need the dev server — they write to
+`public/flows/` through it, so none of them work in a static build. Saves are
+validated against the flow schema before anything is written, so a save can't
+leave a file the app won't load. Bundled examples can be saved (a bad save is one
+`git checkout` away) but not deleted.
 
 **Never stop the dev server with `pkill -f vite`** — that matches every vite process on the machine, including other repos' dev servers and `vitest`. Kill by port instead:
 

@@ -37,9 +37,14 @@ export class ConnectionPipe {
   midpoint: THREE.Vector3
 
   private conn:              InternalConnection
-  private idleColor:         number
-  private activeColor:       number
-  private activeEmissive:    number
+  // Assigned by applyPalette in the constructor, before anything reads them.
+  private idleColor:         number = 0
+  private activeColor:       number = 0
+  private activeEmissive:    number = 0
+  /** Author's colour, if the connection names one. It replaces the theme's
+   *  three pipe colours but not the opacity ladder — a coloured pipe is still
+   *  glass you can see a packet travelling inside. */
+  private authored:          THREE.Color | null
   private currentActive:     boolean = false
   private packetTraversing:  boolean = false
 
@@ -48,10 +53,8 @@ export class ConnectionPipe {
     this.id    = connection.id
     this.curve = connection.curve
 
-    const c = THEME_COLORS['light']
-    this.idleColor      = c.pipeIdle
-    this.activeColor    = c.pipeActive
-    this.activeEmissive = c.pipeActiveEmissive
+    this.authored = connection.color ? new THREE.Color(connection.color) : null
+    this.applyPalette('light')
 
     const { t0, t1 } = connection.renderTrim
     const renderCurve = new TrimmedCurve(connection.curve, t0, t1)
@@ -98,11 +101,29 @@ export class ConnectionPipe {
     oldGeo.dispose()
   }
 
-  setTheme(theme: Theme): void {
+  /**
+   * Work out the three colours this pipe uses.
+   *
+   * An authored colour is taken at face value for the lit states and mixed
+   * halfway to the theme's resting colour for idle, so a scene of coloured
+   * pipes still reads as calm until a step lights one up. The emissive is the
+   * same hue darkened rather than the theme's — a red pipe should glow red.
+   */
+  private applyPalette(theme: Theme): void {
     const c = THEME_COLORS[theme]
-    this.idleColor      = c.pipeIdle
-    this.activeColor    = c.pipeActive
-    this.activeEmissive = c.pipeActiveEmissive
+    if (!this.authored) {
+      this.idleColor      = c.pipeIdle
+      this.activeColor    = c.pipeActive
+      this.activeEmissive = c.pipeActiveEmissive
+      return
+    }
+    this.activeColor    = this.authored.getHex()
+    this.idleColor      = this.authored.clone().lerp(new THREE.Color(c.pipeIdle), 0.5).getHex()
+    this.activeEmissive = this.authored.clone().multiplyScalar(0.45).getHex()
+  }
+
+  setTheme(theme: Theme): void {
+    this.applyPalette(theme)
 
     const mat = this.mesh.material as THREE.MeshStandardMaterial
     mat.color.setHex(this.packetTraversing || this.currentActive ? this.activeColor : this.idleColor)

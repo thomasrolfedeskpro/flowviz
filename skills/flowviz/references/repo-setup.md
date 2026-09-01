@@ -92,6 +92,18 @@ If it is flat, write to `public/flows/` — the manifest in that version does no
 recurse into subdirectories, so a flow in a new subfolder would simply never
 appear.
 
+## Saving from the browser
+
+Current checkouts have a **Save to file** button in edit mode that PUTs the
+edited definition to `/api/flows/<id>`; the dev server validates it and
+overwrites the file. Older checkouts only have **Copy JSON**, where the dev
+pastes the clipboard over the file themselves. Check before telling someone to
+"just hit save":
+
+```bash
+grep -c 'Save to file' src/components/StepSidebar.tsx
+```
+
 ## Validation failures
 
 `flowviz-validate.mjs` runs the repo's zod schema and then builds the graph, so

@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 
-const COUNT     = 6
-const PERIOD_MS = 3500
+const COUNT = 6
 
 // Chevron ">" band shape, pointing in +X direction in local XZ space.
 // Two arms of constant thickness meeting at a tip — no filled interior.
@@ -40,10 +39,19 @@ export class ChevronStream {
   /** The pipe itself, not its curve: a drag rebuilds the pipe with a *new*
    *  curve object, and chevrons must follow it rather than the stale one. */
   private source: { curve: THREE.Curve<THREE.Vector3> }
+  /** One full lap, in ms — the flow's stream timing, already divided by the
+   *  playback speed. Settable because both can change mid-step. */
+  private period: number
 
-  constructor(scene: THREE.Object3D, source: { curve: THREE.Curve<THREE.Vector3> }, color: number) {
+  constructor(
+    scene: THREE.Object3D,
+    source: { curve: THREE.Curve<THREE.Vector3> },
+    color: number,
+    periodMs: number,
+  ) {
     this.scene  = scene
     this.source = source
+    this.period = Math.max(1, periodMs)
 
     this.geo = buildChevronGeo()
     this.mat = new THREE.MeshBasicMaterial({
@@ -60,8 +68,15 @@ export class ChevronStream {
     })
   }
 
+  /** Speed and timing can both change mid-step, so the loop length is settable
+   *  rather than fixed at construction — otherwise a running stream keeps its
+   *  old pace. */
+  setPeriod(periodMs: number): void {
+    this.period = Math.max(1, periodMs)
+  }
+
   update(now: number): void {
-    const phase = (now % PERIOD_MS) / PERIOD_MS
+    const phase = (now % this.period) / this.period
     const curve = this.source.curve
 
     for (let i = 0; i < COUNT; i++) {

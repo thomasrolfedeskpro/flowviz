@@ -21,6 +21,15 @@
   opacity:         0.95;
 }
 
+/* Edit-mode hover. The chip covers its own scene handle, so this is the only
+   visible feedback that the label is about to be renamed. A ring, matching the
+   scene handles — nothing that changes the chip's size or position. */
+.hovered {
+  outline:        2px solid var(--accent-blue);
+  outline-offset: 1px;
+  opacity:        1;
+}
+
 /* repeat marker: "×25" for a step that fires the same request many times */
 .count {
   margin-left: 0.3rem;

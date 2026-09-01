@@ -1,4 +1,5 @@
 import type { Step } from '@/types/schema'
+import { DEFAULT_TIMING } from '@/engine/timing'
 
 type StepEngineListener = (state: StepState) => void
 
@@ -9,7 +10,8 @@ export interface StepState {
   step: Step
 }
 
-export const DEFAULT_PLAY_INTERVAL_MS = 3000
+/** Re-exported so callers that only want the step interval need one import. */
+export const DEFAULT_PLAY_INTERVAL_MS = DEFAULT_TIMING.step
 
 export class StepEngine {
   private steps:          Step[]
@@ -31,6 +33,20 @@ export class StepEngine {
 
   getSteps(): Step[] {
     return this.steps
+  }
+
+  /**
+   * Swap in an edited step list without losing your place.
+   *
+   * The index is clamped rather than reset: deleting the last step, or the one
+   * you were on, should leave you somewhere sensible instead of back at the
+   * start of the flow.
+   */
+  setSteps(steps: Step[]): void {
+    if (steps.length === 0) return
+    this.steps = steps
+    this.index = Math.max(0, Math.min(this.index, steps.length - 1))
+    this.notify()
   }
 
   getState(): StepState {

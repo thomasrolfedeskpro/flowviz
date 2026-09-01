@@ -14,7 +14,7 @@
 
 import { existsSync, writeFileSync, unlinkSync, mkdirSync, rmdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { resolve, isAbsolute, join } from 'node:path'
+import { basename, resolve, isAbsolute, join } from 'node:path'
 
 const [repoArg, flowArg] = process.argv.slice(2)
 if (!repoArg || !flowArg) {
@@ -39,7 +39,10 @@ if (!existsSync(join(repo, 'node_modules'))) {
 // Live under src/ so it is picked up whatever the vitest include pattern is, and
 // name it obviously in case a crash ever leaves it behind.
 const testDir = join(repo, 'src', '__generated__')
-const testFile = join(testDir, 'flowviz-skill-validate.test.mts')
+// Named per-process: several validations can be in flight at once (an agent
+// per flow, say), and a shared filename means they overwrite each other's test
+// and report someone else's errors.
+const testFile = join(testDir, `flowviz-skill-validate.${process.pid}.test.mts`)
 
 const testSource = `
 // Temporary file written by the flowviz skill. Safe to delete.
@@ -82,7 +85,7 @@ try {
     'npx',
     // No --reporter: the flag names changed across vitest majors and the default
     // output is fine once filtered below.
-    ['vitest', 'run', 'src/__generated__/flowviz-skill-validate.test.mts'],
+    ['vitest', 'run', `src/__generated__/${basename(testFile)}`],
     {
       cwd: repo,
       env: { ...process.env, FLOWVIZ_FLOW: flowPath, CI: '1' },

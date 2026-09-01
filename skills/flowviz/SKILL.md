@@ -135,7 +135,7 @@ committed:
 | Directory | Committed | Use for |
 |---|---|---|
 | `public/flows/custom/` | no — git-ignored | **the default.** Anything about the user's own product |
-| `public/flows/examples/` | yes | reference flows meant to ship, only when asked |
+| `public/flows/examples/` | yes | reference flows meant to ship, only when asked. Undeletable from the UI |
 
 **Write to `public/flows/custom/<slug>.json`**, slug in kebab-case from the
 title. A flow of someone's internal request path names their services, file paths
@@ -208,9 +208,13 @@ ticket one", not `deskpro-ticket-write-path`. Confirm the file before editing.
 
 For layout complaints ("it's cramped", "that pipe crosses"), the fastest route
 is often the app's own edit mode rather than hand-editing coordinates: the dev
-opens the flow, presses **Edit layout**, drags things, presses **Copy JSON**, and
-pastes it back. Offer that when the fix is aesthetic; do it in JSON when the fix
-is structural.
+opens the flow, presses **Edit layout**, drags things, and presses **Save to
+file**, which writes straight back to the JSON (older checkouts only have **Copy
+JSON**, which they paste back themselves). Offer that when the fix is aesthetic;
+do it in JSON when the fix is structural.
+
+If the dev has been editing in the browser, ask whether they saved before you
+edit the same file — otherwise your write and their unsaved session will fight.
 
 ## Reference files
 

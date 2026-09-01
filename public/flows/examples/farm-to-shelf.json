@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "ZZ Nested \u2014 farm to shelf",
-    "description": "Three components at the top level; the factory holds a scene of its own, and the mill inside it holds another."
+    "title": "Farm to Shelf",
+    "description": "Grain leaves a farm, is milled and packed inside a factory, and reaches a shop. The smallest example of nested scenes: the factory holds a scene of its own, and the mill inside it holds another \u2014 three levels in six steps."
   },
   "layout": {
     "grid": {
@@ -201,7 +201,10 @@
       "title": "Farm to shelf",
       "description": "Three stops at the top level.",
       "highlight": [],
-      "active_connections": []
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      }
     },
     {
       "id": 1,

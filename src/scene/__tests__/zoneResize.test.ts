@@ -5,9 +5,9 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { applyZoneCorner, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
+import { applyZoneCorner, clampZoneDelta, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
 import { buildGraph, removeWaypoint } from '@/engine/parseFlow'
-import { graphToFlowDefinition } from '@/utils/flowSerializer'
+import { flowReducer } from '@/state/flowActions'
 import { CELL_SIZE } from '@/engine/layoutEngine'
 import type { FlowDefinition } from '@/types/schema'
 
@@ -103,53 +103,6 @@ describe('whole-zone move helpers', () => {
   })
 })
 
-describe('graphToFlowDefinition — zones', () => {
-  it('exports resized bounds and renamed labels', () => {
-    const def   = zonedFlow()
-    const graph = buildGraph(def)
-    const z     = graph.zones[0]
-
-    applyZoneCorner(z, 'se', 8 * CELL_SIZE, 5 * CELL_SIZE)
-    snapZoneToGrid(z)
-    z.label = 'Renamed'
-
-    const out = graphToFlowDefinition(graph, def).zones[0]
-    expect(out.label).toBe('Renamed')
-    expect(out.bounds).toEqual({ col: 1, row: 1, width: 7, height: 4 })
-  })
-
-  it('exports component size/icon/colour edits and connection renames', () => {
-    const def   = zonedFlow()
-    def.connections = [{ id: 'c_ab', from: 'a', to: 'a', route: 'auto' }]
-    const graph = buildGraph(def)
-
-    const a = graph.components.get('a')!
-    a.meshSize.x = 3 * CELL_SIZE * 0.8   // 3 cells wide (COMPONENT_GAP = 0.8)
-    a.icon  = 'database'
-    a.color = '#e91e63'
-    graph.connections.get('c_ab')!.label = 'renamed pipe'
-
-    const out = graphToFlowDefinition(graph, def)
-    expect(out.components[0].size).toEqual({ w: 3, h: 1 })
-    expect(out.components[0].icon).toBe('database')
-    expect(out.components[0].color).toBe('#e91e63')
-    expect(out.connections[0].label).toBe('renamed pipe')
-  })
-
-  it('drops cleared icon/colour overrides instead of writing undefined', () => {
-    const def   = zonedFlow()
-    def.components[0].icon  = 'database'
-    def.components[0].color = '#ffffff'
-    const graph = buildGraph(def)
-    graph.components.get('a')!.icon  = undefined
-    graph.components.get('a')!.color = undefined
-
-    const out = graphToFlowDefinition(graph, def).components[0]
-    expect('icon' in out).toBe(false)
-    expect('color' in out).toBe(false)
-  })
-})
-
 describe('waypoint editing', () => {
   function routedFlow(): FlowDefinition {
     return {
@@ -177,16 +130,45 @@ describe('waypoint editing', () => {
     expect(removeWaypoint('auto', 0)).toBe('auto')
   })
 
-  it('exports edited and deleted waypoints', () => {
+  it('commits edited and deleted waypoints to the definition', () => {
     const def   = routedFlow()
     const graph = buildGraph(def)
     const conn  = graph.connections.get('c_ab')!
 
     conn.route = [{ col: 3, row: 7 }, { col: 6, row: 5 }]   // dragged the first one
-    expect(graphToFlowDefinition(graph, def).connections[0].route)
-      .toEqual([{ col: 3, row: 7 }, { col: 6, row: 5 }])
+    const dragged = flowReducer(def, {
+      type: 'connection/setRoute', scene: null, id: 'c_ab', route: conn.route,
+    })
+    expect(dragged.connections[0].route).toEqual([{ col: 3, row: 7 }, { col: 6, row: 5 }])
 
     conn.route = removeWaypoint(removeWaypoint(conn.route, 0), 0)
-    expect(graphToFlowDefinition(graph, def).connections[0].route).toBe('auto')
+    const cleared = flowReducer(dragged, {
+      type: 'connection/setRoute', scene: null, id: 'c_ab', route: conn.route,
+    })
+    expect(cleared.connections[0].route).toBe('auto')
+  })
+})
+
+describe('the grid origin', () => {
+  it('snaps a resized edge back to zero rather than into negative space', () => {
+    const z = zone()
+    applyZoneCorner(z, 'nw', -9, -6)
+    snapZoneToGrid(z)
+    expect(z.min.x).toBe(0)
+    expect(z.min.z).toBe(0)
+  })
+
+  it('trims a whole-zone drag at the origin, keeping the other axis free', () => {
+    // Leading edge at x = 3, so it can move 3 left and no further; z is far
+    // enough out to move as much as it likes.
+    expect(clampZoneDelta(3, 30, -12, -12)).toEqual({ dx: -3, dz: -12 })
+  })
+
+  it('leaves a drag away from the origin alone', () => {
+    expect(clampZoneDelta(3, 30, 12, 12)).toEqual({ dx: 12, dz: 12 })
+  })
+
+  it('refuses any further travel for a zone already on the edge', () => {
+    expect(clampZoneDelta(0, 0, -5, -5)).toEqual({ dx: 0, dz: 0 })
   })
 })

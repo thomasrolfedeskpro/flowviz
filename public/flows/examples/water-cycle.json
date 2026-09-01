@@ -1,0 +1,458 @@
+{
+  "meta": {
+    "title": "The Water Cycle",
+    "description": "Sunlight lifts water out of the ocean, the atmosphere carries it inland, and gravity returns it to the sea. Nothing is created, nothing is lost \u2014 the same water has been going round for roughly four billion years.",
+    "timing": {
+      "step": 4000,
+      "packet": 2600
+    }
+  },
+  "layout": {
+    "grid": {
+      "cols": 13,
+      "rows": 10
+    }
+  },
+  "zones": [
+    {
+      "id": "z_atmosphere",
+      "label": "Atmosphere",
+      "color": "#7aa8c9",
+      "outline": "dashed",
+      "bounds": {
+        "col": 3,
+        "row": 0,
+        "width": 8,
+        "height": 5
+      },
+      "meta": {
+        "description": "Holds only about 0.001% of Earth's water at any moment, yet the whole cycle passes through it."
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "sun",
+      "label": "Sun",
+      "type": "function",
+      "shape": "octagon",
+      "color": "#f5b301",
+      "icon": "sun",
+      "position": {
+        "col": 1,
+        "row": 0,
+        "elevation": 4
+      },
+      "meta": {
+        "description": "The engine of the cycle. Delivers roughly 340 W/m\u00b2 averaged over the Earth's surface.",
+        "notes": "About half of all absorbed solar energy is spent evaporating water rather than warming the surface. Drawn above the ground plane \u2014 its `elevation` puts it in the sky."
+      }
+    },
+    {
+      "id": "ocean",
+      "label": "Ocean",
+      "type": "database",
+      "shape": "cuboid",
+      "color": "#12557f",
+      "icon": "water",
+      "position": {
+        "col": 0,
+        "row": 5
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "Holds 97% of the planet's water and supplies about 86% of all evaporation.",
+        "notes": "Average residence time of a water molecule here is roughly 3,000 years."
+      }
+    },
+    {
+      "id": "water_vapour",
+      "label": "Water Vapour",
+      "type": "function",
+      "shape": "hexagon",
+      "color": "#8fb8d0",
+      "icon": "smog",
+      "position": {
+        "col": 4,
+        "row": 3,
+        "elevation": 1
+      },
+      "meta": {
+        "description": "Invisible gas-phase water rising with warm air.",
+        "notes": "Residence time in the atmosphere is about 9 days \u2014 the fastest-turning reservoir in the cycle. Drawn above the ground plane \u2014 its `elevation` puts it in the sky."
+      }
+    },
+    {
+      "id": "cloud",
+      "label": "Clouds",
+      "type": "queue",
+      "shape": "octagon",
+      "color": "#c9d6e0",
+      "icon": "cloud",
+      "position": {
+        "col": 8,
+        "row": 1,
+        "elevation": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Liquid droplets and ice crystals condensed onto aerosol nuclei.",
+        "notes": "Cloud droplets are ~0.02 mm across; a raindrop needs about a million of them to merge. Drawn above the ground plane \u2014 its `elevation` puts it in the sky."
+      }
+    },
+    {
+      "id": "highlands",
+      "label": "Highlands",
+      "type": "service",
+      "shape": "hexagon",
+      "color": "#4f7a4a",
+      "icon": "mountain",
+      "position": {
+        "col": 9,
+        "row": 5
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Land that forces moist air upward, wringing rain and snow out of it.",
+        "notes": "Mountain ranges supply a disproportionate share of river flow \u2014 often called the world's water towers."
+      }
+    },
+    {
+      "id": "river",
+      "label": "River",
+      "type": "queue",
+      "shape": "cylinder",
+      "color": "#2e9ec4",
+      "position": {
+        "col": 11,
+        "row": 7
+      },
+      "meta": {
+        "description": "Surface channel carrying runoff downhill to the sea.",
+        "notes": "Rivers hold a tiny fraction of the world's fresh water but move most of it."
+      }
+    },
+    {
+      "id": "groundwater",
+      "label": "Groundwater",
+      "type": "database",
+      "shape": "cylinder",
+      "color": "#5c6b73",
+      "icon": "layerGroup",
+      "position": {
+        "col": 5,
+        "row": 9
+      },
+      "meta": {
+        "description": "Water held in the pores and fractures of soil and rock.",
+        "notes": "Moves at metres per year, not metres per second. Some of it last saw daylight before the last ice age."
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "c_sun_ocean",
+      "from": "sun",
+      "to": "ocean",
+      "label": "solar radiation",
+      "route": "auto"
+    },
+    {
+      "id": "c_ocean_vapour",
+      "from": "ocean",
+      "to": "water_vapour",
+      "label": "evaporation",
+      "route": "auto"
+    },
+    {
+      "id": "c_vapour_cloud",
+      "from": "water_vapour",
+      "to": "cloud",
+      "label": "condensation",
+      "route": "auto"
+    },
+    {
+      "id": "c_highland_cloud",
+      "from": "highlands",
+      "to": "cloud",
+      "label": "orographic lift",
+      "route": "auto"
+    },
+    {
+      "id": "c_highland_river",
+      "from": "highlands",
+      "to": "river",
+      "label": "surface runoff",
+      "route": "auto"
+    },
+    {
+      "id": "c_highland_ground",
+      "from": "highlands",
+      "to": "groundwater",
+      "label": "infiltration",
+      "route": "auto"
+    },
+    {
+      "id": "c_river_ocean",
+      "from": "river",
+      "to": "ocean",
+      "label": "river discharge",
+      "route": "auto"
+    },
+    {
+      "id": "c_ground_ocean",
+      "from": "groundwater",
+      "to": "ocean",
+      "label": "submarine discharge",
+      "route": "auto"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "name": "Overview",
+      "title": "A closed loop with no beginning",
+      "description": "Water moves continuously between the ocean, the atmosphere and the land. Because the loop closes, any point on it is as good a starting place as any other \u2014 we begin at the ocean because that is where most of the water is.",
+      "highlight": [],
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      }
+    },
+    {
+      "id": 1,
+      "name": "Solar input",
+      "title": "The Sun drives the whole thing",
+      "description": "Sunlight falls on the sea surface without pause. This is drawn as a stream rather than a packet because there is no discrete unit of sunlight arriving \u2014 the connection is simply open, all day, every day.",
+      "highlight": [
+        "sun",
+        "ocean"
+      ],
+      "active_connections": [
+        "c_sun_ocean"
+      ],
+      "stream": {
+        "connection": "c_sun_ocean",
+        "color": "#f5b301"
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "sun",
+          "text": "\u2248 340 W/m\u00b2 averaged over the globe",
+          "style": "info"
+        }
+      ],
+      "footer": [
+        {
+          "text": "Roughly **half** of the solar energy absorbed at the surface is spent evaporating water, not heating it",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Evaporation",
+      "title": "Water leaves the sea as vapour",
+      "description": "Energised molecules break free of the surface and rise as invisible gas. Again a stream: evaporation is not an event that happens and finishes, it is a flux that never switches off while the sun is up.",
+      "highlight": [
+        "ocean",
+        "water_vapour"
+      ],
+      "active_connections": [
+        "c_ocean_vapour"
+      ],
+      "stream": {
+        "connection": "c_ocean_vapour",
+        "color": "#7fd3e8"
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "ocean",
+          "text": "liquid \u2192 vapour \u00b7 2,260 kJ absorbed per kg",
+          "style": "info"
+        }
+      ],
+      "footer": [
+        {
+          "text": "About **505,000 km\u00b3** of water evaporates worldwide each year, **86%** of it from the ocean",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Condensation",
+      "title": "Rising air cools and clouds form",
+      "description": "Air expands and cools as it rises, until it can no longer hold its vapour. The water condenses onto dust and salt particles into droplets small enough to stay airborne. Still a stream \u2014 the supply of moisture from below is unbroken.",
+      "highlight": [
+        "water_vapour",
+        "cloud"
+      ],
+      "active_connections": [
+        "c_vapour_cloud"
+      ],
+      "stream": {
+        "connection": "c_vapour_cloud",
+        "color": "#a8c8dc"
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "cloud",
+          "text": "vapour + condensation nuclei \u2192 droplets (~0.02 mm)",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Air rides the slope",
+      "title": "Moist air is forced up over the highlands",
+      "description": "Wind meeting a mountain range has nowhere to go but up, and the air cools further on the way. This pipe carries a continuous flow of damp air uphill \u2014 watch it, because the next step sends something back down the very same pipe.",
+      "highlight": [
+        "highlands",
+        "cloud"
+      ],
+      "active_connections": [
+        "c_highland_cloud"
+      ],
+      "stream": {
+        "connection": "c_highland_cloud",
+        "color": "#9ec7e0"
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "highlands",
+          "text": "windward slope \u00b7 air cools ~6.5 \u00b0C per km climbed",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Precipitation",
+      "title": "Rain falls back down the same pipe",
+      "description": "Droplets collide and merge until they are too heavy for the updraught, and fall. This is the opposite of a stream: countable drops, each one a discrete arrival, travelling in reverse along the connection that carried the air up.",
+      "highlight": [
+        "cloud",
+        "highlands"
+      ],
+      "active_connections": [
+        "c_highland_cloud"
+      ],
+      "packet": {
+        "connection": "c_highland_cloud",
+        "shape": "sphere",
+        "direction": "reverse",
+        "count": 12,
+        "arrivalStyle": "success",
+        "data": {
+          "form": "rain",
+          "drop_diameter_mm": 2.1,
+          "fall_speed_m_s": 6.5,
+          "event_total_mm": 18
+        }
+      },
+      "footer": [
+        {
+          "text": "A single raindrop is around **a million** cloud droplets merged together",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Runoff & soak",
+      "title": "The land splits the rain two ways",
+      "description": "Some of what lands runs straight off the surface into streams and rivers; the rest soaks through soil and rock into the aquifer below. Both are discrete deliveries of a rainfall event, so both are packets.",
+      "highlight": [
+        "highlands",
+        "river",
+        "groundwater"
+      ],
+      "active_connections": [
+        "c_highland_river",
+        "c_highland_ground"
+      ],
+      "packets": [
+        {
+          "connection": "c_highland_river",
+          "shape": "blob",
+          "count": 6,
+          "arrivalStyle": "success",
+          "data": {
+            "path": "surface runoff",
+            "share": "~35% of rainfall",
+            "lag": "hours"
+          }
+        },
+        {
+          "connection": "c_highland_ground",
+          "shape": "sphere",
+          "count": 4,
+          "arrivalStyle": "success",
+          "data": {
+            "path": "infiltration",
+            "share": "~15% of rainfall",
+            "lag": "years to centuries"
+          }
+        }
+      ],
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "highlands",
+          "text": "runoff vs infiltration set by slope, soil and how hard it rained",
+          "style": "info"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Back to the sea",
+      "title": "Both paths return to the ocean",
+      "description": "Rivers deliver their water in months; groundwater seeps out beneath the coast over decades or longer. Neither ever stops, so both are streams \u2014 and with the water back where it started, the loop is closed and the cycle begins again.",
+      "highlight": [
+        "river",
+        "groundwater",
+        "ocean"
+      ],
+      "active_connections": [
+        "c_river_ocean",
+        "c_ground_ocean"
+      ],
+      "streams": [
+        {
+          "connection": "c_river_ocean",
+          "color": "#2e9ec4"
+        },
+        {
+          "connection": "c_ground_ocean",
+          "color": "#8899a1"
+        }
+      ],
+      "footer": [
+        {
+          "text": "Rivers return about **37,000 km\u00b3** a year to the sea \u2014 the difference that balances ocean evaporation against ocean rainfall",
+          "style": "info"
+        },
+        {
+          "text": "Submarine groundwater discharge is roughly **6%** of that, and far slower",
+          "style": "info"
+        }
+      ]
+    }
+  ]
+}

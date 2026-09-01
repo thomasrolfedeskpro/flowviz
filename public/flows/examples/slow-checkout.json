@@ -1,0 +1,932 @@
+{
+  "meta": {
+    "title": "Anatomy of a Slow Checkout",
+    "description": "One POST /checkout that took 3,520 ms. Follow the trace hop by hop and find out where the time actually went.",
+    "timing": {
+      "step": 2400,
+      "packet": 1600,
+      "transition": 650
+    }
+  },
+  "layout": {
+    "grid": {
+      "cols": 24,
+      "rows": 9
+    }
+  },
+  "zones": [
+    {
+      "id": "z_edge",
+      "label": "Edge",
+      "color": "#4a9edd",
+      "bounds": {
+        "col": 0,
+        "row": 2,
+        "width": 6,
+        "height": 6
+      },
+      "meta": {
+        "description": "The shopper's browser and the CDN point of presence that fronts the shop.",
+        "notes": "Checkout is never cached \u2014 every request is a MISS by design."
+      }
+    },
+    {
+      "id": "z_app",
+      "label": "Application",
+      "color": "#2d9f6a",
+      "outline": "dashed",
+      "bounds": {
+        "col": 7,
+        "row": 0,
+        "width": 7,
+        "height": 9
+      },
+      "meta": {
+        "description": "Origin load balancer and the three PHP services that serve a checkout.",
+        "notes": "All three services run in the same cluster, so inter-service latency is sub-millisecond."
+      }
+    },
+    {
+      "id": "z_data",
+      "label": "Data",
+      "color": "#e8a838",
+      "bounds": {
+        "col": 15,
+        "row": 0,
+        "width": 4,
+        "height": 9
+      },
+      "meta": {
+        "description": "Redis session cache and the primary Postgres instance.",
+        "notes": "Postgres answers a single row lookup in ~2 ms. It is not slow; it is asked too often."
+      }
+    },
+    {
+      "id": "z_third_party",
+      "label": "Third Party",
+      "color": "#7c6ff0",
+      "outline": "dashed",
+      "bounds": {
+        "col": 20,
+        "row": 2,
+        "width": 4,
+        "height": 7
+      },
+      "meta": {
+        "description": "The payment provider and its own downstream issuer risk check.",
+        "notes": "Outside our control. Budget for it, do not try to optimise it."
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "browser",
+      "label": "Shopper",
+      "type": "client",
+      "icon": "desktop",
+      "position": {
+        "col": 1,
+        "row": 4
+      },
+      "meta": {
+        "description": "Chrome on a home broadband connection. Fires POST /checkout when Pay is clicked.",
+        "notes": "Real User Monitoring recorded 3.6 s from click to rendered confirmation."
+      }
+    },
+    {
+      "id": "cdn",
+      "label": "Edge CDN",
+      "type": "service",
+      "logo": "cloudflare",
+      "color": "#F38020",
+      "position": {
+        "col": 4,
+        "row": 4
+      },
+      "meta": {
+        "description": "CDN point of presence. Serves static assets, passes everything under /checkout to origin.",
+        "notes": "Cache-Control: no-store on all checkout routes."
+      }
+    },
+    {
+      "id": "load_balancer",
+      "label": "Load Balancer",
+      "type": "service",
+      "icon": "networkWired",
+      "color": "#5b8dd6",
+      "position": {
+        "col": 8,
+        "row": 4
+      },
+      "meta": {
+        "description": "Layer 7 load balancer. Terminates TLS from the CDN and picks a healthy checkout pod.",
+        "file": "infra/lb/checkout.conf",
+        "line": 12
+      }
+    },
+    {
+      "id": "checkout_service",
+      "label": "Checkout Service",
+      "type": "service",
+      "icon": "receipt",
+      "color": "#2d9f6a",
+      "position": {
+        "col": 11,
+        "row": 4
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Orchestrates a checkout: verify session, price the cart, take payment, write the order.",
+        "file": "src/Checkout/CheckoutController.php",
+        "line": 84
+      }
+    },
+    {
+      "id": "auth_service",
+      "label": "Auth Service",
+      "type": "service",
+      "icon": "key",
+      "color": "#8a63d2",
+      "position": {
+        "col": 11,
+        "row": 1
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Resolves the session cookie to a user id and a set of scopes.",
+        "file": "src/Auth/SessionResolver.php",
+        "line": 41
+      }
+    },
+    {
+      "id": "cart_service",
+      "label": "Cart Service",
+      "type": "service",
+      "icon": "cartShopping",
+      "color": "#2d9f6a",
+      "position": {
+        "col": 11,
+        "row": 7
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Loads the cart and prices every line item before the payment intent is created.",
+        "file": "src/Cart/CartPricer.php",
+        "line": 117,
+        "notes": "priceLines() walks $cart->getLines() and calls $productRepo->find() per line. This is the bug."
+      }
+    },
+    {
+      "id": "session_cache",
+      "label": "Session Cache",
+      "type": "database",
+      "shape": "cylinder",
+      "icon": "bolt",
+      "color": "#d64f3a",
+      "position": {
+        "col": 16,
+        "row": 1
+      },
+      "meta": {
+        "description": "Redis. Holds session blobs keyed by cookie, 30 minute TTL.",
+        "notes": "Hit rate on checkout sessions is 99.4%."
+      }
+    },
+    {
+      "id": "orders_db",
+      "label": "Postgres Primary",
+      "type": "database",
+      "shape": "cylinder",
+      "icon": "database",
+      "color": "#336791",
+      "position": {
+        "col": 16,
+        "row": 7
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Primary Postgres. Holds carts, cart_lines, products and orders.",
+        "notes": "Median single-row lookup is 2.1 ms. Nothing here is slow on its own."
+      }
+    },
+    {
+      "id": "payment_provider",
+      "label": "Payment Provider",
+      "type": "external",
+      "logo": "stripe",
+      "color": "#635BFF",
+      "position": {
+        "col": 21,
+        "row": 4
+      },
+      "meta": {
+        "description": "Creates the payment intent and authorises the card.",
+        "notes": "Published p95 for intent creation is 700 ms. We are inside their normal range."
+      }
+    },
+    {
+      "id": "fraud_check",
+      "label": "Issuer Risk",
+      "type": "external",
+      "icon": "shieldHalved",
+      "color": "#9aa4b2",
+      "position": {
+        "col": 22,
+        "row": 7
+      },
+      "meta": {
+        "description": "The card issuer's own risk scoring service, called by the payment provider.",
+        "notes": "Invisible to us except as time inside the provider's span."
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "c_browser_cdn",
+      "from": "browser",
+      "to": "cdn",
+      "label": "POST /checkout",
+      "route": "auto"
+    },
+    {
+      "id": "c_cdn_lb",
+      "from": "cdn",
+      "to": "load_balancer",
+      "label": "cache MISS \u2192 origin",
+      "route": "auto"
+    },
+    {
+      "id": "c_lb_checkout",
+      "from": "load_balancer",
+      "to": "checkout_service",
+      "label": "upstream",
+      "route": "auto"
+    },
+    {
+      "id": "c_checkout_auth",
+      "from": "checkout_service",
+      "to": "auth_service",
+      "label": "verifySession()",
+      "route": "auto"
+    },
+    {
+      "id": "c_auth_cache",
+      "from": "auth_service",
+      "to": "session_cache",
+      "label": "GET sess:8f21",
+      "route": "auto"
+    },
+    {
+      "id": "c_checkout_cart",
+      "from": "checkout_service",
+      "to": "cart_service",
+      "label": "priceCart()",
+      "route": "auto"
+    },
+    {
+      "id": "c_cart_db",
+      "from": "cart_service",
+      "to": "orders_db",
+      "label": "SELECT",
+      "route": "auto",
+      "color": "#ef4444"
+    },
+    {
+      "id": "c_checkout_payment",
+      "from": "checkout_service",
+      "to": "payment_provider",
+      "label": "POST /v1/payment_intents",
+      "route": "auto",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "c_payment_fraud",
+      "from": "payment_provider",
+      "to": "fraud_check",
+      "label": "risk score",
+      "route": "auto"
+    },
+    {
+      "id": "c_checkout_orders",
+      "from": "checkout_service",
+      "to": "orders_db",
+      "label": "INSERT INTO orders",
+      "route": "auto"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "name": "Overview",
+      "title": "One checkout, 3,520 ms",
+      "description": "A shopper clicked Pay and waited three and a half seconds. Every hop below is a span from that single trace. Open the waterfall to see the shape of it before we walk through.",
+      "highlight": [],
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      }
+    },
+    {
+      "id": 1,
+      "name": "Pay clicked",
+      "title": "Shopper clicks Pay",
+      "description": "The button handler serialises the cart id and posts it. Client-side work is 15 ms, so nothing here explains the wait.",
+      "highlight": [
+        "browser"
+      ],
+      "active_connections": [],
+      "camera": {
+        "focus": "browser",
+        "zoom": 1.5
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "browser",
+          "text": "fetch('/checkout', { method: 'POST', body: cartId })",
+          "style": "info"
+        }
+      ],
+      "packet": null,
+      "footer": [
+        {
+          "text": "**15 ms** of client work \u2014 the browser is not the problem",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 15,
+        "label": "15 ms \u00b7 client",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Edge miss",
+      "title": "Request reaches the CDN and misses",
+      "description": "Checkout routes carry `no-store`, so the edge never has a cached answer. The 45 ms is TLS plus the hop to origin, which is exactly what we would expect.",
+      "highlight": [
+        "browser",
+        "cdn"
+      ],
+      "active_connections": [
+        "c_browser_cdn"
+      ],
+      "packet": {
+        "connection": "c_browser_cdn",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "method": "POST",
+          "path": "/checkout",
+          "cart_id": "cart_7f3ac9",
+          "cf_cache_status": "BYPASS"
+        }
+      },
+      "footer": [
+        {
+          "text": "**45 ms** \u2014 normal for a cold POST from this region",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 15,
+        "weight": 45,
+        "label": "45 ms \u00b7 edge + TLS",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Origin routing",
+      "title": "Load balancer picks a pod",
+      "description": "The load balancer terminates the connection and forwards to a healthy checkout pod. Ten milliseconds, and the pod it picked was not saturated \u2014 that rules out a noisy-neighbour theory.",
+      "highlight": [
+        "cdn",
+        "load_balancer"
+      ],
+      "active_connections": [
+        "c_cdn_lb"
+      ],
+      "packet": {
+        "connection": "c_cdn_lb",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "upstream": "checkout-7d9f4b-x2kq",
+          "pool_active": 3,
+          "pool_size": 12
+        }
+      },
+      "footer": [
+        {
+          "text": "**10 ms** \u2014 pool was 3 of 12 busy, so no queueing at the LB",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 60,
+        "weight": 10,
+        "label": "10 ms \u00b7 upstream pick",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Controller entry",
+      "title": "Checkout controller takes the request",
+      "description": "Routing, middleware and request validation cost 12 ms. Framework overhead is not where the time went either.",
+      "highlight": [
+        "load_balancer",
+        "checkout_service"
+      ],
+      "active_connections": [
+        "c_lb_checkout"
+      ],
+      "camera": {
+        "focus": "checkout_service",
+        "zoom": 1.4
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "checkout_service",
+          "text": "route() \u2192 validate(CheckoutRequest) \u2192 CheckoutController::pay()"
+        }
+      ],
+      "packet": {
+        "connection": "c_lb_checkout",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "handler": "CheckoutController::pay",
+          "cart_id": "cart_7f3ac9"
+        }
+      },
+      "footer": [
+        {
+          "text": "**12 ms** of framework overhead \u2014 70 ms elapsed so far",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 70,
+        "weight": 12,
+        "label": "12 ms \u00b7 route + middleware",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 5,
+      "name": "Session check",
+      "title": "Auth service verifies the session",
+      "description": "The controller calls out to auth before it touches money. The whole exchange is 28 ms including the network round trip.",
+      "highlight": [
+        "checkout_service",
+        "auth_service"
+      ],
+      "active_connections": [
+        "c_checkout_auth"
+      ],
+      "packet": {
+        "connection": "c_checkout_auth",
+        "shape": "token",
+        "arrivalStyle": "success",
+        "data": {
+          "cookie": "sess:8f21c4",
+          "scopes": [
+            "cart:write",
+            "order:create"
+          ]
+        }
+      },
+      "footer": [
+        {
+          "text": "**28 ms** for the whole auth exchange",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 82,
+        "weight": 28,
+        "label": "28 ms \u00b7 auth round trip",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 6,
+      "name": "Cache hit",
+      "title": "Session found in Redis",
+      "description": "A single Redis GET answers in 6 ms, sitting inside the auth span above it. Auth is cheap and cached \u2014 cross it off.",
+      "highlight": [
+        "auth_service",
+        "session_cache"
+      ],
+      "active_connections": [
+        "c_auth_cache"
+      ],
+      "camera": {
+        "focus": "session_cache",
+        "zoom": 1.6
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "session_cache",
+          "text": "GET sess:8f21c4 \u2192 HIT (ttl 1,412 s)",
+          "style": "success"
+        }
+      ],
+      "packet": {
+        "connection": "c_auth_cache",
+        "shape": "token",
+        "arrivalStyle": "success",
+        "data": {
+          "key": "sess:8f21c4",
+          "result": "HIT",
+          "user_id": 90412
+        }
+      },
+      "footer": [
+        {
+          "text": "**6 ms** \u2014 contained inside the 28 ms auth bar",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 90,
+        "weight": 6,
+        "label": "6 ms \u00b7 Redis GET (inside auth)",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 7,
+      "name": "Price the cart",
+      "title": "Checkout hands the cart to pricing",
+      "description": "With the user resolved, the controller asks the cart service to price the basket. The call itself is 12 ms; what happens behind it is the rest of this diagram.",
+      "highlight": [
+        "checkout_service",
+        "cart_service"
+      ],
+      "active_connections": [
+        "c_checkout_cart"
+      ],
+      "packet": {
+        "connection": "c_checkout_cart",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "cart_id": "cart_7f3ac9",
+          "currency": "GBP",
+          "lines": 25
+        }
+      },
+      "footer": [
+        {
+          "text": "**12 ms** to hand over \u2014 118 ms elapsed, everything still healthy",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 118,
+        "weight": 12,
+        "label": "12 ms \u00b7 priceCart() call",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 8,
+      "name": "Cart rows read",
+      "title": "One query fetches 25 cart lines",
+      "description": "The cart itself loads in a single indexed query returning 25 rows in 22 ms. This is what a healthy database call looks like \u2014 remember it for the next step.",
+      "highlight": [
+        "cart_service",
+        "orders_db"
+      ],
+      "active_connections": [
+        "c_cart_db"
+      ],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "cart_service",
+          "text": "SELECT * FROM cart_lines WHERE cart_id = ? \u2192 25 rows"
+        }
+      ],
+      "packet": {
+        "connection": "c_cart_db",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "query": "SELECT * FROM cart_lines WHERE cart_id = $1",
+          "rows": 25,
+          "duration_ms": 22
+        }
+      },
+      "footer": [
+        {
+          "text": "**22 ms** for 25 rows in one query \u2014 the baseline to compare against",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 130,
+        "weight": 22,
+        "label": "22 ms \u00b7 1 query, 25 rows",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 9,
+      "name": "N+1 storm",
+      "title": "Pricing runs one query per line",
+      "description": "`priceLines()` loops the 25 cart lines and calls `$productRepo->find()` inside the loop, so the same product lookup is issued 25 times, serially. Each query is only ~127 ms including round trip and connection checkout, but 25 of them back to back is 3,180 ms.",
+      "highlight": [
+        "cart_service",
+        "orders_db"
+      ],
+      "active_connections": [
+        "c_cart_db"
+      ],
+      "camera": {
+        "focus": "orders_db",
+        "zoom": 1.8
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "cart_service",
+          "text": "foreach ($lines as $l) { $productRepo->find($l->productId); }",
+          "style": "error"
+        },
+        {
+          "type": "callout",
+          "target": "orders_db",
+          "text": "25 \u00d7 SELECT * FROM products WHERE id = $1",
+          "style": "warning"
+        }
+      ],
+      "packet": {
+        "connection": "c_cart_db",
+        "shape": "token",
+        "count": 25,
+        "arrivalStyle": "error",
+        "data": {
+          "query": "SELECT * FROM products WHERE id = $1",
+          "executions": 25,
+          "total_ms": 3180,
+          "median_ms": 124,
+          "max_ms": 191,
+          "distinct_products": 19
+        }
+      },
+      "footer": [
+        {
+          "text": "**Slow step \u2014 3,180 ms** across 25 identical queries",
+          "style": "error"
+        },
+        {
+          "text": "Nothing is waiting on the database engine: it answers each one in ~2 ms. The cost is 25 serial round trips.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 152,
+        "weight": 3180,
+        "label": "3,180 ms \u00b7 \u00d725 queries",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 10,
+      "name": "Payment intent",
+      "title": "Payment intent created in parallel",
+      "description": "The controller fires the payment intent as soon as the subtotal is known, so this 620 ms overlaps the tail of the query storm rather than adding to it. Slow, but expected and outside our control.",
+      "highlight": [
+        "checkout_service",
+        "payment_provider"
+      ],
+      "active_connections": [
+        "c_checkout_payment"
+      ],
+      "camera": {
+        "focus": "payment_provider",
+        "zoom": 1.5
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "payment_provider",
+          "text": "POST /v1/payment_intents { amount: 18420, currency: 'gbp' }",
+          "style": "warning"
+        }
+      ],
+      "packet": {
+        "connection": "c_checkout_payment",
+        "shape": "envelope",
+        "arrivalStyle": "warning",
+        "data": {
+          "amount": 18420,
+          "currency": "gbp",
+          "intent": "pi_3PqA1x2eZvKY",
+          "status": "requires_capture"
+        }
+      },
+      "footer": [
+        {
+          "text": "**620 ms** at the payment provider \u2014 inside their published p95 of 700 ms",
+          "style": "warning"
+        },
+        {
+          "text": "Overlaps the query storm by **497 ms**, so it only costs us the part that sticks out past it",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 2835,
+        "weight": 620,
+        "label": "620 ms \u00b7 payment (overlapping)",
+        "color": "#f59e0b"
+      }
+    },
+    {
+      "id": 11,
+      "name": "Issuer risk",
+      "title": "Provider calls the issuer's risk check",
+      "description": "Most of the payment span is the provider waiting on the card issuer. It sits inside their 620 ms and there is no version of this we can make faster.",
+      "highlight": [
+        "payment_provider",
+        "fraud_check"
+      ],
+      "active_connections": [
+        "c_payment_fraud"
+      ],
+      "packet": {
+        "connection": "c_payment_fraud",
+        "shape": "sphere",
+        "arrivalStyle": "warning",
+        "data": {
+          "risk_score": 12,
+          "decision": "allow",
+          "issuer": "bank_of_example"
+        }
+      },
+      "footer": [
+        {
+          "text": "**380 ms** of the provider's 620 ms is the issuer \u2014 not actionable",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 2975,
+        "weight": 380,
+        "label": "380 ms \u00b7 issuer (inside payment)",
+        "color": "#f59e0b"
+      }
+    },
+    {
+      "id": 12,
+      "name": "Order written",
+      "title": "Order row committed",
+      "description": "One insert, 24 ms, and the checkout is done. The write path was never in question.",
+      "highlight": [
+        "checkout_service",
+        "orders_db"
+      ],
+      "active_connections": [
+        "c_checkout_orders"
+      ],
+      "packet": {
+        "connection": "c_checkout_orders",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "order_id": "ord_5512480",
+          "total": 18420,
+          "lines": 25,
+          "intent": "pi_3PqA1x2eZvKY"
+        }
+      },
+      "footer": [
+        {
+          "text": "**24 ms** for the insert and commit",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 3455,
+        "weight": 24,
+        "label": "24 ms \u00b7 INSERT + commit",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 13,
+      "name": "Response back",
+      "title": "201 unwinds to the browser",
+      "description": "The response travels back down the same pipes it came up, 41 ms in total, and the confirmation page paints.",
+      "highlight": [
+        "checkout_service",
+        "load_balancer",
+        "cdn",
+        "browser"
+      ],
+      "active_connections": [
+        "c_lb_checkout",
+        "c_cdn_lb",
+        "c_browser_cdn"
+      ],
+      "packets": [
+        {
+          "connection": "c_lb_checkout",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "success",
+          "data": {
+            "status": 201,
+            "order_id": "ord_5512480"
+          }
+        },
+        {
+          "connection": "c_cdn_lb",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "success",
+          "data": {
+            "status": 201
+          }
+        },
+        {
+          "connection": "c_browser_cdn",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "success",
+          "data": {
+            "status": 201,
+            "redirect": "/order/ord_5512480"
+          }
+        }
+      ],
+      "footer": [
+        {
+          "text": "**41 ms** back to first paint \u2014 total wall clock **3,520 ms**",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 3479,
+        "weight": 41,
+        "label": "41 ms \u00b7 response + paint",
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": 14,
+      "name": "Verdict",
+      "title": "Where the 3,520 ms went",
+      "description": "Every hop except one is in the tens of milliseconds. The N+1 in `CartPricer::priceLines()` is 3,180 ms \u2014 90% of the request \u2014 and it is 25 round trips to fetch 19 distinct products. Eager-load them in a single `IN (...)` and the same checkout finishes in roughly 900 ms, bounded by the payment provider rather than by us.",
+      "highlight": [
+        "cart_service",
+        "orders_db"
+      ],
+      "active_connections": [],
+      "camera": {
+        "focus": "cart_service",
+        "zoom": 1.5
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "cart_service",
+          "text": "$productRepo->findBy(['id' => $productIds]) \u2192 1 query, 19 rows",
+          "style": "success"
+        }
+      ],
+      "packet": null,
+      "footer": [
+        {
+          "text": "**3,180 of 3,520 ms** \u2014 one loop, 90% of the request",
+          "style": "error"
+        },
+        {
+          "text": "Fix: batch the lookup in `src/Cart/CartPricer.php:117`, saving ~2.6 s",
+          "style": "success"
+        }
+      ]
+    }
+  ]
+}

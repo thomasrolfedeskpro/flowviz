@@ -30,7 +30,7 @@ pick matters because only one of them is committed:
 
 | Directory | Committed? | For |
 |---|---|---|
-| `public/flows/examples/` | yes | Reference flows that ship with the repo |
+| `public/flows/examples/` | yes | Reference flows that ship with the repo (cannot be deleted from the UI) |
 | `public/flows/custom/` | **no — git-ignored** | Your own work, and anything specific to your product |
 
 **Write new flows to `public/flows/custom/<slug>.json`** unless you have been
@@ -65,11 +65,31 @@ Every field is required. `zones` may be an empty array if zones are not needed.
 ```json
 {
   "title":       "OAuth 2.0 PKCE Flow",
-  "description": "How a browser-based app obtains an access token without a client secret."
+  "description": "How a browser-based app obtains an access token without a client secret.",
+  "timing":      { "step": 3000, "packet": 2000, "transition": 800, "stream": 3500 }
 }
 ```
 
 `title` is shown in the step HUD. `description` is optional context.
+
+### `meta.timing`
+
+Optional. How fast this flow plays, in milliseconds. Every field is optional and
+falls back to the default, so omit the whole block unless the pace matters.
+
+| Field | Default | What it times |
+|---|---|---|
+| `step` | 3000 | How long a step holds before the walkthrough advances |
+| `packet` | 2000 | How long a packet takes to cross a pipe |
+| `transition` | 800 | Highlight and dim fades on a step change |
+| `stream` | 3500 | One full lap of the chevrons on a streaming connection |
+
+All four must be above zero. The viewer's speed control divides whatever you set
+here and is never saved — authored pace and viewing pace are separate things.
+
+**When to set it:** a calm, physical process (a water cycle, a production line)
+reads better slower; a request trace reads better brisk. Leave it alone if you
+have no opinion.
 
 ---
 
@@ -333,8 +353,15 @@ All fields optional. Shown in the hover tooltip when the user hovers the compone
 A component can contain a whole scene of its own. Give it `detail` and any step
 tagged with that component's id is rendered *inside* it: the camera dives into
 the component, the outer scene is replaced by the inner one, and stepping back
-out reverses it. The breadcrumb in the top-left panel shows where you are, and
-the step list indents the steps that happen inside.
+out reverses it.
+
+Three things then say where you are, so nobody has to read prose to find out: a
+**dashed boundary** is drawn on the ground around everything in the scene; the
+component's `label` is written **on that boundary's near edge**; and the
+breadcrumb in the top-left panel plus the indented steps in the sidebar confirm
+it. You get all of this for free — the only thing you control is the
+component's `label`, which becomes the name on the ground, so make it a place
+("Regional Sorting Hub") rather than an abbreviation ("RSH").
 
 ```jsonc
 {
@@ -378,6 +405,7 @@ The `label` is shown as a small HTML overlay at the pipe's midpoint.
   "from":  "browser",
   "to":    "auth_server",
   "label": "POST /token",
+  "color": "#ef4444",
   "route": "auto"
 }
 ```
@@ -388,7 +416,19 @@ The `label` is shown as a small HTML overlay at the pipe's midpoint.
 | `from`  | Component id. |
 | `to`    | Component id. |
 | `label` | Optional. Names the protocol or operation (e.g. `"POST /api/events"`, `"INSERT INTO orders"`). Rendered at the pipe midpoint, always visible. |
+| `color` | Optional hex. Overrides the theme's pipe colour. |
 | `route` | `"auto"` for smooth S-curve routing, or an array of `{ "col": n, "row": n }` waypoints. |
+
+**Colouring a pipe:** the glass stays glass. A coloured pipe keeps the same three
+states — barely-there at rest, lit when the step names it in `active_connections`,
+brightest with a matching glow while a packet is inside it — and packets remain
+visible through the wall. At rest the colour is mixed halfway to the theme's
+resting grey, so a scene full of coloured pipes still looks calm until a step
+lights one up.
+
+Use it to carry meaning the labels can't: the slow call in red, the retry path in
+amber, one protocol family in a colour of its own. Don't colour every pipe — if
+they are all special, none of them is.
 
 **Routing guidance:**
 - `"auto"` produces a smooth cubic-Bezier S-curve: the pipe exits the source
@@ -516,15 +556,26 @@ Optional. Controls camera position for this step.
 { "focus": "component_id", "zoom": 1.4 }
 ```
 
-- `focus: null` — returns to the full-scene overview.
-- `focus: "id"` — pans to centre on that component.
-- `zoom` — multiplier on the default frustum. `1.0` = overview size. `1.5` = 50%
-  closer. `2.0` = twice as close. Keep between `1.2` and `2.5`.
-- Omitting `camera` entirely is equivalent to `{ "focus": null }`.
+- `focus: "id"` — pans to centre on that component. **This is the only thing that
+  moves the camera.**
+- `focus: null` — leaves the view exactly where it is. So does omitting `camera`.
+  It does *not* return to the overview: half the steps in the shipped flows carry
+  `focus: null`, and treating that as "recentre" made the camera lurch on nearly
+  every step and fight any panning the viewer did.
+- `zoom` — magnification of the scene's own overview framing. `1.5` is half again
+  as close. Ignored without a `focus`, since there is nothing to zoom in on.
+  Keep between `1.2` and `2.5`.
+- `fit: true` — frame the whole scene again. This is the only way to undo an
+  earlier focus. Put it on the step that steps back out to the big picture, and
+  on step 0 so that returning to the overview really shows the overview.
+- The viewer can switch camera-following off entirely in the playback bar, and
+  panning or scrolling cancels a camera move in flight. Never rely on a camera
+  move to make a step legible — it is a nicety, not a layout tool.
 
 **When to zoom:** focus + zoom on a component when the step is about an internal
-process (transformation, validation, decision). Return to overview (`focus: null`)
-for data-in-flight steps where the packet's journey across the scene is the story.
+process (transformation, validation, decision). Leave `camera` off for
+data-in-flight steps where the packet's journey across the scene is the story;
+the view then stays wherever the last focused step left it.
 
 ### 8.7 `annotations`
 
@@ -1284,31 +1335,50 @@ A minimal but complete example illustrating all features.
 
 ## 13. Iterating in the browser
 
-You do not have to get the layout right in JSON on the first pass. Load the flow
-(`?flow=<file-name-without-json>`), press **Edit layout**, and the diagram becomes
-editable:
+You do not have to get any of this right in JSON on the first pass. Load the
+flow (`?flow=<file-name-without-json>`), press **Edit layout**, and the whole
+definition becomes editable in place. Playback stops while you edit.
+
+**Direct manipulation on the grid**
 
 | Action | How |
 |---|---|
 | Move a component | Drag it; it snaps to the grid on release |
 | Resize a zone | Drag any of its four corner handles |
 | Move a zone and everything in it | Drag the amber grip on its top edge |
-| Rename a zone | Click its label chip |
-| Rename a pipe | Click its label chip |
-| Change a component's size, shape, colour or icon | Click the component |
 | Move a routing waypoint | Drag the teal diamond on the pipe |
 | Delete a waypoint | Right-click the diamond — the route falls back to `auto` when the last one goes |
+| Add a component or zone | **＋ Component** / **＋ Zone**, then click the cell to drop it on |
+| Join two components | **⤳ Connect**, then click the source and the target |
 
-Then press **Copy JSON** and paste over the flow file. The export carries
-component positions and sizes, zone bounds and labels, pipe labels, icons,
-colours, shapes and waypoints — so a layout worked out by hand in the browser
-survives as source.
+Esc cancels an armed add or connect. Zones and components stop at the grid
+origin — nothing can be dragged into negative cells, because a component left
+there could not be dragged back.
 
-Two things worth knowing before you trust the round-trip:
+**Everything else, in forms**
 
-- Parent zones are auto-expanded to enclose their children when a flow loads, so
-  exporting a parent writes back the *expanded* bounds, not what you typed.
-- Editing is dev-server only. A built static site has nothing to write files.
+| Action | How |
+|---|---|
+| Edit a component, zone or pipe | Click it — every field it has, including colour, icon, shape, size, elevation and hover notes |
+| Edit a step | Hover it in the sidebar, press the pencil — text, scene, highlights, active connections, packets, streams, annotations, footer notes, waterfall bar and camera |
+| Add, duplicate, delete or reorder steps | Row buttons in the sidebar; drag a row to reorder |
+| Flow title, description, grid, timing | The gear beside **Done** |
+| Raw JSON of one object, or of the whole flow | **JSON** in any editor's header; `{}` beside the gear for the whole file |
+| Delete a component, zone or pipe | **Delete** in its editor — it lists what else changes first |
+
+**Safety net**
+
+- ⌘Z / ⇧⌘Z undo and redo everything, including drags and deletes.
+- The flow is validated on every edit. Problems appear above **Save to file**,
+  which stays disabled until they are fixed.
+- **Save to file** writes the definition back to its own JSON, including edits
+  made inside a nested scene. What you loaded is what gets written, plus your
+  changes and nothing else. **Copy JSON** puts the same thing on the clipboard.
+- Editing needs the dev server. A built, deployed page is read-only.
+
+Two things the editor deliberately won't do: create a flow from nothing, and
+add or remove a nested `detail` scene. Both stay JSON jobs — for the second,
+deleting a component that owns a scene is refused, with an explanation.
 
 ## 14. Validation checklist
 
@@ -1358,6 +1428,7 @@ Before returning a flow JSON, verify each of these:
 | Component `color` override | ✅ Rendered |
 | Connection pipes | ✅ Rendered |
 | Connection `label` overlay at midpoint | ✅ Rendered |
+| Connection `color` override, keeping the glass opacity ladder | ✅ Rendered |
 | Zone fills + 3D ground-plane labels | ✅ Rendered |
 | Zone `parentId` nesting | ✅ Rendered |
 | Zone `outline: "dashed"` border | ✅ Rendered |
@@ -1370,18 +1441,24 @@ Before returning a flow JSON, verify each of these:
 | Chevron streams (`stream` / `streams[]`) | ✅ Rendered |
 | Annotation cards with leader lines | ✅ Rendered (`callout`, `transform`) |
 | Annotation `style` badge + icon (`info`, `success`, `warning`, `error`) | ✅ Rendered |
-| Camera pan + zoom per step (`step.camera`) | 🔲 Schema accepted, not applied — removed in #32 |
+| Camera pan + zoom per step (`step.camera`) | ✅ Rendered — only for a named `focus`; `null` leaves the view alone |
+| `camera.fit` — frame the whole scene again | ✅ Rendered |
+| Camera-follow off switch in the playback bar | ✅ Interactive |
+| Flow pace (`meta.timing`) | ✅ Rendered |
 | Scroll-wheel zoom | ✅ Interactive |
 | Component hover tooltip | ✅ Interactive |
 | Packet hover payload | ✅ Interactive |
 | Step sidebar with jump-to navigation | ✅ Interactive |
 | Nested scenes (`component.detail` + `step.scene`), any depth | ✅ Rendered |
 | Scene breadcrumb + indented steps for nested scenes | ✅ Rendered |
-| Copy JSON of edits made *inside* a nested scene | 🔲 Not yet — sub-scene edits are not exported |
+| Dashed boundary + name on the ground inside a nested scene | ✅ Rendered (automatic) |
+| Edits made *inside* a nested scene | ✅ Saved — the whole definition is written back |
 | Visualization switcher + `?flow=<id>` URL | ✅ Interactive |
-| Edit mode: drag components, resize/move zones, edit labels and waypoints | ✅ Interactive (dev server) |
-| Copy JSON export of an edited layout | ✅ Interactive (dev server) |
+| Edit mode: every field of every object, via forms | ✅ Interactive (dev server) |
+| Edit mode: add/delete components, zones, connections and steps | ✅ Interactive (dev server) |
+| Edit mode: undo/redo, live validation, raw-JSON hatch | ✅ Interactive (dev server) |
+| Save edits back to the flow file | ✅ Interactive (dev server) |
 | Delete a visualization from the list | ✅ Interactive (dev server) |
 | `step.name` sidebar label | ✅ Rendered (falls back to `title`) |
-| Popout panels | 🔲 Schema accepted, not yet rendered |
-| Elevation (`position.elevation`) | 🔲 Schema accepted, not yet rendered |
+| Popout panels (`step.popouts`) | 🔲 Schema accepted, nothing draws them — do not use |
+| Elevation (`position.elevation`) | ✅ Rendered — lifts the component off the floor |

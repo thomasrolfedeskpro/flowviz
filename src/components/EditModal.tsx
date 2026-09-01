@@ -1,54 +1,82 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { TYPE_COLOR } from '@/scene/ComponentMesh'
-import { COMPONENT_SHAPES } from '@/scene/componentShapes'
-import { SOLID_ICON_NAMES } from '@/scene/IconMesh'
-import { CELL_SIZE, COMPONENT_GAP } from '@/engine/layoutEngine'
-import type { InternalComponent } from '@/types/internal'
-import type { ComponentShape } from '@/types/schema'
+import { useEffect, useRef, useState } from 'react'
+import type { FlowDefinition } from '@/types/schema'
+import type {
+  ComponentPatch,
+  ConnectionPatch,
+  SceneId,
+  StepPatch,
+  ZonePatch,
+} from '@/state/flowActions'
+import { StepEditor } from '@/components/StepEditor'
+import { JsonEditor } from '@/components/JsonEditor'
+import {
+  ComponentFields,
+  ConnectionFields,
+  FlowFields,
+  ZoneFields,
+} from '@/components/InspectorFields'
+import type { DeletePlan } from '@/state/cascade'
+import { sceneOf } from '@/utils/scenes'
 import styles from '@/styles/EditModal.module.css'
 
-export interface ComponentPatch {
-  size?:  { w: number; h: number }
-  icon?:  string
-  color?: string
-  shape?: ComponentShape
-}
-
-/** What the modal is currently editing. `null` closes it. */
+/**
+ * What the modal is currently editing. `null` closes it.
+ *
+ * Objects carry the scene they were opened from: only one scene's meshes are on
+ * screen, but the same id has to be found in the definition to edit it.
+ */
 export type EditTarget =
-  | { kind: 'zone';        id: string; label: string }
-  | { kind: 'pipe';        id: string; label: string }
-  | { kind: 'component';   id: string }
+  | { kind: 'component';   id: string; scene: SceneId }
+  | { kind: 'zone';        id: string; scene: SceneId }
+  | { kind: 'pipe';        id: string; scene: SceneId }
+  | { kind: 'step';        index: number }
+  | { kind: 'flow' }
+  | { kind: 'json' }
   | { kind: 'delete-flow'; id: string; label: string }
 
 interface Props {
   target: EditTarget
-  component: InternalComponent | null
-  onRenameLabel: (target: EditTarget, label: string) => void
-  onPatchComponent: (id: string, patch: ComponentPatch) => void
+  /** The flow being edited. Every form reads its subject out of this. */
+  def: FlowDefinition | null
+  onPatchStep: (index: number, patch: StepPatch) => void
+  onPatchComponent: (id: string, scene: SceneId, patch: ComponentPatch) => void
+  onPatchZone: (id: string, scene: SceneId, patch: ZonePatch) => void
+  onPatchConnection: (id: string, scene: SceneId, patch: ConnectionPatch, clearRoute: boolean) => void
+  onPatchFlow: (meta: { title: string; description?: string }, grid: { cols: number; rows: number }) => void
+  /** Applies a component's visual fields to the scene only, for live preview. */
+  onPreviewComponent: (id: string, patch: ComponentPatch) => void
+  /** Called when a form is abandoned, so any preview can be thrown away. */
+  onDiscard: () => void
+  /** Applies raw JSON for the object being edited. Returns any reasons it was
+   *  refused, so the editor can stay open and say so. */
+  onApplyJson: (target: EditTarget, parsed: unknown) => string[] | null
+  /** Work out what deleting this would take with it, and show the prompt. */
+  onAskDelete: (kind: 'component' | 'zone' | 'connection', id: string, scene: SceneId) => void
+  /** Set while that prompt is up. */
+  deletePlan: DeletePlan | null
+  onConfirmDeleteObject: () => void
+  onCancelDeleteObject: () => void
   onConfirmDelete?: () => void
   /** Shown inside the modal when an action failed, so it stays open to say why. */
   error?: string | null
   onClose: () => void
 }
 
-const cells = (worldSize: number) => Math.max(1, Math.round(worldSize / (CELL_SIZE * COMPONENT_GAP)))
-const hex   = (n: number) => `#${n.toString(16).padStart(6, '0')}`
-
-/** Footprint glyph for the shape picker — drawn, not named, so the choice reads at a glance. */
-const SHAPE_GLYPH: Record<ComponentShape, string> = {
-  cuboid:   'M2 3h12v10H2z',
-  cylinder: 'M8 2a6 6 0 1 1 0 12A6 6 0 0 1 8 2z',
-  hexagon:  'M8 1.5 14 5v6l-6 3.5L2 11V5z',
-  octagon:  'M5.5 1.5h5L14 5v6l-3.5 3.5h-5L2 11V5z',
-  triangle: 'M8 2l6 11H2z',
-}
-
 export function EditModal({
   target,
-  component,
-  onRenameLabel,
+  def,
+  onPatchStep,
   onPatchComponent,
+  onPatchZone,
+  onPatchConnection,
+  onPatchFlow,
+  onPreviewComponent,
+  onDiscard,
+  onApplyJson,
+  onAskDelete,
+  deletePlan,
+  onConfirmDeleteObject,
+  onCancelDeleteObject,
   onConfirmDelete,
   error,
   onClose,
@@ -60,47 +88,208 @@ export function EditModal({
     if (el && !el.open) el.showModal()
   }, [])
 
+  /** Closing without applying — Esc, the backdrop, the ✕ or Cancel — drops any
+   *  preview the form pushed into the scene. */
+  const cancel = () => { onDiscard(); onClose() }
+
+  // Objects can be edited as fields or as raw JSON; the toggle only appears
+  // where there is a form to toggle away from.
+  const [asJson, setAsJson] = useState(false)
+  const scene = 'scene' in target ? target.scene : null
+  const contents = def ? sceneOf(def, scene) : null
+  const component  = target.kind === 'component' ? contents?.components.find((c) => c.id === target.id) : null
+  const zone       = target.kind === 'zone' ? contents?.zones?.find((z) => z.id === target.id) : null
+  const connection = target.kind === 'pipe' ? contents?.connections.find((c) => c.id === target.id) : null
+
   const heading =
-    target.kind === 'zone'          ? { title: 'Rename zone',        sub: target.label }
-    : target.kind === 'pipe'        ? { title: 'Pipe label',         sub: target.label }
+    target.kind === 'zone'          ? { title: 'Zone',        sub: zone?.label ?? target.id }
+    : target.kind === 'pipe'        ? { title: 'Connection',  sub: connection?.label ?? target.id }
+    : target.kind === 'flow'        ? { title: 'Visualization', sub: def?.meta.title ?? '' }
+    : target.kind === 'json'        ? { title: 'Flow JSON',     sub: def?.meta.title ?? '' }
     : target.kind === 'delete-flow' ? { title: 'Delete visualization', sub: target.label }
+    : target.kind === 'step'        ? {
+        title: `Step ${target.index}`,
+        sub:   def?.steps[target.index]?.name ?? def?.steps[target.index]?.title ?? '',
+      }
     :                                 { title: component?.label ?? 'Component', sub: component?.type ?? '' }
 
+  const subject =
+    target.kind === 'component' ? component
+    : target.kind === 'zone'    ? zone
+    : target.kind === 'pipe'    ? connection
+    : target.kind === 'step'    ? def?.steps[target.index]
+    : null
+
+  const canToggleJson = subject != null
+
   return (
-    <dialog ref={ref} className={styles.dialog} onClose={onClose} onCancel={onClose}>
+    <dialog
+      ref={ref}
+      className={
+        `${styles.dialog}` +
+        (target.kind === 'step' || target.kind === 'json' || asJson ? ` ${styles.wide}` : '')
+      }
+      onClose={cancel}
+      onCancel={cancel}
+    >
       <header className={styles.header}>
         <div>
           <h2 className={styles.title}>{heading.title}</h2>
           {heading.sub && <p className={styles.subtitle}>{heading.sub}</p>}
         </div>
-        <button className={styles.close} onClick={onClose} aria-label="Close">✕</button>
+        <div className={styles.headerActions}>
+          {canToggleJson && !deletePlan && (
+            <button
+              className={`${styles.tabBtn}${asJson ? ` ${styles.tabBtnOn}` : ''}`}
+              onClick={() => setAsJson((v) => !v)}
+              title="Edit this object's raw JSON"
+            >
+              {asJson ? 'Fields' : 'JSON'}
+            </button>
+          )}
+          <button className={styles.close} onClick={cancel} aria-label="Close">✕</button>
+        </div>
       </header>
 
-      {target.kind === 'delete-flow'
-        ? (
-            <ConfirmDelete
-              label={target.label}
-              error={error}
-              onConfirm={() => onConfirmDelete?.()}
-              onCancel={onClose}
-            />
-          )
-        : target.kind === 'component'
-        ? component && (
-            <ComponentFields
-              component={component}
-              onChange={patch => onPatchComponent(component.id, patch)}
-              onDone={onClose}
-            />
-          )
-        : (
-            <LabelField
-              value={target.label}
-              onSave={label => { onRenameLabel(target, label); onClose() }}
-              onCancel={onClose}
-            />
-          )}
+      {deletePlan ? (
+        <CascadeConfirm
+          plan={deletePlan}
+          what={heading.sub || heading.title}
+          onConfirm={onConfirmDeleteObject}
+          onCancel={onCancelDeleteObject}
+        />
+      ) : target.kind === 'json' ? (
+        def && (
+          <JsonEditor
+            value={def}
+            hint="The whole flow. Paste one in, or reach anything the forms don't cover."
+            onApply={(parsed) => onApplyJson(target, parsed)}
+            onCancel={onClose}
+          />
+        )
+      ) : asJson && subject ? (
+        <JsonEditor
+          value={subject}
+          hint="Applied only if the whole flow still validates. Ids can't be changed here."
+          onApply={(parsed) => onApplyJson(target, parsed)}
+          onCancel={cancel}
+        />
+      ) : target.kind === 'delete-flow' ? (
+        <ConfirmDelete
+          label={target.label}
+          error={error}
+          onConfirm={() => onConfirmDelete?.()}
+          onCancel={onClose}
+        />
+      ) : target.kind === 'step' ? (
+        def && (
+          <StepEditor
+            def={def}
+            index={target.index}
+            onApply={(patch) => onPatchStep(target.index, patch)}
+            onClose={onClose}
+          />
+        )
+      ) : target.kind === 'flow' ? (
+        def && (
+          <FlowFields
+            def={def}
+            onApply={(meta, grid) => { onPatchFlow(meta, grid); onClose() }}
+            onCancel={cancel}
+          />
+        )
+      ) : target.kind === 'component' ? (
+        component && (
+          <ComponentFields
+            component={component}
+            onPreview={(patch) => onPreviewComponent(target.id, patch)}
+            onApply={(patch) => { onPatchComponent(target.id, target.scene, patch); onClose() }}
+            onDelete={() => onAskDelete('component', target.id, target.scene)}
+            onCancel={cancel}
+          />
+        )
+      ) : target.kind === 'zone' ? (
+        zone && def && (
+          <ZoneFields
+            zone={zone}
+            def={def}
+            scene={target.scene}
+            onApply={(patch) => { onPatchZone(target.id, target.scene, patch); onClose() }}
+            onDelete={() => onAskDelete('zone', target.id, target.scene)}
+            onCancel={cancel}
+          />
+        )
+      ) : (
+        connection && def && (
+          <ConnectionFields
+            connection={connection}
+            def={def}
+            scene={target.scene}
+            onApply={(patch, clearRoute) => {
+              onPatchConnection(target.id, target.scene, patch, clearRoute)
+              onClose()
+            }}
+            onDelete={() => onAskDelete('pipe' === target.kind ? 'connection' : 'connection', target.id, target.scene)}
+            onCancel={cancel}
+          />
+        )
+      )}
     </dialog>
+  )
+}
+
+/**
+ * The prompt before a structural delete.
+ *
+ * Deleting is per-delete-confirmed by design: the fallout is listed here, in
+ * the flow's own words, rather than cascading silently or being refused because
+ * something somewhere points at it.
+ */
+function CascadeConfirm({
+  plan,
+  what,
+  onConfirm,
+  onCancel,
+}: {
+  plan: DeletePlan
+  what: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <>
+      <div className={styles.body}>
+        {plan.blocked ? (
+          <p className={styles.prose}>{plan.blocked}</p>
+        ) : (
+          <>
+            <p className={styles.prose}>
+              Delete <strong>{what}</strong>?
+            </p>
+            {plan.referrers.length > 0 ? (
+              <>
+                <p className={styles.prose}>These change too:</p>
+                <ul className={styles.cascadeList}>
+                  {plan.referrers.map((r, i) => (
+                    <li key={i}><strong>{r.where}</strong> — {r.what}</li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className={styles.hint}>Nothing else refers to it.</p>
+            )}
+          </>
+        )}
+      </div>
+      <footer className={styles.footer}>
+        <button type="button" className={styles.button} onClick={onCancel}>Cancel</button>
+        {!plan.blocked && (
+          <button type="button" className={`${styles.button} ${styles.danger}`} onClick={onConfirm} autoFocus>
+            Delete
+          </button>
+        )}
+      </footer>
+    </>
   )
 }
 
@@ -129,156 +318,6 @@ function ConfirmDelete({
         <button type="button" className={`${styles.button} ${styles.danger}`} onClick={onConfirm} autoFocus>
           Delete
         </button>
-      </footer>
-    </>
-  )
-}
-
-function LabelField({
-  value,
-  onSave,
-  onCancel,
-}: {
-  value: string
-  onSave: (label: string) => void
-  onCancel: () => void
-}) {
-  const [text, setText] = useState(value)
-
-  return (
-    <form onSubmit={e => { e.preventDefault(); onSave(text) }}>
-      <div className={styles.body}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="edit-label">Label</label>
-          <input
-            id="edit-label"
-            className={styles.input}
-            type="text"
-            value={text}
-            autoFocus
-            onChange={e => setText(e.target.value)}
-          />
-        </div>
-      </div>
-      <footer className={styles.footer}>
-        <button type="button" className={styles.button} onClick={onCancel}>Cancel</button>
-        <button type="submit" className={`${styles.button} ${styles.primary}`}>Save</button>
-      </footer>
-    </form>
-  )
-}
-
-function ComponentFields({
-  component,
-  onChange,
-  onDone,
-}: {
-  component: InternalComponent
-  onChange: (patch: ComponentPatch) => void
-  onDone: () => void
-}) {
-  const [w, setW]         = useState(() => cells(component.meshSize.x))
-  const [h, setH]         = useState(() => cells(component.meshSize.z))
-  const [icon, setIcon]   = useState(component.icon ?? '')
-  const [color, setColor] = useState(component.color ?? hex(TYPE_COLOR[component.type]))
-  const [shape, setShape] = useState<ComponentShape>(component.shape ?? 'cuboid')
-  const iconListId = useId()
-
-  const resize = (nextW: number, nextH: number) => {
-    setW(nextW)
-    setH(nextH)
-    onChange({ size: { w: nextW, h: nextH } })
-  }
-
-  // Every field applies straight to the scene — the 3-D view is the preview.
-  return (
-    <>
-      <div className={styles.body}>
-        <div className={styles.field}>
-          <span className={styles.label}>Size</span>
-          <div className={styles.inline}>
-            <input
-              className={`${styles.input} ${styles.number}`}
-              type="number" min={1} max={12} value={w}
-              aria-label="Width in cells"
-              onChange={e => resize(Math.max(1, Number(e.target.value)), h)}
-            />
-            <span className={styles.times}>×</span>
-            <input
-              className={`${styles.input} ${styles.number}`}
-              type="number" min={1} max={12} value={h}
-              aria-label="Depth in cells"
-              onChange={e => resize(w, Math.max(1, Number(e.target.value)))}
-            />
-            <span className={styles.suffix}>cells</span>
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <span className={styles.label}>Shape</span>
-          <div className={styles.segmented} role="group" aria-label="Shape">
-            {COMPONENT_SHAPES.map(s => (
-              <button
-                key={s}
-                type="button"
-                title={s}
-                aria-label={s}
-                aria-pressed={s === shape}
-                className={`${styles.segment}${s === shape ? ` ${styles.segmentOn}` : ''}`}
-                onClick={() => { setShape(s); onChange({ shape: s }) }}
-              >
-                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-                  <path d={SHAPE_GLYPH[s]} fill="currentColor" />
-                </svg>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <span className={styles.label}>Colour</span>
-          <div className={styles.inline}>
-            <input
-              className={styles.color} type="color" value={color}
-              aria-label="Component colour"
-              onChange={e => { setColor(e.target.value); onChange({ color: e.target.value }) }}
-            />
-            <code className={styles.swatchValue}>{color}</code>
-            <button
-              type="button"
-              className={styles.buttonSm}
-              onClick={() => { setColor(hex(TYPE_COLOR[component.type])); onChange({ color: '' }) }}
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="edit-icon">Icon</label>
-          {/* A combobox, not a 2000-row select: type to filter, or open the list. */}
-          <input
-            id="edit-icon"
-            className={styles.input}
-            list={iconListId}
-            value={icon}
-            placeholder="type default"
-            onChange={e => { setIcon(e.target.value); onChange({ icon: e.target.value }) }}
-          />
-          <datalist id={iconListId}>
-            {SOLID_ICON_NAMES.map(name => <option key={name} value={name} />)}
-          </datalist>
-        </div>
-
-        <p className={styles.hint}>
-          {component.logo
-            ? `Brand logo “${component.logo}” is drawn instead of this icon.`
-            : 'Font Awesome free-solid name — leave blank for the type default.'}
-        </p>
-      </div>
-
-      <footer className={styles.footer}>
-        <button type="button" className={`${styles.button} ${styles.primary}`} onClick={onDone}>Done</button>
       </footer>
     </>
   )

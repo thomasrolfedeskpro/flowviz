@@ -1,0 +1,315 @@
+{
+  "meta": {
+    "title": "Coffee Shop Order",
+    "description": "One flat white, from the moment it is ordered to the moment it lands on the bar. A short flow to show how FlowViz tells a story one step at a time."
+  },
+  "layout": {
+    "grid": {
+      "cols": 15,
+      "rows": 7
+    }
+  },
+  "zones": [],
+  "components": [
+    {
+      "id": "customer",
+      "label": "Customer",
+      "type": "client",
+      "icon": "user",
+      "position": {
+        "col": 0,
+        "row": 3
+      },
+      "meta": {
+        "description": "Orders at the counter and waits for their name to be called."
+      }
+    },
+    {
+      "id": "barista",
+      "label": "Barista",
+      "type": "service",
+      "icon": "userTie",
+      "color": "#c08a3e",
+      "position": {
+        "col": 3,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Takes the order, works the grinder and the machine, and calls the drink when it is up.",
+        "notes": "Everything in this flow is either started or finished by the barista."
+      }
+    },
+    {
+      "id": "grinder",
+      "label": "Grinder",
+      "type": "function",
+      "shape": "hexagon",
+      "icon": "gears",
+      "color": "#6f4e37",
+      "position": {
+        "col": 7,
+        "row": 1
+      },
+      "meta": {
+        "description": "Grinds whole beans to an espresso-fine dose, weighed to the gram."
+      }
+    },
+    {
+      "id": "milk_steamer",
+      "label": "Steam Wand",
+      "type": "service",
+      "shape": "cylinder",
+      "icon": "glassWater",
+      "color": "#8fb8d4",
+      "position": {
+        "col": 7,
+        "row": 5
+      },
+      "meta": {
+        "description": "Heats and textures the milk into glossy microfoam \u2014 no big bubbles.",
+        "notes": "A flat white wants milk around 60\u201365 \u00b0C. Hotter than that and it scalds."
+      }
+    },
+    {
+      "id": "espresso_machine",
+      "label": "Espresso Machine",
+      "type": "service",
+      "icon": "mugHot",
+      "color": "#b5453b",
+      "position": {
+        "col": 10,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Pushes hot water through the packed grounds under pressure to pull the shot."
+      }
+    },
+    {
+      "id": "pickup_counter",
+      "label": "Pickup Counter",
+      "type": "queue",
+      "icon": "mugSaucer",
+      "position": {
+        "col": 13,
+        "row": 3
+      },
+      "meta": {
+        "description": "Where finished drinks wait to be collected."
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "c_order",
+      "from": "customer",
+      "to": "barista",
+      "label": "orders a flat white",
+      "route": "auto"
+    },
+    {
+      "id": "c_dose",
+      "from": "barista",
+      "to": "grinder",
+      "label": "18 g of beans",
+      "route": "auto"
+    },
+    {
+      "id": "c_grounds",
+      "from": "grinder",
+      "to": "espresso_machine",
+      "label": "tamp and lock in",
+      "route": "auto"
+    },
+    {
+      "id": "c_steam",
+      "from": "barista",
+      "to": "milk_steamer",
+      "label": "200 ml oat milk",
+      "route": "auto"
+    },
+    {
+      "id": "c_pour",
+      "from": "milk_steamer",
+      "to": "espresso_machine",
+      "label": "pour the microfoam",
+      "route": "auto"
+    },
+    {
+      "id": "c_serve",
+      "from": "espresso_machine",
+      "to": "pickup_counter",
+      "label": "one flat white",
+      "route": "auto"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "name": "Overview",
+      "title": "A quiet moment before the order",
+      "description": "The shop is set up and waiting: a customer at the counter, a barista between the grinder and the machine, and an empty pickup counter at the far end. Step forward to follow a single flat white through it.",
+      "highlight": [],
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      }
+    },
+    {
+      "id": 1,
+      "name": "Order placed",
+      "title": "The customer orders a flat white",
+      "description": "Maya asks for a flat white with oat milk, to drink in. The barista repeats it back and writes the name on the cup.",
+      "highlight": [
+        "customer",
+        "barista"
+      ],
+      "active_connections": [
+        "c_order"
+      ],
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "customer",
+          "text": "One flat white, oat, to stay"
+        }
+      ],
+      "packet": {
+        "connection": "c_order",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "drink": "flat white",
+          "milk": "oat",
+          "size": "6 oz",
+          "name": "Maya"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "Beans ground",
+      "title": "Beans go into the grinder",
+      "description": "The barista drops a fresh dose of beans into the grinder and takes it down to an espresso-fine grind, straight into the portafilter.",
+      "highlight": [
+        "barista",
+        "grinder"
+      ],
+      "active_connections": [
+        "c_dose"
+      ],
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "grinder",
+          "text": "18 g in, ground fine"
+        }
+      ],
+      "packet": {
+        "connection": "c_dose",
+        "shape": "sphere",
+        "data": {
+          "beans": "Brazil Cerrado",
+          "dose_g": 18,
+          "grind": "espresso"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "name": "Shot pulled",
+      "title": "The shot is pulled",
+      "description": "The grounds are tamped level and the portafilter is locked into the group head. Hot water is forced through the puck for a shade under thirty seconds.",
+      "highlight": [
+        "grinder",
+        "espresso_machine"
+      ],
+      "active_connections": [
+        "c_grounds"
+      ],
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "espresso_machine",
+          "text": "36 g out in 28 seconds",
+          "style": "success"
+        }
+      ],
+      "packet": {
+        "connection": "c_grounds",
+        "shape": "token",
+        "arrivalStyle": "success",
+        "data": {
+          "in_g": 18,
+          "out_g": 36,
+          "seconds": 28,
+          "crema": "thick and even"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "Milk steamed",
+      "title": "Milk is steamed to microfoam",
+      "description": "While the shot runs, the barista purges the wand and steams the oat milk, swirling it until the jug is too warm to hold comfortably.",
+      "highlight": [
+        "barista",
+        "milk_steamer"
+      ],
+      "active_connections": [
+        "c_steam"
+      ],
+      "packet": {
+        "connection": "c_steam",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "milk": "oat",
+          "volume_ml": 200,
+          "temperature_c": 62,
+          "texture": "microfoam"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "Drink handed over",
+      "title": "Poured, finished and called",
+      "description": "The milk is poured through the crema in one steady motion, leaving a small rosetta on top. The cup goes onto the pickup counter and the barista calls the name.",
+      "highlight": [
+        "milk_steamer",
+        "espresso_machine",
+        "pickup_counter"
+      ],
+      "active_connections": [
+        "c_pour",
+        "c_serve"
+      ],
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "pickup_counter",
+          "text": "Flat white for Maya",
+          "style": "success"
+        }
+      ],
+      "packet": {
+        "connection": "c_serve",
+        "shape": "envelope",
+        "arrivalStyle": "success",
+        "data": {
+          "drink": "flat white",
+          "name": "Maya",
+          "total_seconds": 95
+        }
+      }
+    }
+  ]
+}

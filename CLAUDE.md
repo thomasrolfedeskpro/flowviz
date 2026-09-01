@@ -32,7 +32,12 @@ word-split an unquoted `$PID`, so piping to `xargs` is what actually kills both.
 ## Where flows live
 
 - `public/flows/examples/` — committed. Reference flows that ship with the repo.
+  The UI hides their delete button and the dev-server endpoint refuses them.
 - `public/flows/custom/` — **git-ignored.** Personal and product-specific flows.
+
+Edit mode writes back through the dev server: **Save to file** PUTs the edited
+definition to `/api/flows/<id>`, which validates it against the flow schema
+before overwriting. Examples can be saved but not deleted.
 
 Write new flows to `custom/` unless asked for a shipped example: these diagrams
 name internal services and file paths, and keeping them out of git is deliberate.

@@ -1,0 +1,940 @@
+{
+  "meta": {
+    "title": "Card Payment Authorisation",
+    "description": "A contactless card payment in a shop, from tap to settlement \u2014 including a decline for insufficient funds and a successful retry on a second card. A simplified model: real card schemes add tokenisation, 3-D Secure, stand-in processing and interchange accounting that are left out here."
+  },
+  "layout": {
+    "grid": {
+      "cols": 23,
+      "rows": 10
+    }
+  },
+  "zones": [
+    {
+      "id": "z_shop",
+      "label": "Shop",
+      "color": "#4a9edd",
+      "bounds": {
+        "col": 0,
+        "row": 1,
+        "width": 4,
+        "height": 5
+      },
+      "meta": {
+        "description": "The merchant's till point. The cardholder and the payment terminal \u2014 the only part of the chain either of them can see.",
+        "notes": "The terminal never stores the full card number; it reads the EMV chip over NFC and passes an encrypted request onward."
+      }
+    },
+    {
+      "id": "z_acquirer",
+      "label": "Acquirer",
+      "color": "#2d9f6a",
+      "bounds": {
+        "col": 5,
+        "row": 1,
+        "width": 6,
+        "height": 8
+      },
+      "meta": {
+        "description": "The merchant's payment provider. It signs the shop up to accept cards, routes each authorisation to the right scheme, and pays the shop out.",
+        "notes": "Acquirers carry the credit risk on the merchant: if the shop refunds more than it takes, the acquirer is left holding it."
+      }
+    },
+    {
+      "id": "z_network",
+      "label": "Card Network",
+      "color": "#8a6ad4",
+      "outline": "dashed",
+      "bounds": {
+        "col": 12,
+        "row": 1,
+        "width": 4,
+        "height": 8
+      },
+      "meta": {
+        "description": "The scheme in the middle \u2014 Visa, Mastercard and the like. A logical boundary rather than a place: it sets the rules, routes messages by card number, and clears the money between banks.",
+        "notes": "Drawn dashed because the network is a rulebook and a switch, not a system either the shop or the bank operates."
+      }
+    },
+    {
+      "id": "z_issuer",
+      "label": "Issuing Bank",
+      "color": "#e8a838",
+      "bounds": {
+        "col": 17,
+        "row": 1,
+        "width": 6,
+        "height": 8
+      },
+      "meta": {
+        "description": "The bank that issued the card and holds the cardholder's account. It alone decides whether to approve or decline.",
+        "notes": "An approval places a hold on the funds; the money does not actually move until settlement, often the next day."
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "card_a",
+      "label": "Card \u00b7\u00b7\u00b74242",
+      "type": "external",
+      "logo": "ccVisa",
+      "color": "#1A1F71",
+      "position": {
+        "col": 1,
+        "row": 2
+      },
+      "meta": {
+        "description": "The customer's first card. Contactless, EMV chip, held against the terminal.",
+        "notes": "Balance is short of the \u00a348.20 basket \u2014 this is the card that gets declined."
+      }
+    },
+    {
+      "id": "card_b",
+      "label": "Card \u00b7\u00b7\u00b75310",
+      "type": "external",
+      "logo": "ccMastercard",
+      "color": "#EB001B",
+      "position": {
+        "col": 1,
+        "row": 4
+      },
+      "meta": {
+        "description": "The second card the customer offers after the first is declined. A different issuer entirely.",
+        "notes": "Modelled here as reaching the same issuer host, to keep the diagram to one bank."
+      }
+    },
+    {
+      "id": "terminal",
+      "label": "Card Terminal",
+      "type": "client",
+      "icon": "creditCard",
+      "color": "#3b82c4",
+      "position": {
+        "col": 2,
+        "row": 3
+      },
+      "meta": {
+        "description": "The countertop PIN pad. Reads the chip over NFC, builds the authorisation request and prints the receipt.",
+        "notes": "PCI-certified hardware: the card data is encrypted inside the reader before it reaches any software the shop controls."
+      }
+    },
+    {
+      "id": "gateway",
+      "label": "Payment Gateway",
+      "type": "service",
+      "icon": "networkWired",
+      "color": "#2d9f6a",
+      "position": {
+        "col": 6,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Terminates the terminal's connection, normalises the message and forwards it to the acquirer's authorisation host.",
+        "notes": "Also where retries, timeouts and reversals are handled if the chain further on goes quiet."
+      }
+    },
+    {
+      "id": "acquirer_host",
+      "label": "Acquirer Host",
+      "type": "service",
+      "icon": "server",
+      "color": "#238b5c",
+      "position": {
+        "col": 9,
+        "row": 3
+      },
+      "meta": {
+        "description": "The acquirer's authorisation switch. Looks at the card's BIN, picks the right scheme, and forwards the request.",
+        "notes": "Keeps a record of every authorisation so it can be matched against the clearing file at end of day."
+      }
+    },
+    {
+      "id": "merchant_acct",
+      "label": "Merchant Account",
+      "type": "database",
+      "icon": "buildingColumns",
+      "color": "#1f7a52",
+      "position": {
+        "col": 7,
+        "row": 7
+      },
+      "meta": {
+        "description": "Where the shop's takings land, net of scheme fees and the acquirer's margin.",
+        "notes": "Funding is typically T+1 or T+2, so the money arrives a day or two after the customer taps."
+      }
+    },
+    {
+      "id": "network_switch",
+      "label": "Network Switch",
+      "type": "service",
+      "icon": "networkWired",
+      "color": "#8a6ad4",
+      "position": {
+        "col": 13,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Routes the authorisation to the issuing bank identified by the first digits of the card number.",
+        "notes": "Schemes hold acquirers to a strict round-trip budget \u2014 a few hundred milliseconds \u2014 or the switch answers on the issuer's behalf."
+      }
+    },
+    {
+      "id": "clearing",
+      "label": "Clearing & Settlement",
+      "type": "service",
+      "icon": "moneyBillTransfer",
+      "color": "#7057c0",
+      "position": {
+        "col": 13,
+        "row": 7
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Nets the day's approved transactions between banks and instructs the actual movement of money.",
+        "notes": "Clearing runs on a batch cycle, hours after the authorisations it settles."
+      }
+    },
+    {
+      "id": "issuer_host",
+      "label": "Issuer Auth Host",
+      "type": "service",
+      "icon": "server",
+      "color": "#d99a2b",
+      "position": {
+        "col": 18,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "The bank's authorisation system. Runs the checks and returns an approve or decline response code.",
+        "notes": "Must answer within the scheme's timeout or the transaction is decided by stand-in processing instead."
+      }
+    },
+    {
+      "id": "risk_engine",
+      "label": "Risk & Fraud",
+      "type": "function",
+      "icon": "shieldHalved",
+      "color": "#c0392b",
+      "position": {
+        "col": 21,
+        "row": 3
+      },
+      "meta": {
+        "description": "Scores the transaction against the cardholder's normal behaviour \u2014 amount, merchant, country, velocity.",
+        "notes": "A high score can decline outright or push the payment to a step-up challenge; a low score just passes through."
+      }
+    },
+    {
+      "id": "ledger",
+      "label": "Cardholder Ledger",
+      "type": "database",
+      "icon": "database",
+      "color": "#b8811f",
+      "position": {
+        "col": 18,
+        "row": 6
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "The account record: cleared balance, pending holds, and the credit or overdraft limit.",
+        "notes": "Available balance is the cleared balance minus every hold still outstanding \u2014 which is why a decline can surprise a customer who 'has the money'."
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "c_card_a_terminal",
+      "from": "card_a",
+      "to": "terminal",
+      "label": "contactless tap",
+      "route": "auto"
+    },
+    {
+      "id": "c_card_b_terminal",
+      "from": "card_b",
+      "to": "terminal",
+      "label": "second tap",
+      "route": "auto"
+    },
+    {
+      "id": "c_terminal_gateway",
+      "from": "terminal",
+      "to": "gateway",
+      "label": "auth request",
+      "route": "auto"
+    },
+    {
+      "id": "c_gateway_acquirer",
+      "from": "gateway",
+      "to": "acquirer_host",
+      "label": "route by BIN",
+      "route": "auto"
+    },
+    {
+      "id": "c_acquirer_network",
+      "from": "acquirer_host",
+      "to": "network_switch",
+      "label": "scheme request",
+      "route": "auto"
+    },
+    {
+      "id": "c_network_issuer",
+      "from": "network_switch",
+      "to": "issuer_host",
+      "label": "issuer request",
+      "route": "auto"
+    },
+    {
+      "id": "c_issuer_risk",
+      "from": "issuer_host",
+      "to": "risk_engine",
+      "label": "score()",
+      "route": "auto"
+    },
+    {
+      "id": "c_issuer_ledger",
+      "from": "issuer_host",
+      "to": "ledger",
+      "label": "available balance",
+      "route": "auto"
+    },
+    {
+      "id": "c_acquirer_clearing",
+      "from": "acquirer_host",
+      "to": "clearing",
+      "label": "clearing batch",
+      "route": "auto"
+    },
+    {
+      "id": "c_clearing_ledger",
+      "from": "clearing",
+      "to": "ledger",
+      "label": "post debit",
+      "route": "auto"
+    },
+    {
+      "id": "c_clearing_merchant",
+      "from": "clearing",
+      "to": "merchant_acct",
+      "label": "fund merchant",
+      "route": "auto"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "name": "Overview",
+      "title": "Card payment authorisation",
+      "description": "Four parties stand between a tap and a receipt: the shop, the acquirer that signed it up, the card network in the middle, and the bank that issued the card. This is a simplified model \u2014 real schemes add tokenisation, 3-D Secure and stand-in processing on top.",
+      "highlight": [],
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      }
+    },
+    {
+      "id": 1,
+      "name": "Card tapped",
+      "title": "Customer taps the first card",
+      "description": "The card is held against the terminal and the chip is read over NFC. The terminal gets a card number, an expiry and a cryptogram proving the chip is genuine \u2014 it never sees a PIN for a contactless payment under the limit.",
+      "highlight": [
+        "card_a",
+        "terminal"
+      ],
+      "active_connections": [
+        "c_card_a_terminal"
+      ],
+      "camera": {
+        "focus": "terminal",
+        "zoom": 1.4
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "terminal",
+          "text": "readEmv() \u2192 { pan, expiry, cryptogram }"
+        }
+      ],
+      "packet": {
+        "connection": "c_card_a_terminal",
+        "shape": "token",
+        "data": {
+          "pan_masked": "4242 \u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7 4242",
+          "scheme": "visa",
+          "entry_mode": "contactless_emv",
+          "amount": "48.20",
+          "currency": "GBP"
+        }
+      },
+      "waterfall": {
+        "start": 0,
+        "weight": 20,
+        "label": "20 ms \u00b7 chip read",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Auth request",
+      "title": "Terminal sends the authorisation request",
+      "description": "The terminal builds an authorisation message \u2014 amount, currency, merchant id, entry mode, card cryptogram \u2014 and sends it to the payment gateway over its own encrypted link.",
+      "highlight": [
+        "terminal",
+        "gateway"
+      ],
+      "active_connections": [
+        "c_terminal_gateway"
+      ],
+      "packet": {
+        "connection": "c_terminal_gateway",
+        "shape": "document",
+        "data": {
+          "mti": "0100",
+          "amount": "48.20",
+          "currency": "GBP",
+          "merchant_id": "M-4471902",
+          "entry_mode": "contactless_emv"
+        }
+      },
+      "waterfall": {
+        "start": 20,
+        "weight": 45,
+        "label": "45 ms \u00b7 terminal \u2192 gateway",
+        "color": "#4a9edd"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Route by BIN",
+      "title": "Gateway hands off to the acquirer",
+      "description": "The gateway normalises the message and passes it to the acquirer's authorisation host, which reads the card's BIN \u2014 the leading digits \u2014 to work out which scheme and which issuing bank the request belongs to.",
+      "highlight": [
+        "gateway",
+        "acquirer_host"
+      ],
+      "active_connections": [
+        "c_gateway_acquirer"
+      ],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "acquirer_host",
+          "text": "bin('424242') \u2192 scheme=visa, issuer=GB-0113"
+        }
+      ],
+      "packet": {
+        "connection": "c_gateway_acquirer",
+        "shape": "document",
+        "data": {
+          "bin": "424242",
+          "scheme": "visa",
+          "acquirer_ref": "AQ-2f81c0",
+          "amount": "48.20"
+        }
+      },
+      "waterfall": {
+        "start": 65,
+        "weight": 30,
+        "label": "30 ms \u00b7 BIN lookup and routing",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Across the network",
+      "title": "Request crosses the card network",
+      "description": "The acquirer hands the request to the scheme, which switches it straight through to the issuing bank. The whole round trip has to finish inside the scheme's timeout, so nothing here is allowed to be slow.",
+      "highlight": [
+        "acquirer_host",
+        "network_switch",
+        "issuer_host"
+      ],
+      "active_connections": [
+        "c_acquirer_network",
+        "c_network_issuer"
+      ],
+      "packets": [
+        {
+          "connection": "c_acquirer_network",
+          "shape": "document",
+          "data": {
+            "scheme": "visa",
+            "amount": "48.20",
+            "currency": "GBP",
+            "mcc": "5411"
+          }
+        },
+        {
+          "connection": "c_network_issuer",
+          "shape": "document",
+          "data": {
+            "issuer": "GB-0113",
+            "amount": "48.20",
+            "merchant": "Corner Stores Ltd"
+          }
+        }
+      ],
+      "waterfall": {
+        "start": 95,
+        "weight": 60,
+        "label": "60 ms \u00b7 acquirer \u2192 scheme \u2192 issuer",
+        "color": "#8a6ad4"
+      }
+    },
+    {
+      "id": 5,
+      "name": "Risk check",
+      "title": "Issuer scores the transaction for fraud",
+      "description": "Before it looks at the money, the bank asks whether this looks like the cardholder. Amount, merchant category, country and how recently the card was used elsewhere all feed a score. This one comes back low, so the payment is not challenged.",
+      "highlight": [
+        "issuer_host",
+        "risk_engine"
+      ],
+      "active_connections": [
+        "c_issuer_risk"
+      ],
+      "camera": {
+        "focus": "risk_engine",
+        "zoom": 1.5
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "risk_engine",
+          "text": "score({ mcc, geo, velocity, amount }) \u2192 0.07"
+        },
+        {
+          "type": "callout",
+          "target": "risk_engine",
+          "style": "success",
+          "text": "below challenge threshold \u2014 no step-up"
+        }
+      ],
+      "packet": {
+        "connection": "c_issuer_risk",
+        "shape": "token",
+        "arrivalStyle": "success",
+        "data": {
+          "score": 0.07,
+          "threshold": 0.62,
+          "signals": "known_merchant, home_country, low_velocity",
+          "decision": "no_challenge"
+        }
+      },
+      "waterfall": {
+        "start": 155,
+        "weight": 85,
+        "label": "85 ms \u00b7 fraud scoring",
+        "color": "#e8a838"
+      }
+    },
+    {
+      "id": 6,
+      "name": "Insufficient funds",
+      "title": "The balance check fails",
+      "description": "The issuer checks available balance \u2014 the cleared balance minus every hold still outstanding \u2014 and the basket does not fit. The transaction is declined with response code 51.",
+      "highlight": [
+        "issuer_host",
+        "ledger"
+      ],
+      "active_connections": [
+        "c_issuer_ledger"
+      ],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "ledger",
+          "style": "error",
+          "text": "available = 31.85 \u2212 0.00 holds < 48.20"
+        }
+      ],
+      "packet": {
+        "connection": "c_issuer_ledger",
+        "shape": "token",
+        "arrivalStyle": "error",
+        "data": {
+          "requested": "48.20",
+          "available": "31.85",
+          "currency": "GBP",
+          "response_code": "51"
+        }
+      },
+      "footer": [
+        {
+          "text": "**Declined** \u2014 insufficient funds (code `51`)",
+          "style": "error"
+        },
+        {
+          "text": "Runs *concurrently* with the risk check \u2014 the issuer does not wait for one to finish the other",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 155,
+        "weight": 120,
+        "label": "120 ms \u00b7 balance and limit check",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 7,
+      "name": "Decline returned",
+      "title": "The decline travels back to the terminal",
+      "description": "The response retraces the request hop by hop \u2014 issuer, scheme, acquirer, gateway, terminal. No money was ever held, and the terminal shows 'declined' without saying why: the reason belongs to the cardholder's bank, not the shop.",
+      "highlight": [
+        "issuer_host",
+        "network_switch",
+        "acquirer_host",
+        "gateway",
+        "terminal"
+      ],
+      "active_connections": [
+        "c_network_issuer",
+        "c_acquirer_network",
+        "c_gateway_acquirer",
+        "c_terminal_gateway"
+      ],
+      "packets": [
+        {
+          "connection": "c_network_issuer",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "error",
+          "data": {
+            "mti": "0110",
+            "response_code": "51"
+          }
+        },
+        {
+          "connection": "c_acquirer_network",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "error",
+          "data": {
+            "response_code": "51",
+            "approved": false
+          }
+        },
+        {
+          "connection": "c_gateway_acquirer",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "error",
+          "data": {
+            "response_code": "51",
+            "auth_code": null
+          }
+        },
+        {
+          "connection": "c_terminal_gateway",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "error",
+          "data": {
+            "display": "DECLINED",
+            "response_code": "51"
+          }
+        }
+      ],
+      "footer": [
+        {
+          "text": "The shop is told **declined** and nothing more \u2014 the reason stays between the bank and its customer",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 275,
+        "weight": 70,
+        "label": "70 ms \u00b7 decline returned",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "id": 8,
+      "name": "Second card",
+      "title": "Customer offers a different card",
+      "description": "The cardholder pulls out another card and taps again. As far as every system downstream is concerned this is a brand new transaction, with a new reference \u2014 nothing about the declined attempt is carried forward.",
+      "highlight": [
+        "card_b",
+        "terminal"
+      ],
+      "active_connections": [
+        "c_card_b_terminal"
+      ],
+      "camera": {
+        "focus": "terminal",
+        "zoom": 1.4
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "terminal",
+          "text": "newAttempt({ attempt: 2, prev: 'declined_51' })"
+        }
+      ],
+      "packet": {
+        "connection": "c_card_b_terminal",
+        "shape": "token",
+        "data": {
+          "pan_masked": "5310 \u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7 5310",
+          "scheme": "mastercard",
+          "entry_mode": "contactless_emv",
+          "attempt": 2
+        }
+      }
+    },
+    {
+      "id": 9,
+      "name": "Retry approved",
+      "title": "The second attempt is authorised",
+      "description": "The same chain runs again for the new card. This time the balance check passes, the issuer places a hold for the full amount and returns an approval with an authorisation code.",
+      "highlight": [
+        "terminal",
+        "gateway",
+        "acquirer_host",
+        "network_switch",
+        "issuer_host",
+        "ledger"
+      ],
+      "active_connections": [
+        "c_terminal_gateway",
+        "c_gateway_acquirer",
+        "c_acquirer_network",
+        "c_network_issuer",
+        "c_issuer_ledger"
+      ],
+      "packets": [
+        {
+          "connection": "c_terminal_gateway",
+          "shape": "document",
+          "data": {
+            "mti": "0100",
+            "amount": "48.20",
+            "attempt": 2
+          }
+        },
+        {
+          "connection": "c_gateway_acquirer",
+          "shape": "document",
+          "data": {
+            "bin": "531000",
+            "scheme": "mastercard"
+          }
+        },
+        {
+          "connection": "c_acquirer_network",
+          "shape": "document",
+          "data": {
+            "scheme": "mastercard",
+            "amount": "48.20"
+          }
+        },
+        {
+          "connection": "c_network_issuer",
+          "shape": "document",
+          "data": {
+            "issuer": "GB-0207",
+            "amount": "48.20"
+          }
+        },
+        {
+          "connection": "c_issuer_ledger",
+          "shape": "token",
+          "arrivalStyle": "success",
+          "data": {
+            "requested": "48.20",
+            "available": "612.40",
+            "hold_placed": "48.20",
+            "response_code": "00"
+          }
+        }
+      ],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "ledger",
+          "style": "success",
+          "text": "hold(48.20) \u2192 available 612.40 \u2192 564.20"
+        }
+      ],
+      "waterfall": {
+        "start": 1500,
+        "weight": 210,
+        "label": "210 ms \u00b7 second attempt, end to end",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 10,
+      "name": "Approval at till",
+      "title": "Approval reaches the terminal",
+      "description": "The approval comes back down the same chain carrying an authorisation code, and the terminal prints the receipt. No money has moved yet \u2014 all that exists is a hold on the cardholder's account and a promise to settle.",
+      "highlight": [
+        "issuer_host",
+        "network_switch",
+        "acquirer_host",
+        "gateway",
+        "terminal"
+      ],
+      "active_connections": [
+        "c_network_issuer",
+        "c_acquirer_network",
+        "c_gateway_acquirer",
+        "c_terminal_gateway"
+      ],
+      "camera": {
+        "focus": "terminal",
+        "zoom": 1.4
+      },
+      "packets": [
+        {
+          "connection": "c_network_issuer",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "success",
+          "data": {
+            "mti": "0110",
+            "response_code": "00",
+            "auth_code": "0A3F91"
+          }
+        },
+        {
+          "connection": "c_acquirer_network",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "success",
+          "data": {
+            "approved": true,
+            "auth_code": "0A3F91"
+          }
+        },
+        {
+          "connection": "c_gateway_acquirer",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "success",
+          "data": {
+            "approved": true,
+            "acquirer_ref": "AQ-2f81d4"
+          }
+        },
+        {
+          "connection": "c_terminal_gateway",
+          "shape": "envelope",
+          "direction": "reverse",
+          "arrivalStyle": "success",
+          "data": {
+            "display": "APPROVED",
+            "auth_code": "0A3F91",
+            "amount": "48.20"
+          }
+        }
+      ],
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "terminal",
+          "style": "success",
+          "text": "printReceipt({ authCode: '0A3F91', amount: '\u00a348.20' })"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**Approved** \u2014 auth code `0A3F91`, \u00a348.20 held",
+          "style": "success"
+        },
+        {
+          "text": "**1,915 ms** from the first tap, of which ~1.2 s was the customer finding another card",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 1710,
+        "weight": 95,
+        "label": "95 ms \u00b7 approval returned",
+        "color": "#2d9f6a"
+      }
+    },
+    {
+      "id": 11,
+      "name": "End-of-day settlement",
+      "title": "The day's takings are cleared and settled",
+      "description": "At close of business the acquirer submits one clearing file covering every approved authorisation. The scheme nets the amounts between banks: the issuer debits its cardholders, the acquirer is paid, and the shop's account is funded a day or two later.",
+      "highlight": [
+        "acquirer_host",
+        "clearing",
+        "ledger",
+        "merchant_acct"
+      ],
+      "active_connections": [
+        "c_acquirer_clearing",
+        "c_clearing_ledger",
+        "c_clearing_merchant"
+      ],
+      "packets": [
+        {
+          "connection": "c_acquirer_clearing",
+          "shape": "document",
+          "count": 40,
+          "arrivalStyle": "success",
+          "data": {
+            "batch_id": "B-20260901-0113",
+            "transactions": 40,
+            "gross": "1,842.65",
+            "currency": "GBP"
+          }
+        },
+        {
+          "connection": "c_clearing_ledger",
+          "shape": "document",
+          "arrivalStyle": "success",
+          "data": {
+            "posting": "debit",
+            "amount": "48.20",
+            "auth_code": "0A3F91",
+            "hold_released": true
+          }
+        },
+        {
+          "connection": "c_clearing_merchant",
+          "shape": "document",
+          "arrivalStyle": "success",
+          "data": {
+            "gross": "1,842.65",
+            "fees": "24.31",
+            "net": "1,818.34",
+            "value_date": "T+1"
+          }
+        }
+      ],
+      "footer": [
+        {
+          "text": "**40 transactions** in one clearing file \u2014 the hold becomes a real debit only here",
+          "style": "info"
+        },
+        {
+          "text": "No bar: settlement runs hours later, so it is not on the authorisation's latency budget",
+          "style": "info"
+        }
+      ]
+    }
+  ]
+}

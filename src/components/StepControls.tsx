@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
 import { useStepEngine } from '@/hooks/useStepEngine'
-import { DEFAULT_PLAY_INTERVAL_MS } from '@/engine/stepEngine'
 import type { StepEngine } from '@/engine/stepEngine'
 import styles from '@/styles/StepControls.module.css'
 
@@ -12,14 +10,26 @@ const SPEED_OPTIONS = [
   { label: '4×', multiplier: 4 },
 ]
 
-export function StepControls({ engine }: { engine: StepEngine }) {
+export function StepControls({
+  engine,
+  speed,
+  onSpeedChange,
+  cameraFollow,
+  onCameraFollowChange,
+  editMode = false,
+}: {
+  engine: StepEngine
+  /** Owned by App, because the scene has to scale its animations by it too. */
+  speed: number
+  onSpeedChange: (speed: number) => void
+  /** Whether steps are allowed to move the camera. */
+  cameraFollow: boolean
+  onCameraFollowChange: (follow: boolean) => void
+  /** Playback is off while editing: nothing should move under an open editor,
+   *  and a step that re-applies mid-edit fights whatever you just typed. */
+  editMode?: boolean
+}) {
   const state = useStepEngine(engine)
-  const [speed, setSpeed] = useState(1)
-
-  // Keep the engine's playback interval in sync with the chosen speed.
-  useEffect(() => {
-    engine.setPlayInterval(DEFAULT_PLAY_INTERVAL_MS / speed)
-  }, [engine, speed])
 
   if (!state) return null
 
@@ -28,7 +38,11 @@ export function StepControls({ engine }: { engine: StepEngine }) {
       <button onClick={() => engine.prev()} disabled={state.currentIndex === 0}>
         ← Back
       </button>
-      <button onClick={() => engine.toggle()}>
+      <button
+        onClick={() => engine.toggle()}
+        disabled={editMode}
+        title={editMode ? 'Playback is paused while editing' : undefined}
+      >
         {state.isPlaying ? 'Pause' : 'Play'}
       </button>
       <button onClick={() => engine.next()} disabled={state.currentIndex === state.totalSteps - 1}>
@@ -37,10 +51,20 @@ export function StepControls({ engine }: { engine: StepEngine }) {
       <span className={styles.counter}>
         {state.currentIndex + 1} / {state.totalSteps}
       </span>
+      {/* Steps that name a component pull the camera to it. Turning this off
+          hands the view back, so you can look around while it plays. */}
+      <label className={styles.follow} title="Let steps move the camera">
+        <input
+          type="checkbox"
+          checked={cameraFollow}
+          onChange={(e) => onCameraFollowChange(e.target.checked)}
+        />
+        Follow
+      </label>
       <select
         className={styles.speedSelect}
         value={speed}
-        onChange={(e) => setSpeed(Number(e.target.value))}
+        onChange={(e) => onSpeedChange(Number(e.target.value))}
         aria-label="Playback speed"
         title="Playback speed"
       >
