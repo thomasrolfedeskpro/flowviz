@@ -1,3 +1,5 @@
+<img src="docs/logo.png" alt="FlowViz logo" width="140" />
+
 # FlowViz
 
 An animated isometric 3D data-flow diagram tool. Describe a system architecture in a JSON file and step through an animated explanation of how data moves through it — complete with glowing glass tubes, flowing packets, nested sub-scenes, and annotation cards.
@@ -14,7 +16,8 @@ An animated isometric 3D data-flow diagram tool. Describe a system architecture 
 - Chevron stream animation for genuine continuous data flows (Kafka, video, WebSockets)
 - **Nested scenes:** a component can contain a scene of its own, to any depth. Steps inside it are rendered in that scene, with the camera diving in and pulling back out
 - **Waterfall column:** give steps a measured bar and the sidebar slides out a waterfall showing where the time, rows, retries or cost went — the unit is yours, the renderer assumes nothing
-- **Edit mode:** drag components, resize and move zones, edit routing waypoints, change a component's size / shape / colour / icon, rename zone and pipe labels — then **Save to file** writes it straight back to the flow's JSON (or Copy JSON if you'd rather paste it somewhere)
+- **Edit mode:** place components and zones on the grid, draw connections, add / duplicate / delete steps, drag components, resize and move zones, edit routing waypoints, change a component's size / shape / colour / icon, rename zone and pipe labels. Deletes show what they cascade to first, edits are undo/redo-able (⌘Z / ⇧⌘Z), and any object — or the whole flow — can be edited as raw JSON when no form covers what you need. **Save to file** writes it back to the flow's JSON (or Copy JSON to paste it elsewhere)
+- **GIF export:** records a play-through of the current flow and downloads it as `flowviz.gif`
 - Light and dark themes
 
 ## Authoring flows with an LLM
@@ -23,7 +26,7 @@ Flows are plain JSON files under `public/flows/`, in one of two directories:
 
 | Directory | What goes there |
 |---|---|
-| `public/flows/examples/` | Committed to the repo. The flows that ship as reference material — read-only in the UI, they cannot be deleted. |
+| `public/flows/examples/` | Committed to the repo. The flows that ship as reference material — editable and savable, but the UI and the dev server both refuse to delete them. |
 | `public/flows/custom/` | **Git-ignored.** Your own and your product's flows — they stay on your machine. |
 
 New flows belong in `custom/` unless you specifically mean to add a shipped
@@ -39,10 +42,9 @@ filename, so `?flow=oauth` works wherever the file sits.
 
 **Example flows:**
 
-These ship in `public/flows/examples/`:
-
-Between them they exercise every feature the renderer has. Start with the coffee
-shop; it is deliberately the simplest thing the tool can draw.
+These ship in `public/flows/examples/` and between them exercise every feature
+the renderer has. Start with the coffee shop; it is deliberately the simplest
+thing the tool can draw.
 
 | File | Size | What it shows |
 |------|------|---------------|
@@ -60,8 +62,12 @@ shop; it is deliberately the simplest thing the tool can draw.
 
 *Size is components / steps, counting every nested scene.*
 
-Flows in `public/flows/custom/` are git-ignored, for personal and
-product-specific diagrams that should not be committed.
+## The Claude Code skill
+
+`skills/flowviz/` is a Claude Code skill that authors flows **from any repo** —
+it finds this checkout, reads its guide and schema, interviews you about intent
+and depth, then writes and validates a flow into `public/flows/custom/`. Install
+and packaging instructions are in [`skills/README.md`](./skills/README.md).
 
 ## Screenshots
 
@@ -77,13 +83,17 @@ product-specific diagrams that should not be committed.
 ```bash
 pnpm install
 pnpm run dev      # http://localhost:5175
-pnpm test         # vitest
+pnpm test         # vitest run
+pnpm test:watch   # vitest
 pnpm run build    # tsc -b && vite build
 pnpm run lint
 ```
 
-The port is pinned to **5175** in `vite.config.ts`. A flow loads automatically;
-append `?flow=<name>` (any filename under `public/flows/`, without its extension)
+Both a `pnpm-lock.yaml` and a `package-lock.json` are committed; pnpm is the one
+to use.
+
+The port is pinned to **5175** in `vite.config.ts`. `coffee-shop-order` loads by
+default; append `?flow=<name>` (any filename under `public/flows/`, without its extension)
 to load a specific one.
 
 Editing, saving and deleting flows all need the dev server — they write to
