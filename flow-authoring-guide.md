@@ -737,11 +737,45 @@ Each item uses the same schema as `packet`.
 
 - `packets` and `packet` are mutually exclusive per step — use one or the other,
   not both.
-- All packets in the array launch simultaneously and travel in parallel.
 - Each packet may have its own `connection`, `shape`, `direction`, `arrivalStyle`,
   and `data`.
 - The `active_connections` array for the step should include every connection
   referenced across the entire `packets` array.
+
+**Simultaneous means simultaneous.** Every packet in the array launches at the
+same instant and they travel in parallel. There is no way to sequence them
+within one step — no delay, no ordering. `packets` means *these things happen at
+once*, and nothing else.
+
+This is worth stating plainly because the tempting misuse looks so reasonable.
+The Monopoly example needed a token to move ten squares along ten consecutive
+pipes, and was first written as ten packets on those ten pipes. It rendered as
+ten counters travelling abreast, because that is exactly what it says.
+
+**One thing moving is one packet.** If something has to travel several hops, do
+not send a packet down each hop — give it a single connection from where it
+starts to where it ends, and use waypoints to route it along the path it should
+take:
+
+```json
+{
+  "id": "m_move", "from": "square_3", "to": "square_9",
+  "route": [
+    { "col": 4.5, "row": 20.5 },
+    { "col": 6.5, "row": 20.5 },
+    { "col": 8.5, "row": 20.5 }
+  ]
+}
+```
+
+The packet then follows that route as one object, and every component it passes
+through goes briefly translucent as it does. Waypoints take fractional cells, so
+a route can pass through the middle of a square rather than its corner.
+
+**When several packets *are* right:** a fan-out to three consumers, a two-sided
+handshake, or two genuinely concurrent things — drawing a card *and* collecting
+the money for it. If you would describe it as "and at the same time", `packets`
+is correct.
 
 ### 8.11 `streams` / `stream` — continuous data stream animation
 

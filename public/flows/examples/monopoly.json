@@ -1,0 +1,3385 @@
+{
+  "meta": {
+    "title": "Monopoly \u2014 one game, forty spaces",
+    "description": "The London board as it is: forty spaces round the edge, nine between each corner. Follow two players round it \u2014 a purchase, an auction, a set completed, three turns in a cell, a hotel on Mayfair and the landing that ends the game. Pipe colour is the money: green to and from the bank, amber between players, red for the one shortcut nobody wants. Two squares open into scenes of their own.",
+    "timing": {
+      "step": 3200,
+      "packet": 1700,
+      "transition": 700,
+      "stream": 3200
+    }
+  },
+  "layout": {
+    "grid": {
+      "cols": 21,
+      "rows": 21
+    }
+  },
+  "zones": [
+    {
+      "id": "z_board",
+      "label": "The board",
+      "color": "#6f8f52",
+      "bounds": {
+        "col": 0,
+        "row": 0,
+        "width": 21,
+        "height": 21
+      },
+      "meta": {
+        "description": "Forty spaces, four corners, nine between each. Every game of Monopoly ever played happened on this rectangle.",
+        "notes": "The middle is where the box art and the two card decks live."
+      }
+    },
+    {
+      "id": "z_south",
+      "label": "Old Kent Road to Pentonville",
+      "color": "#8b5a2b",
+      "bounds": {
+        "col": 0,
+        "row": 20,
+        "width": 21,
+        "height": 1
+      },
+      "meta": {
+        "description": "The cheap side. Two brown properties nobody wants and the first station."
+      },
+      "parentId": "z_board"
+    },
+    {
+      "id": "z_west",
+      "label": "Pall Mall to Vine Street",
+      "color": "#ec4899",
+      "bounds": {
+        "col": 0,
+        "row": 0,
+        "width": 1,
+        "height": 21
+      },
+      "meta": {
+        "description": "Pink and orange \u2014 the stretch most likely to be landed on out of jail."
+      },
+      "parentId": "z_board"
+    },
+    {
+      "id": "z_north",
+      "label": "Strand to Piccadilly",
+      "color": "#dc2626",
+      "bounds": {
+        "col": 0,
+        "row": 0,
+        "width": 21,
+        "height": 1
+      },
+      "meta": {
+        "description": "Red and yellow, the middle of the board and the middle of the market."
+      },
+      "parentId": "z_board"
+    },
+    {
+      "id": "z_east",
+      "label": "Regent Street to Mayfair",
+      "color": "#1e3a8a",
+      "bounds": {
+        "col": 20,
+        "row": 0,
+        "width": 1,
+        "height": 21
+      },
+      "meta": {
+        "description": "The expensive side. Park Lane and Mayfair end more games than anything else."
+      },
+      "parentId": "z_board"
+    }
+  ],
+  "components": [
+    {
+      "id": "go",
+      "label": "GO",
+      "type": "external",
+      "shape": "octagon",
+      "icon": "flagCheckered",
+      "color": "#22c55e",
+      "position": {
+        "col": 20,
+        "row": 20
+      },
+      "meta": {
+        "description": "GO \u2014 the only square that pays you.",
+        "notes": "Collect \u00a3200 every time you pass it, including the time you land on it. Not \u00a3400 for landing: that is a house rule too."
+      }
+    },
+    {
+      "id": "old_kent",
+      "label": "Old Kent Road",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#8b5a2b",
+      "position": {
+        "col": 18,
+        "row": 20
+      },
+      "meta": {
+        "description": "Old Kent Road \u2014 \u00a360, rent \u00a32.",
+        "notes": "The cheapest street on the board and, with a hotel, still only \u00a3250. People buy it out of affection."
+      }
+    },
+    {
+      "id": "chest_1",
+      "label": "Community Chest",
+      "type": "client",
+      "shape": "cylinder",
+      "icon": "gift",
+      "color": "#60a5fa",
+      "position": {
+        "col": 16,
+        "row": 20
+      },
+      "meta": {
+        "description": "Community Chest \u2014 16 cards, mostly harmless.",
+        "notes": "Doctor\u2019s fee, sale of stock, second prize in a beauty contest. Two of the sixteen send you somewhere."
+      }
+    },
+    {
+      "id": "whitechapel",
+      "label": "Whitechapel Road",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#8b5a2b",
+      "position": {
+        "col": 14,
+        "row": 20
+      },
+      "meta": {
+        "description": "Whitechapel Road \u2014 \u00a360, rent \u00a34.",
+        "notes": "The other brown. Cheap to complete, cheap to develop, and hotels here cost \u00a350 apiece."
+      }
+    },
+    {
+      "id": "income_tax",
+      "label": "Income Tax",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "fileInvoiceDollar",
+      "color": "#78716c",
+      "position": {
+        "col": 12,
+        "row": 20
+      },
+      "meta": {
+        "description": "Income Tax \u2014 pay \u00a3200.",
+        "notes": "Current rules make it a flat \u00a3200. Older sets let you choose 10% of everything you own instead, which almost nobody works out honestly."
+      }
+    },
+    {
+      "id": "kings_cross",
+      "label": "King's Cross Station",
+      "type": "service",
+      "shape": "cuboid",
+      "icon": "train",
+      "color": "#334155",
+      "position": {
+        "col": 10,
+        "row": 20
+      },
+      "meta": {
+        "description": "King\u2019s Cross Station \u2014 \u00a3200.",
+        "notes": "Rent is \u00a325 for one station, \u00a350 for two, \u00a3100 for three, \u00a3200 for all four. Stations cannot be built on."
+      }
+    },
+    {
+      "id": "angel",
+      "label": "The Angel Islington",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#7dd3fc",
+      "position": {
+        "col": 8,
+        "row": 20
+      },
+      "meta": {
+        "description": "The Angel Islington \u2014 \u00a3100, rent \u00a36.",
+        "notes": "Light blue. Cheap to complete and directly in the firing line of anyone leaving jail."
+      }
+    },
+    {
+      "id": "chance_1",
+      "label": "Chance",
+      "type": "client",
+      "shape": "cylinder",
+      "icon": "circleQuestion",
+      "color": "#fb923c",
+      "position": {
+        "col": 6,
+        "row": 20
+      },
+      "meta": {
+        "description": "Chance \u2014 16 cards, ten of which move you.",
+        "notes": "The most dangerous deck: three cards send you to jail or backwards, and one sends you to Mayfair."
+      }
+    },
+    {
+      "id": "euston",
+      "label": "Euston Road",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#7dd3fc",
+      "position": {
+        "col": 4,
+        "row": 20
+      },
+      "meta": {
+        "description": "Euston Road \u2014 \u00a3100, rent \u00a36.",
+        "notes": "The middle light blue. Worth more to whoever already owns the other two than it is to you."
+      }
+    },
+    {
+      "id": "pentonville",
+      "label": "Pentonville Road",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#7dd3fc",
+      "position": {
+        "col": 2,
+        "row": 20
+      },
+      "meta": {
+        "description": "Pentonville Road \u2014 \u00a3120, rent \u00a38.",
+        "notes": "Completes the light blues. With the set the rent doubles to \u00a316 before a single house goes on."
+      }
+    },
+    {
+      "id": "jail",
+      "label": "Jail / Just Visiting",
+      "type": "external",
+      "shape": "octagon",
+      "icon": "handcuffs",
+      "color": "#94a3b8",
+      "position": {
+        "col": 0,
+        "row": 20
+      },
+      "meta": {
+        "description": "Jail, and the Just Visiting kerb outside it.",
+        "notes": "Two different squares sharing one corner. Visiting costs nothing; being in costs you up to three turns."
+      },
+      "detail": {
+        "grid": {
+          "cols": 13,
+          "rows": 8
+        },
+        "components": [
+          {
+            "id": "j_cell",
+            "label": "In the cell",
+            "type": "external",
+            "shape": "octagon",
+            "icon": "handcuffs",
+            "color": "#94a3b8",
+            "position": {
+              "col": 0,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
+            "meta": {
+              "description": "Your token is in jail. You still collect rent, still trade, still build.",
+              "notes": "Being in jail late in the game is an advantage: you cannot land on anyone else\u2019s hotels from inside it."
+            }
+          },
+          {
+            "id": "j_double",
+            "label": "Throw a double",
+            "type": "function",
+            "shape": "hexagon",
+            "icon": "dice",
+            "color": "#22c55e",
+            "position": {
+              "col": 5,
+              "row": 0
+            },
+            "meta": {
+              "description": "One attempt per turn, three turns in all.",
+              "notes": "Six of the thirty-six outcomes are doubles, so each attempt succeeds one time in six. You move the number thrown and do not roll again."
+            }
+          },
+          {
+            "id": "j_fifty",
+            "label": "Pay \u00a350",
+            "type": "service",
+            "shape": "cuboid",
+            "icon": "moneyBillWave",
+            "color": "#16a34a",
+            "position": {
+              "col": 5,
+              "row": 3
+            },
+            "meta": {
+              "description": "The fine. Optional on turns one and two, compulsory on turn three.",
+              "notes": "Paying before you roll lets you use both dice normally, including a double for an extra turn."
+            }
+          },
+          {
+            "id": "j_card",
+            "label": "Get Out Of Jail Free",
+            "type": "queue",
+            "shape": "cylinder",
+            "icon": "key",
+            "color": "#fb923c",
+            "position": {
+              "col": 5,
+              "row": 6
+            },
+            "meta": {
+              "description": "One card in each deck. Play it or sell it to another player.",
+              "notes": "It goes to the bottom of its deck once used, so there is always exactly one of each in circulation."
+            }
+          },
+          {
+            "id": "j_out",
+            "label": "Back on the board",
+            "type": "client",
+            "shape": "octagon",
+            "icon": "doorOpen",
+            "color": "#7dd3fc",
+            "position": {
+              "col": 10,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
+            "meta": {
+              "description": "Out on the Just Visiting kerb, moving the number you threw.",
+              "notes": "The oranges and pinks sit six to nine squares from here, which is why they are the best sets in the game."
+            }
+          }
+        ],
+        "connections": [
+          {
+            "id": "c_j_try",
+            "from": "j_cell",
+            "to": "j_double",
+            "label": "roll for a pair",
+            "color": "#22c55e",
+            "route": "auto"
+          },
+          {
+            "id": "c_j_pay",
+            "from": "j_cell",
+            "to": "j_fifty",
+            "label": "the fine",
+            "color": "#16a34a",
+            "route": "auto"
+          },
+          {
+            "id": "c_j_use",
+            "from": "j_cell",
+            "to": "j_card",
+            "label": "play the card",
+            "color": "#fb923c",
+            "route": "auto"
+          },
+          {
+            "id": "c_j_out_double",
+            "from": "j_double",
+            "to": "j_out",
+            "color": "#22c55e",
+            "route": "auto"
+          },
+          {
+            "id": "c_j_out_pay",
+            "from": "j_fifty",
+            "to": "j_out",
+            "color": "#16a34a",
+            "route": "auto"
+          },
+          {
+            "id": "c_j_out_card",
+            "from": "j_card",
+            "to": "j_out",
+            "color": "#fb923c",
+            "route": "auto"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pall_mall",
+      "label": "Pall Mall",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#ec4899",
+      "position": {
+        "col": 0,
+        "row": 18
+      },
+      "meta": {
+        "description": "Pall Mall \u2014 \u00a3140, rent \u00a310.",
+        "notes": "First of the pinks, and one of the most landed-on stretches on the board thanks to everyone leaving jail six to nine squares away."
+      }
+    },
+    {
+      "id": "electric",
+      "label": "Electric Company",
+      "type": "service",
+      "shape": "cuboid",
+      "icon": "bolt",
+      "color": "#64748b",
+      "position": {
+        "col": 0,
+        "row": 16
+      },
+      "meta": {
+        "description": "Electric Company \u2014 \u00a3150.",
+        "notes": "Rent is four times your dice roll, or ten times if the same player owns Water Works too. Never a fortune, never nothing."
+      }
+    },
+    {
+      "id": "whitehall",
+      "label": "Whitehall",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#ec4899",
+      "position": {
+        "col": 0,
+        "row": 14
+      },
+      "meta": {
+        "description": "Whitehall \u2014 \u00a3140, rent \u00a310.",
+        "notes": "The pink nobody remembers until they owe \u00a3500 on it."
+      }
+    },
+    {
+      "id": "northumberland",
+      "label": "Northumberland Avenue",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#ec4899",
+      "position": {
+        "col": 0,
+        "row": 12
+      },
+      "meta": {
+        "description": "Northumberland Avenue \u2014 \u00a3160, rent \u00a312.",
+        "notes": "Completes the pinks. A pink set with three houses each is the classic mid-game trap."
+      }
+    },
+    {
+      "id": "marylebone",
+      "label": "Marylebone Station",
+      "type": "service",
+      "shape": "cuboid",
+      "icon": "train",
+      "color": "#334155",
+      "position": {
+        "col": 0,
+        "row": 10
+      },
+      "meta": {
+        "description": "Marylebone Station \u2014 \u00a3200.",
+        "notes": "The second station. Two stations is \u00a350 a landing \u2014 the cheapest reliable income on the board."
+      }
+    },
+    {
+      "id": "bow_street",
+      "label": "Bow Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#f97316",
+      "position": {
+        "col": 0,
+        "row": 8
+      },
+      "meta": {
+        "description": "Bow Street \u2014 \u00a3180, rent \u00a314.",
+        "notes": "First of the oranges, statistically the best set on the board: everyone leaving jail rolls into them."
+      }
+    },
+    {
+      "id": "chest_2",
+      "label": "Community Chest",
+      "type": "client",
+      "shape": "cylinder",
+      "icon": "gift",
+      "color": "#60a5fa",
+      "position": {
+        "col": 0,
+        "row": 6
+      },
+      "meta": {
+        "description": "Community Chest \u2014 the second of three.",
+        "notes": "All three squares draw from the same deck, and cards go to the bottom after use."
+      }
+    },
+    {
+      "id": "marlborough",
+      "label": "Marlborough Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#f97316",
+      "position": {
+        "col": 0,
+        "row": 4
+      },
+      "meta": {
+        "description": "Marlborough Street \u2014 \u00a3180, rent \u00a314.",
+        "notes": "The middle orange. Three houses here is \u00a3700 a landing for an outlay of \u00a3600."
+      }
+    },
+    {
+      "id": "vine_street",
+      "label": "Vine Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#f97316",
+      "position": {
+        "col": 0,
+        "row": 2
+      },
+      "meta": {
+        "description": "Vine Street \u2014 \u00a3200, rent \u00a316.",
+        "notes": "Completes the oranges, six to nine squares out of jail \u2014 the single most profitable spot to be waiting."
+      }
+    },
+    {
+      "id": "free_parking",
+      "label": "Free Parking",
+      "type": "external",
+      "shape": "octagon",
+      "icon": "squareParking",
+      "color": "#a3a3a3",
+      "position": {
+        "col": 0,
+        "row": 0
+      },
+      "meta": {
+        "description": "Free Parking \u2014 nothing happens.",
+        "notes": "No money, no cards, no penalty. Every pot of cash in the middle of a real game is a house rule."
+      }
+    },
+    {
+      "id": "strand",
+      "label": "Strand",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#dc2626",
+      "position": {
+        "col": 2,
+        "row": 0
+      },
+      "meta": {
+        "description": "Strand \u2014 \u00a3220, rent \u00a318.",
+        "notes": "First of the reds, and the beginning of the expensive half of the board."
+      }
+    },
+    {
+      "id": "chance_2",
+      "label": "Chance",
+      "type": "client",
+      "shape": "cylinder",
+      "icon": "circleQuestion",
+      "color": "#fb923c",
+      "position": {
+        "col": 4,
+        "row": 0
+      },
+      "meta": {
+        "description": "Chance \u2014 the second of three.",
+        "notes": "Ten of the sixteen cards move your token. Drawing here can take you back to Old Kent Road."
+      }
+    },
+    {
+      "id": "fleet_street",
+      "label": "Fleet Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#dc2626",
+      "position": {
+        "col": 6,
+        "row": 0
+      },
+      "meta": {
+        "description": "Fleet Street \u2014 \u00a3220, rent \u00a318.",
+        "notes": "The middle red. Unimproved it is small change; with a hotel it is \u00a31,050."
+      }
+    },
+    {
+      "id": "trafalgar",
+      "label": "Trafalgar Square",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#dc2626",
+      "position": {
+        "col": 8,
+        "row": 0
+      },
+      "meta": {
+        "description": "Trafalgar Square \u2014 \u00a3240, rent \u00a320.",
+        "notes": "One of the most landed-on squares in the game \u2014 a Chance card posts players here from three places on the board."
+      }
+    },
+    {
+      "id": "fenchurch",
+      "label": "Fenchurch St Station",
+      "type": "service",
+      "shape": "cuboid",
+      "icon": "train",
+      "color": "#334155",
+      "position": {
+        "col": 10,
+        "row": 0
+      },
+      "meta": {
+        "description": "Fenchurch Street Station \u2014 \u00a3200.",
+        "notes": "The third station. Chance cards send players to the nearest station and charge them double."
+      }
+    },
+    {
+      "id": "leicester",
+      "label": "Leicester Square",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#eab308",
+      "position": {
+        "col": 12,
+        "row": 0
+      },
+      "meta": {
+        "description": "Leicester Square \u2014 \u00a3260, rent \u00a322.",
+        "notes": "First of the yellows. Expensive to build, awkwardly placed, frequently owned by the player who then loses."
+      }
+    },
+    {
+      "id": "coventry",
+      "label": "Coventry Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#eab308",
+      "position": {
+        "col": 14,
+        "row": 0
+      },
+      "meta": {
+        "description": "Coventry Street \u2014 \u00a3260, rent \u00a322.",
+        "notes": "The middle yellow. Nothing distinguishes it except how often it is mortgaged."
+      }
+    },
+    {
+      "id": "water_works",
+      "label": "Water Works",
+      "type": "service",
+      "shape": "cuboid",
+      "icon": "faucet",
+      "color": "#64748b",
+      "position": {
+        "col": 16,
+        "row": 0
+      },
+      "meta": {
+        "description": "Water Works \u2014 \u00a3150.",
+        "notes": "Four times the dice, or ten times with the Electric Company. Buy it to stop someone else getting the pair."
+      }
+    },
+    {
+      "id": "piccadilly",
+      "label": "Piccadilly",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#eab308",
+      "position": {
+        "col": 18,
+        "row": 0
+      },
+      "meta": {
+        "description": "Piccadilly \u2014 \u00a3280, rent \u00a324.",
+        "notes": "Completes the yellows, and sits one square before Go To Jail. Many players never land on it at all."
+      }
+    },
+    {
+      "id": "go_to_jail",
+      "label": "Go To Jail",
+      "type": "external",
+      "shape": "octagon",
+      "icon": "handcuffs",
+      "color": "#ef4444",
+      "position": {
+        "col": 20,
+        "row": 0
+      },
+      "meta": {
+        "description": "Go To Jail \u2014 the worst square on the board.",
+        "notes": "Straight to the cell, no \u00a3200, no collecting anything on the way. You are not \"just visiting\"."
+      }
+    },
+    {
+      "id": "regent",
+      "label": "Regent Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#16a34a",
+      "position": {
+        "col": 20,
+        "row": 2
+      },
+      "meta": {
+        "description": "Regent Street \u2014 \u00a3300, rent \u00a326.",
+        "notes": "First of the greens. Greens cost \u00a3200 a house and rarely repay it before the game ends."
+      }
+    },
+    {
+      "id": "oxford",
+      "label": "Oxford Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#16a34a",
+      "position": {
+        "col": 20,
+        "row": 4
+      },
+      "meta": {
+        "description": "Oxford Street \u2014 \u00a3300, rent \u00a326.",
+        "notes": "The middle green. A full green set with hotels is the most expensive thing to build in the game."
+      }
+    },
+    {
+      "id": "chest_3",
+      "label": "Community Chest",
+      "type": "client",
+      "shape": "cylinder",
+      "icon": "gift",
+      "color": "#60a5fa",
+      "position": {
+        "col": 20,
+        "row": 6
+      },
+      "meta": {
+        "description": "Community Chest \u2014 the last of three.",
+        "notes": "The deck that pays you \u00a3100 for a life insurance policy and takes \u00a3150 for school fees."
+      }
+    },
+    {
+      "id": "bond_street",
+      "label": "Bond Street",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#16a34a",
+      "position": {
+        "col": 20,
+        "row": 8
+      },
+      "meta": {
+        "description": "Bond Street \u2014 \u00a3320, rent \u00a328.",
+        "notes": "Completes the greens. \u00a31,100 to build them out to hotels; you had better collect."
+      }
+    },
+    {
+      "id": "liverpool",
+      "label": "Liverpool Street Station",
+      "type": "service",
+      "shape": "cuboid",
+      "icon": "train",
+      "color": "#334155",
+      "position": {
+        "col": 20,
+        "row": 10
+      },
+      "meta": {
+        "description": "Liverpool Street Station \u2014 \u00a3200.",
+        "notes": "The fourth station. Owning all four is \u00a3200 a landing and needs no building at all."
+      }
+    },
+    {
+      "id": "chance_3",
+      "label": "Chance",
+      "type": "client",
+      "shape": "cylinder",
+      "icon": "circleQuestion",
+      "color": "#fb923c",
+      "position": {
+        "col": 20,
+        "row": 12
+      },
+      "meta": {
+        "description": "Chance \u2014 the last of three, and the cruellest.",
+        "notes": "It sits two squares before Mayfair, and one of its cards is \"Advance to Mayfair\"."
+      }
+    },
+    {
+      "id": "park_lane",
+      "label": "Park Lane",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "house",
+      "color": "#1e3a8a",
+      "position": {
+        "col": 20,
+        "row": 14
+      },
+      "meta": {
+        "description": "Park Lane \u2014 \u00a3350, rent \u00a335.",
+        "notes": "The quieter dark blue. Four houses here is \u00a31,100 \u2014 and the rules make you build it before Mayfair gets a hotel."
+      }
+    },
+    {
+      "id": "super_tax",
+      "label": "Super Tax",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "fileInvoiceDollar",
+      "color": "#78716c",
+      "position": {
+        "col": 20,
+        "row": 16
+      },
+      "meta": {
+        "description": "Super Tax \u2014 pay \u00a3100.",
+        "notes": "A flat \u00a3100, and the last thing between a player and Mayfair."
+      }
+    },
+    {
+      "id": "mayfair",
+      "label": "Mayfair",
+      "type": "client",
+      "shape": "cuboid",
+      "icon": "crown",
+      "color": "#1e3a8a",
+      "position": {
+        "col": 20,
+        "row": 18
+      },
+      "meta": {
+        "description": "Mayfair \u2014 \u00a3400, rent \u00a350.",
+        "notes": "The most expensive square in the game. \u00a350 unimproved, \u00a3100 with the set, \u00a32,000 with a hotel. Games end here."
+      },
+      "detail": {
+        "grid": {
+          "cols": 14,
+          "rows": 8
+        },
+        "components": [
+          {
+            "id": "mf_site",
+            "label": "The bare site",
+            "type": "external",
+            "shape": "cuboid",
+            "icon": "tag",
+            "color": "#1e3a8a",
+            "position": {
+              "col": 0,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
+            "meta": {
+              "description": "Mayfair as bought: a title deed and nothing on it.",
+              "notes": "Rent \u00a350. Doubled to \u00a3100 the moment the same player owns Park Lane as well, with nothing built."
+            }
+          },
+          {
+            "id": "mf_h1",
+            "label": "One house",
+            "type": "service",
+            "shape": "cuboid",
+            "icon": "house",
+            "color": "#16a34a",
+            "position": {
+              "col": 4,
+              "row": 3
+            },
+            "meta": {
+              "description": "\u00a3200 buys the first house. Rent \u00a3200.",
+              "notes": "The first house is the best value on the board: it multiplies the rent by four for a quarter of the purchase price."
+            }
+          },
+          {
+            "id": "mf_h2",
+            "label": "Two houses",
+            "type": "service",
+            "shape": "cuboid",
+            "icon": "house",
+            "color": "#16a34a",
+            "position": {
+              "col": 6,
+              "row": 3
+            },
+            "meta": {
+              "description": "Rent \u00a3600.",
+              "notes": "Another \u00a3200 for another \u00a3400 of rent."
+            }
+          },
+          {
+            "id": "mf_h3",
+            "label": "Three houses",
+            "type": "service",
+            "shape": "cuboid",
+            "icon": "house",
+            "color": "#16a34a",
+            "position": {
+              "col": 8,
+              "row": 3
+            },
+            "meta": {
+              "description": "Rent \u00a31,400.",
+              "notes": "Three houses is where most sets stop, because it is where the money runs out."
+            }
+          },
+          {
+            "id": "mf_h4",
+            "label": "Four houses",
+            "type": "service",
+            "shape": "cuboid",
+            "icon": "house",
+            "color": "#16a34a",
+            "position": {
+              "col": 10,
+              "row": 3
+            },
+            "meta": {
+              "description": "Rent \u00a31,700.",
+              "notes": "The worst step on the ladder: \u00a3200 spent for \u00a3300 more rent."
+            }
+          },
+          {
+            "id": "mf_hotel",
+            "label": "The hotel",
+            "type": "database",
+            "shape": "cuboid",
+            "icon": "hotel",
+            "color": "#dc2626",
+            "position": {
+              "col": 12,
+              "row": 3
+            },
+            "meta": {
+              "description": "\u00a3200 and the four houses, traded in. Rent \u00a32,000.",
+              "notes": "A hotel replaces the houses \u2014 they go back to the bank for someone else to buy. Only twelve hotels exist."
+            }
+          },
+          {
+            "id": "mf_rent",
+            "label": "The title deed",
+            "type": "client",
+            "shape": "cuboid",
+            "icon": "fileContract",
+            "color": "#eab308",
+            "position": {
+              "col": 11,
+              "row": 0
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
+            "meta": {
+              "description": "The rent ladder printed on the card: 50 \u00b7 200 \u00b7 600 \u00b7 1400 \u00b7 1700 \u00b7 2000.",
+              "notes": "Also on the card: houses cost \u00a3200 each here, and mortgaging raises \u00a3200."
+            }
+          },
+          {
+            "id": "mf_park",
+            "label": "Park Lane, in step",
+            "type": "client",
+            "shape": "cuboid",
+            "icon": "house",
+            "color": "#1e3a8a",
+            "position": {
+              "col": 0,
+              "row": 6
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
+            "meta": {
+              "description": "The other dark blue, built at the same rate.",
+              "notes": "You may never be more than one house ahead on either street of a set. Mayfair cannot reach a hotel until Park Lane has four houses."
+            }
+          }
+        ],
+        "connections": [
+          {
+            "id": "c_mf_1",
+            "from": "mf_site",
+            "to": "mf_h1",
+            "label": "+\u00a3200",
+            "color": "#16a34a",
+            "route": "auto"
+          },
+          {
+            "id": "c_mf_2",
+            "from": "mf_h1",
+            "to": "mf_h2",
+            "label": "+\u00a3200",
+            "color": "#16a34a",
+            "route": "auto"
+          },
+          {
+            "id": "c_mf_3",
+            "from": "mf_h2",
+            "to": "mf_h3",
+            "label": "+\u00a3200",
+            "color": "#16a34a",
+            "route": "auto"
+          },
+          {
+            "id": "c_mf_4",
+            "from": "mf_h3",
+            "to": "mf_h4",
+            "label": "+\u00a3200",
+            "color": "#16a34a",
+            "route": "auto"
+          },
+          {
+            "id": "c_mf_5",
+            "from": "mf_h4",
+            "to": "mf_hotel",
+            "label": "four houses + \u00a3200",
+            "color": "#dc2626",
+            "route": "auto"
+          },
+          {
+            "id": "c_mf_deed",
+            "from": "mf_hotel",
+            "to": "mf_rent",
+            "label": "rent now due",
+            "color": "#eab308",
+            "route": "auto"
+          },
+          {
+            "id": "c_mf_pair",
+            "from": "mf_site",
+            "to": "mf_park",
+            "label": "built evenly",
+            "color": "#60a5fa",
+            "route": "auto"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bank",
+      "label": "The Bank",
+      "type": "database",
+      "shape": "cuboid",
+      "icon": "buildingColumns",
+      "color": "#0f766e",
+      "size": {
+        "w": 4,
+        "h": 3
+      },
+      "position": {
+        "col": 8,
+        "row": 9
+      },
+      "meta": {
+        "description": "Pays out, collects, and never runs out \u2014 the rules say so.",
+        "notes": "It also auctions any property a player declines to buy, and it is where every house and hotel comes from. There are only 32 houses and 12 hotels in the box, and running out is a legal way to starve your opponents."
+      }
+    },
+    {
+      "id": "boot",
+      "label": "Player 1 \u2014 the boot",
+      "type": "client",
+      "shape": "triangle",
+      "icon": "shoePrints",
+      "color": "#b91c1c",
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "position": {
+        "col": 4,
+        "row": 15
+      },
+      "meta": {
+        "description": "Player 1. Starts on GO with \u00a31,500 and a plan about light blues.",
+        "notes": "Opening cash is \u00a31,500: two \u00a3500s, two \u00a3100s, two \u00a350s, six \u00a320s, five each of \u00a310, \u00a35 and \u00a31."
+      }
+    },
+    {
+      "id": "hat",
+      "label": "Player 2 \u2014 the top hat",
+      "type": "client",
+      "shape": "triangle",
+      "icon": "hatCowboy",
+      "color": "#1d4ed8",
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "position": {
+        "col": 15,
+        "row": 15
+      },
+      "meta": {
+        "description": "Player 2. Starts on GO with the same \u00a31,500 and rather worse luck.",
+        "notes": "Turn order is decided by a roll before the game starts. It matters less than people think."
+      }
+    },
+    {
+      "id": "chance_deck",
+      "label": "Chance deck",
+      "type": "queue",
+      "shape": "cylinder",
+      "icon": "circleQuestion",
+      "color": "#fb923c",
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "position": {
+        "col": 15,
+        "row": 4
+      },
+      "meta": {
+        "description": "Sixteen Chance cards, shuffled face down.",
+        "notes": "Ten of them move your token, three of those to jail or backwards. The Get Out Of Jail Free card lives in here until someone draws it."
+      }
+    },
+    {
+      "id": "chest_deck",
+      "label": "Community Chest deck",
+      "type": "queue",
+      "shape": "cylinder",
+      "icon": "gift",
+      "color": "#60a5fa",
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "position": {
+        "col": 4,
+        "row": 4
+      },
+      "meta": {
+        "description": "Sixteen Community Chest cards, shuffled face down.",
+        "notes": "Mostly small sums in your favour, plus a second Get Out Of Jail Free card and one trip to jail."
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "t_go",
+      "from": "go",
+      "to": "old_kent",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_old_kent",
+      "from": "old_kent",
+      "to": "chest_1",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_chest_1",
+      "from": "chest_1",
+      "to": "whitechapel",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_whitechapel",
+      "from": "whitechapel",
+      "to": "income_tax",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_income_tax",
+      "from": "income_tax",
+      "to": "kings_cross",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_kings_cross",
+      "from": "kings_cross",
+      "to": "angel",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_angel",
+      "from": "angel",
+      "to": "chance_1",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_chance_1",
+      "from": "chance_1",
+      "to": "euston",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_euston",
+      "from": "euston",
+      "to": "pentonville",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_pentonville",
+      "from": "pentonville",
+      "to": "jail",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_jail",
+      "from": "jail",
+      "to": "pall_mall",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_pall_mall",
+      "from": "pall_mall",
+      "to": "electric",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_electric",
+      "from": "electric",
+      "to": "whitehall",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_whitehall",
+      "from": "whitehall",
+      "to": "northumberland",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_northumberland",
+      "from": "northumberland",
+      "to": "marylebone",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_marylebone",
+      "from": "marylebone",
+      "to": "bow_street",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_bow_street",
+      "from": "bow_street",
+      "to": "chest_2",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_chest_2",
+      "from": "chest_2",
+      "to": "marlborough",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_marlborough",
+      "from": "marlborough",
+      "to": "vine_street",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_vine_street",
+      "from": "vine_street",
+      "to": "free_parking",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_free_parking",
+      "from": "free_parking",
+      "to": "strand",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_strand",
+      "from": "strand",
+      "to": "chance_2",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_chance_2",
+      "from": "chance_2",
+      "to": "fleet_street",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_fleet_street",
+      "from": "fleet_street",
+      "to": "trafalgar",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_trafalgar",
+      "from": "trafalgar",
+      "to": "fenchurch",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_fenchurch",
+      "from": "fenchurch",
+      "to": "leicester",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_leicester",
+      "from": "leicester",
+      "to": "coventry",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_coventry",
+      "from": "coventry",
+      "to": "water_works",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_water_works",
+      "from": "water_works",
+      "to": "piccadilly",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_piccadilly",
+      "from": "piccadilly",
+      "to": "go_to_jail",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_go_to_jail",
+      "from": "go_to_jail",
+      "to": "regent",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_regent",
+      "from": "regent",
+      "to": "oxford",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_oxford",
+      "from": "oxford",
+      "to": "chest_3",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_chest_3",
+      "from": "chest_3",
+      "to": "bond_street",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_bond_street",
+      "from": "bond_street",
+      "to": "liverpool",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_liverpool",
+      "from": "liverpool",
+      "to": "chance_3",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_chance_3",
+      "from": "chance_3",
+      "to": "park_lane",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_park_lane",
+      "from": "park_lane",
+      "to": "super_tax",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_super_tax",
+      "from": "super_tax",
+      "to": "mayfair",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "t_mayfair",
+      "from": "mayfair",
+      "to": "go",
+      "color": "#94a3b8",
+      "route": "auto"
+    },
+    {
+      "id": "c_gotojail",
+      "from": "go_to_jail",
+      "to": "jail",
+      "label": "go directly to jail",
+      "color": "#dc2626",
+      "route": "auto"
+    },
+    {
+      "id": "c_boot_bank",
+      "from": "boot",
+      "to": "bank",
+      "label": "pays the bank",
+      "color": "#16a34a",
+      "route": "auto"
+    },
+    {
+      "id": "c_bank_boot",
+      "from": "bank",
+      "to": "boot",
+      "color": "#16a34a",
+      "route": "auto",
+      "label": "the bank pays out"
+    },
+    {
+      "id": "c_hat_bank",
+      "from": "hat",
+      "to": "bank",
+      "color": "#16a34a",
+      "route": "auto",
+      "label": "pays the bank"
+    },
+    {
+      "id": "c_bank_hat",
+      "from": "bank",
+      "to": "hat",
+      "color": "#16a34a",
+      "route": "auto",
+      "label": "the bank pays out"
+    },
+    {
+      "id": "c_hat_boot",
+      "from": "hat",
+      "to": "boot",
+      "label": "rent",
+      "color": "#f59e0b",
+      "route": "auto"
+    },
+    {
+      "id": "c_boot_hat",
+      "from": "boot",
+      "to": "hat",
+      "color": "#f59e0b",
+      "route": "auto",
+      "label": "rent"
+    },
+    {
+      "id": "c_chance_draw",
+      "from": "chance_2",
+      "to": "chance_deck",
+      "label": "draw",
+      "color": "#fb923c",
+      "route": "auto"
+    },
+    {
+      "id": "c_chest_draw",
+      "from": "chest_2",
+      "to": "chest_deck",
+      "label": "draw",
+      "color": "#60a5fa",
+      "route": "auto"
+    },
+    {
+      "id": "m_1_go_angel",
+      "from": "go",
+      "to": "angel",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 18.5,
+          "row": 20.5
+        },
+        {
+          "col": 16.5,
+          "row": 20.5
+        },
+        {
+          "col": 14.5,
+          "row": 20.5
+        },
+        {
+          "col": 12.5,
+          "row": 20.5
+        },
+        {
+          "col": 10.5,
+          "row": 20.5
+        }
+      ]
+    },
+    {
+      "id": "m_3_go_income_tax",
+      "from": "go",
+      "to": "income_tax",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 18.5,
+          "row": 20.5
+        },
+        {
+          "col": 16.5,
+          "row": 20.5
+        },
+        {
+          "col": 14.5,
+          "row": 20.5
+        }
+      ]
+    },
+    {
+      "id": "m_5_angel_pentonville",
+      "from": "angel",
+      "to": "pentonville",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 6.5,
+          "row": 20.5
+        },
+        {
+          "col": 4.5,
+          "row": 20.5
+        }
+      ]
+    },
+    {
+      "id": "m_6_income_tax_euston",
+      "from": "income_tax",
+      "to": "euston",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 10.5,
+          "row": 20.5
+        },
+        {
+          "col": 8.5,
+          "row": 20.5
+        },
+        {
+          "col": 6.5,
+          "row": 20.5
+        }
+      ]
+    },
+    {
+      "id": "m_8_euston_chest_2",
+      "from": "euston",
+      "to": "chest_2",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 2.5,
+          "row": 20.5
+        },
+        {
+          "col": 0.5,
+          "row": 20.5
+        },
+        {
+          "col": 0.5,
+          "row": 18.5
+        },
+        {
+          "col": 0.5,
+          "row": 16.5
+        },
+        {
+          "col": 0.5,
+          "row": 14.5
+        },
+        {
+          "col": 0.5,
+          "row": 12.5
+        },
+        {
+          "col": 0.5,
+          "row": 10.5
+        },
+        {
+          "col": 0.5,
+          "row": 8.5
+        }
+      ]
+    },
+    {
+      "id": "m_10_pentonville_free_parking",
+      "from": "pentonville",
+      "to": "free_parking",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 0.5,
+          "row": 20.5
+        },
+        {
+          "col": 0.5,
+          "row": 18.5
+        },
+        {
+          "col": 0.5,
+          "row": 16.5
+        },
+        {
+          "col": 0.5,
+          "row": 14.5
+        },
+        {
+          "col": 0.5,
+          "row": 12.5
+        },
+        {
+          "col": 0.5,
+          "row": 10.5
+        },
+        {
+          "col": 0.5,
+          "row": 8.5
+        },
+        {
+          "col": 0.5,
+          "row": 6.5
+        },
+        {
+          "col": 0.5,
+          "row": 4.5
+        },
+        {
+          "col": 0.5,
+          "row": 2.5
+        }
+      ]
+    },
+    {
+      "id": "m_11_chest_2_fleet_street",
+      "from": "chest_2",
+      "to": "fleet_street",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 0.5,
+          "row": 4.5
+        },
+        {
+          "col": 0.5,
+          "row": 2.5
+        },
+        {
+          "col": 0.5,
+          "row": 0.5
+        },
+        {
+          "col": 2.5,
+          "row": 0.5
+        },
+        {
+          "col": 4.5,
+          "row": 0.5
+        }
+      ]
+    },
+    {
+      "id": "m_12_free_parking_fleet_street",
+      "from": "free_parking",
+      "to": "fleet_street",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 2.5,
+          "row": 0.5
+        },
+        {
+          "col": 4.5,
+          "row": 0.5
+        }
+      ]
+    },
+    {
+      "id": "m_14_fleet_street_go_to_jail",
+      "from": "fleet_street",
+      "to": "go_to_jail",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 8.5,
+          "row": 0.5
+        },
+        {
+          "col": 10.5,
+          "row": 0.5
+        },
+        {
+          "col": 12.5,
+          "row": 0.5
+        },
+        {
+          "col": 14.5,
+          "row": 0.5
+        },
+        {
+          "col": 16.5,
+          "row": 0.5
+        },
+        {
+          "col": 18.5,
+          "row": 0.5
+        }
+      ]
+    },
+    {
+      "id": "m_19_jail_vine_street",
+      "from": "jail",
+      "to": "vine_street",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 0.5,
+          "row": 18.5
+        },
+        {
+          "col": 0.5,
+          "row": 16.5
+        },
+        {
+          "col": 0.5,
+          "row": 14.5
+        },
+        {
+          "col": 0.5,
+          "row": 12.5
+        },
+        {
+          "col": 0.5,
+          "row": 10.5
+        },
+        {
+          "col": 0.5,
+          "row": 8.5
+        },
+        {
+          "col": 0.5,
+          "row": 6.5
+        },
+        {
+          "col": 0.5,
+          "row": 4.5
+        }
+      ]
+    },
+    {
+      "id": "m_20_fleet_street_piccadilly",
+      "from": "fleet_street",
+      "to": "piccadilly",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 8.5,
+          "row": 0.5
+        },
+        {
+          "col": 10.5,
+          "row": 0.5
+        },
+        {
+          "col": 12.5,
+          "row": 0.5
+        },
+        {
+          "col": 14.5,
+          "row": 0.5
+        },
+        {
+          "col": 16.5,
+          "row": 0.5
+        }
+      ]
+    },
+    {
+      "id": "m_21_piccadilly_park_lane",
+      "from": "piccadilly",
+      "to": "park_lane",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 20.5,
+          "row": 0.5
+        },
+        {
+          "col": 20.5,
+          "row": 2.5
+        },
+        {
+          "col": 20.5,
+          "row": 4.5
+        },
+        {
+          "col": 20.5,
+          "row": 6.5
+        },
+        {
+          "col": 20.5,
+          "row": 8.5
+        },
+        {
+          "col": 20.5,
+          "row": 10.5
+        },
+        {
+          "col": 20.5,
+          "row": 12.5
+        }
+      ]
+    },
+    {
+      "id": "m_22_vine_street_coventry",
+      "from": "vine_street",
+      "to": "coventry",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 0.5,
+          "row": 0.5
+        },
+        {
+          "col": 2.5,
+          "row": 0.5
+        },
+        {
+          "col": 4.5,
+          "row": 0.5
+        },
+        {
+          "col": 6.5,
+          "row": 0.5
+        },
+        {
+          "col": 8.5,
+          "row": 0.5
+        },
+        {
+          "col": 10.5,
+          "row": 0.5
+        },
+        {
+          "col": 12.5,
+          "row": 0.5
+        }
+      ]
+    },
+    {
+      "id": "m_23_park_lane_mayfair",
+      "from": "park_lane",
+      "to": "mayfair",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 20.5,
+          "row": 16.5
+        }
+      ]
+    },
+    {
+      "id": "m_31_mayfair_income_tax",
+      "from": "mayfair",
+      "to": "income_tax",
+      "color": "#b91c1c",
+      "route": [
+        {
+          "col": 20.5,
+          "row": 20.5
+        },
+        {
+          "col": 18.5,
+          "row": 20.5
+        },
+        {
+          "col": 16.5,
+          "row": 20.5
+        },
+        {
+          "col": 14.5,
+          "row": 20.5
+        }
+      ]
+    },
+    {
+      "id": "m_33_coventry_park_lane",
+      "from": "coventry",
+      "to": "park_lane",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 16.5,
+          "row": 0.5
+        },
+        {
+          "col": 18.5,
+          "row": 0.5
+        },
+        {
+          "col": 20.5,
+          "row": 0.5
+        },
+        {
+          "col": 20.5,
+          "row": 2.5
+        },
+        {
+          "col": 20.5,
+          "row": 4.5
+        },
+        {
+          "col": 20.5,
+          "row": 6.5
+        },
+        {
+          "col": 20.5,
+          "row": 8.5
+        },
+        {
+          "col": 20.5,
+          "row": 10.5
+        },
+        {
+          "col": 20.5,
+          "row": 12.5
+        }
+      ]
+    },
+    {
+      "id": "m_35_park_lane_mayfair",
+      "from": "park_lane",
+      "to": "mayfair",
+      "color": "#1d4ed8",
+      "route": [
+        {
+          "col": 20.5,
+          "row": 16.5
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "name": "Overview",
+      "title": "The board",
+      "description": "Forty spaces, four corners, two players and a bank in the middle. Nothing has happened yet.",
+      "highlight": [],
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      },
+      "footer": [
+        {
+          "text": "Pipe colour is the money: **green** to and from the bank, **amber** between players, **red** for the shortcut to jail.",
+          "style": "info"
+        }
+      ],
+      "id": 0
+    },
+    {
+      "name": "Boot rolls six",
+      "title": "The boot opens with a six",
+      "description": "Four and a two. The token crosses six pipes and stops on The Angel Islington, unowned and cheap.",
+      "highlight": [
+        "boot",
+        "go",
+        "angel"
+      ],
+      "packets": [
+        {
+          "connection": "m_1_go_angel",
+          "shape": "token",
+          "data": {
+            "roll": "4 + 2",
+            "spaces": 6,
+            "from": "GO",
+            "to": "The Angel Islington"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_1_go_angel"
+      ],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "angel",
+          "text": "GO + 6 \u2192 The Angel Islington (\u00a3100, rent \u00a36)"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "name": "Buys the Angel",
+      "title": "The boot buys The Angel Islington",
+      "description": "Land on an unowned property and you may buy it at the printed price, there and then. \u00a3100 goes to the bank and the deed comes back.",
+      "highlight": [
+        "boot",
+        "bank",
+        "angel"
+      ],
+      "active_connections": [
+        "c_boot_bank"
+      ],
+      "packet": {
+        "connection": "c_boot_bank",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "pays": "\u00a3100",
+          "for": "The Angel Islington",
+          "rent": "\u00a36",
+          "houses": "\u00a350 each"
+        }
+      },
+      "footer": [
+        {
+          "text": "Boot: **\u00a31,400** left. One third of a light blue set.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 100,
+        "label": "\u00a3100 \u00b7 The Angel Islington",
+        "color": "#b91c1c"
+      },
+      "id": 2
+    },
+    {
+      "name": "Hat rolls four",
+      "title": "The top hat rolls a four",
+      "description": "Three and a one. Four spaces off GO is Income Tax, which is not a property and cannot be bought, avoided or negotiated.",
+      "highlight": [
+        "hat",
+        "go",
+        "income_tax"
+      ],
+      "packets": [
+        {
+          "connection": "m_3_go_income_tax",
+          "shape": "token",
+          "data": {
+            "roll": "3 + 1",
+            "spaces": 4,
+            "from": "GO",
+            "to": "Income Tax"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_3_go_income_tax"
+      ],
+      "id": 3
+    },
+    {
+      "name": "Income Tax",
+      "title": "Income Tax takes \u00a3200",
+      "description": "The hat pays the bank and gets nothing for it. Fourth space of the game, thirteen percent of his money gone.",
+      "highlight": [
+        "hat",
+        "bank",
+        "income_tax"
+      ],
+      "active_connections": [
+        "c_hat_bank"
+      ],
+      "camera": {
+        "focus": "income_tax",
+        "zoom": 1.5
+      },
+      "packet": {
+        "connection": "c_hat_bank",
+        "shape": "blob",
+        "arrivalStyle": "warning",
+        "data": {
+          "pays": "\u00a3200",
+          "square": "Income Tax",
+          "alternative": "10% of total worth (older rules)"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "income_tax",
+          "text": "pay(\u00a3200) \u2014 flat rate, no property acquired",
+          "style": "warning"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**\u00a3200** flat in the current rules. Older sets let you pay 10% of everything you own instead \u2014 which you must decide **before** you count it.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 200,
+        "label": "\u00a3200 \u00b7 Income Tax",
+        "color": "#1d4ed8"
+      },
+      "id": 4
+    },
+    {
+      "name": "Boot rolls three",
+      "title": "The boot takes Pentonville Road",
+      "description": "Three spaces on, past Chance and Euston Road, and the boot lands on Pentonville and buys it for \u00a3120.",
+      "highlight": [
+        "boot",
+        "angel",
+        "pentonville"
+      ],
+      "packets": [
+        {
+          "connection": "m_5_angel_pentonville",
+          "shape": "token",
+          "data": {
+            "roll": "2 + 1",
+            "spaces": 3,
+            "from": "The Angel Islington",
+            "to": "Pentonville Road"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_5_angel_pentonville"
+      ],
+      "footer": [
+        {
+          "text": "Two light blues owned, one to go \u2014 and the one to go is **Euston Road**, two spaces behind him.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 120,
+        "label": "\u00a3120 \u00b7 Pentonville Road",
+        "color": "#b91c1c"
+      },
+      "id": 5
+    },
+    {
+      "name": "Hat rolls four",
+      "title": "The hat lands on Euston Road and declines",
+      "description": "Euston Road is \u00a3100 and useless to him \u2014 the boot owns the other two light blues. He passes on it.",
+      "highlight": [
+        "hat",
+        "income_tax",
+        "euston"
+      ],
+      "packets": [
+        {
+          "connection": "m_6_income_tax_euston",
+          "shape": "token",
+          "data": {
+            "roll": "2 + 2",
+            "spaces": 4,
+            "from": "Income Tax",
+            "to": "Euston Road",
+            "decision": "decline"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_6_income_tax_euston"
+      ],
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "euston",
+          "text": "decline(\u00a3100) \u2192 auction()",
+          "style": "warning"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "name": "The auction",
+      "title": "Declining sends it to auction instead",
+      "description": "A property nobody buys does not stay on the shelf: the bank auctions it immediately, and anyone may bid. The boot pays \u00a3260 for a \u00a3100 street because it completes his set.",
+      "highlight": [
+        "boot",
+        "bank",
+        "euston"
+      ],
+      "active_connections": [
+        "c_boot_bank"
+      ],
+      "camera": {
+        "focus": "boot",
+        "zoom": 1.4
+      },
+      "packet": {
+        "connection": "c_boot_bank",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "winning_bid": "\u00a3260",
+          "printed_price": "\u00a3100",
+          "lot": "Euston Road",
+          "bidders": 2
+        }
+      },
+      "footer": [
+        {
+          "text": "Auctions are in the rules and almost nobody plays them. They are the fastest way sets get completed.",
+          "style": "info"
+        },
+        {
+          "text": "Set complete. Unimproved rent **doubles** at once \u2014 Pentonville \u00a38 \u2192 \u00a316 \u2014 before a single house goes on.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 260,
+        "label": "\u00a3260 \u00b7 Euston Road at auction",
+        "color": "#b91c1c"
+      },
+      "id": 7
+    },
+    {
+      "name": "Hat rolls nine",
+      "title": "The hat rolls nine into Community Chest",
+      "description": "Five and a four, past the whole light blue set he just handed over, and onto Community Chest.",
+      "highlight": [
+        "hat",
+        "euston",
+        "chest_2"
+      ],
+      "packets": [
+        {
+          "connection": "m_8_euston_chest_2",
+          "shape": "token",
+          "data": {
+            "roll": "5 + 4",
+            "spaces": 9,
+            "from": "Euston Road",
+            "to": "Community Chest"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_8_euston_chest_2"
+      ],
+      "id": 8
+    },
+    {
+      "name": "Draws a card",
+      "title": "Community Chest pays out",
+      "description": "Top card off the deck, read aloud, obeyed, then put to the bottom. This one is a dividend: the bank pays \u00a350.",
+      "highlight": [
+        "hat",
+        "chest_2",
+        "chest_deck",
+        "bank"
+      ],
+      "active_connections": [
+        "c_chest_draw",
+        "c_bank_hat"
+      ],
+      "camera": {
+        "focus": "chest_deck",
+        "zoom": 1.6
+      },
+      "packets": [
+        {
+          "connection": "c_chest_draw",
+          "shape": "envelope",
+          "data": {
+            "deck": "Community Chest",
+            "card": "Bank pays you dividend of \u00a350",
+            "remaining": 15
+          }
+        },
+        {
+          "connection": "c_bank_hat",
+          "shape": "blob",
+          "arrivalStyle": "success",
+          "data": {
+            "pays": "\u00a350",
+            "to": "the top hat"
+          }
+        }
+      ],
+      "footer": [
+        {
+          "text": "Ten of the sixteen Chance cards move your token. Community Chest mostly just moves money.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 50,
+        "label": "\u00a350 \u00b7 Community Chest dividend",
+        "color": "#0f766e"
+      },
+      "id": 9
+    },
+    {
+      "name": "Free Parking",
+      "title": "The boot rolls eleven onto Free Parking",
+      "description": "Eleven spaces, the length of one side of the board, and he lands on the corner everyone has an opinion about.",
+      "highlight": [
+        "boot",
+        "pentonville",
+        "free_parking"
+      ],
+      "packets": [
+        {
+          "connection": "m_10_pentonville_free_parking",
+          "shape": "token",
+          "data": {
+            "roll": "6 + 5",
+            "spaces": 11,
+            "from": "Pentonville Road",
+            "to": "Free Parking"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_10_pentonville_free_parking"
+      ],
+      "footer": [
+        {
+          "text": "Free Parking pays **nothing**. No fines pot, no jackpot, no bonus \u2014 the pile of cash in the middle is a house rule, and it makes games longer.",
+          "style": "warning"
+        }
+      ],
+      "id": 10
+    },
+    {
+      "name": "Hat buys Fleet St",
+      "title": "The hat rolls six and buys Fleet Street",
+      "description": "A red, \u00a3220, rent \u00a318 while it stands alone. He needs Strand and Trafalgar Square to make it mean anything.",
+      "highlight": [
+        "hat",
+        "chest_2",
+        "fleet_street"
+      ],
+      "packets": [
+        {
+          "connection": "m_11_chest_2_fleet_street",
+          "shape": "token",
+          "data": {
+            "roll": "4 + 2",
+            "spaces": 6,
+            "from": "Community Chest",
+            "to": "Fleet Street"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_11_chest_2_fleet_street"
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 220,
+        "label": "\u00a3220 \u00b7 Fleet Street",
+        "color": "#1d4ed8"
+      },
+      "id": 11
+    },
+    {
+      "name": "Boot rolls three",
+      "title": "The boot lands on Fleet Street too",
+      "description": "Three spaces from Free Parking, past Strand and Chance, onto a street the hat bought a minute ago. Two tokens can share a square; only one of them owes anything.",
+      "highlight": [
+        "boot",
+        "free_parking",
+        "fleet_street"
+      ],
+      "packets": [
+        {
+          "connection": "m_12_free_parking_fleet_street",
+          "shape": "token",
+          "data": {
+            "roll": "2 + 1",
+            "spaces": 3,
+            "from": "Free Parking",
+            "to": "Fleet Street"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_12_free_parking_fleet_street"
+      ],
+      "id": 12
+    },
+    {
+      "name": "Rent: \u00a318",
+      "title": "The boot pays rent \u2014 eighteen pounds",
+      "description": "Rent on an unimproved street with no set behind it. The owner has to ask for it before the next player rolls, or it is forfeit.",
+      "highlight": [
+        "boot",
+        "hat",
+        "fleet_street"
+      ],
+      "active_connections": [
+        "c_boot_hat"
+      ],
+      "packet": {
+        "connection": "c_boot_hat",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "rent": "\u00a318",
+          "property": "Fleet Street",
+          "houses": 0,
+          "set_complete": false
+        }
+      },
+      "footer": [
+        {
+          "text": "Remember this number. **\u00a318.** It is the same board, the same rulebook, and the same two players as the \u00a32,000 at the end.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 18,
+        "label": "\u00a318 \u00b7 rent, Fleet Street",
+        "color": "#1d4ed8"
+      },
+      "id": 13
+    },
+    {
+      "name": "Hat rolls seven",
+      "title": "The hat rolls a seven \u2014 the commonest roll there is",
+      "description": "Six ways out of thirty-six to make a seven, and every one of them lands him on Go To Jail.",
+      "highlight": [
+        "hat",
+        "fleet_street",
+        "go_to_jail"
+      ],
+      "packets": [
+        {
+          "connection": "m_14_fleet_street_go_to_jail",
+          "shape": "token",
+          "data": {
+            "roll": "4 + 3",
+            "spaces": 7,
+            "from": "Fleet Street",
+            "to": "Go To Jail",
+            "odds": "6 in 36"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_14_fleet_street_go_to_jail"
+      ],
+      "id": 14
+    },
+    {
+      "name": "Go to jail",
+      "title": "Go directly to jail",
+      "description": "The only square that moves you against your will and pays you nothing for the journey. The token crosses the board on the red pipe.",
+      "highlight": [
+        "hat",
+        "go_to_jail",
+        "jail"
+      ],
+      "active_connections": [
+        "c_gotojail"
+      ],
+      "camera": {
+        "focus": "jail",
+        "zoom": 1.5
+      },
+      "packet": {
+        "connection": "c_gotojail",
+        "shape": "token",
+        "arrivalStyle": "error",
+        "data": {
+          "from": "Go To Jail",
+          "to": "Jail",
+          "passes_go": false,
+          "collects": "\u00a30"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "go_to_jail",
+          "text": "goToJail() \u2014 no GO, no \u00a3200, no landings on the way",
+          "style": "error"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**Do not pass GO. Do not collect \u00a3200.** Nothing on the squares between happens either.",
+          "style": "error"
+        }
+      ],
+      "id": 15
+    },
+    {
+      "scene": "jail",
+      "name": "Three ways out",
+      "title": "Inside, there are exactly three ways out",
+      "description": "Throw a double, pay \u00a350, or play a Get Out Of Jail Free card. You get three turns to try, and you keep collecting rent the whole time.",
+      "highlight": [
+        "j_cell",
+        "j_double",
+        "j_fifty",
+        "j_card"
+      ],
+      "active_connections": [
+        "c_j_try",
+        "c_j_pay",
+        "c_j_use"
+      ],
+      "footer": [
+        {
+          "text": "Jail is not a penalty box. You still own, trade, build and charge rent from inside it \u2014 you just cannot land on anyone else\u2019s hotels.",
+          "style": "info"
+        }
+      ],
+      "id": 16
+    },
+    {
+      "scene": "jail",
+      "name": "Three failed tries",
+      "title": "Three turns, three attempts at a double",
+      "description": "One roll per turn. Six of the thirty-six outcomes are pairs, so each attempt fails five times in six \u2014 and all three fail more often than not.",
+      "highlight": [
+        "j_cell",
+        "j_double"
+      ],
+      "active_connections": [
+        "c_j_try"
+      ],
+      "packet": {
+        "connection": "c_j_try",
+        "shape": "sphere",
+        "count": 3,
+        "arrivalStyle": "error",
+        "data": {
+          "turn_1": "5 + 2",
+          "turn_2": "6 + 1",
+          "turn_3": "4 + 3",
+          "doubles": 0
+        }
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "j_double",
+          "text": "P(no double in 3 turns) = (5/6)\u00b3 = 57.9%",
+          "style": "error"
+        }
+      ],
+      "footer": [
+        {
+          "text": "Failing all three is the **likelier** outcome, at 125 in 216.",
+          "style": "warning"
+        }
+      ],
+      "id": 17
+    },
+    {
+      "scene": "jail",
+      "name": "Pays the fifty",
+      "title": "On the third turn the \u00a350 is compulsory",
+      "description": "Having thrown no double and holding no card, the hat pays the fine and moves the number he just threw. Out on the kerb, \u00a350 lighter.",
+      "highlight": [
+        "j_cell",
+        "j_fifty",
+        "j_out"
+      ],
+      "active_connections": [
+        "c_j_pay",
+        "c_j_out_pay"
+      ],
+      "packets": [
+        {
+          "connection": "c_j_pay",
+          "shape": "blob",
+          "data": {
+            "fine": "\u00a350",
+            "turn": 3,
+            "compulsory": true
+          }
+        },
+        {
+          "connection": "c_j_out_pay",
+          "shape": "token",
+          "arrivalStyle": "success",
+          "data": {
+            "moves": 7,
+            "lands": "Vine Street"
+          }
+        }
+      ],
+      "footer": [
+        {
+          "text": "Paying the \u00a350 **before** rolling on turn one costs the same and buys three clean turns of movement. Most players wait, and most players are wrong.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 50,
+        "label": "\u00a350 \u00b7 jail fine",
+        "color": "#1d4ed8"
+      },
+      "id": 18
+    },
+    {
+      "name": "Out and moving",
+      "title": "The hat comes out onto Vine Street",
+      "description": "Nine spaces from the jail corner, which is exactly why the oranges and pinks are the most valuable ground in the game.",
+      "highlight": [
+        "hat",
+        "jail",
+        "vine_street"
+      ],
+      "packets": [
+        {
+          "connection": "m_19_jail_vine_street",
+          "shape": "token",
+          "data": {
+            "roll": "5 + 4",
+            "spaces": 9,
+            "from": "Jail",
+            "to": "Vine Street"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_19_jail_vine_street"
+      ],
+      "camera": {
+        "fit": true
+      },
+      "id": 19
+    },
+    {
+      "name": "Boot rolls six",
+      "title": "The boot stops one square short of jail",
+      "description": "Six spaces up the red and yellow side, landing on Piccadilly with Go To Jail sitting immediately next to it.",
+      "highlight": [
+        "boot",
+        "fleet_street",
+        "piccadilly"
+      ],
+      "packets": [
+        {
+          "connection": "m_20_fleet_street_piccadilly",
+          "shape": "token",
+          "data": {
+            "roll": "4 + 2",
+            "spaces": 6,
+            "from": "Fleet Street",
+            "to": "Piccadilly"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_20_fleet_street_piccadilly"
+      ],
+      "footer": [
+        {
+          "text": "Roll a double and you go again \u2014 but a **third** double in one turn sends you to jail from wherever you are.",
+          "style": "info"
+        }
+      ],
+      "id": 20
+    },
+    {
+      "name": "Buys Park Lane",
+      "title": "The boot rolls eight and buys Park Lane",
+      "description": "Past Go To Jail, past the greens, onto the quieter of the two dark blues. \u00a3350, rent \u00a335, and the beginning of something expensive.",
+      "highlight": [
+        "boot",
+        "piccadilly",
+        "park_lane"
+      ],
+      "packets": [
+        {
+          "connection": "m_21_piccadilly_park_lane",
+          "shape": "token",
+          "data": {
+            "roll": "5 + 3",
+            "spaces": 8,
+            "from": "Piccadilly",
+            "to": "Park Lane"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_21_piccadilly_park_lane"
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 350,
+        "label": "\u00a3350 \u00b7 Park Lane",
+        "color": "#b91c1c"
+      },
+      "id": 21
+    },
+    {
+      "name": "Hat rolls eight",
+      "title": "The hat crosses to Coventry Street",
+      "description": "Eight spaces past Free Parking and up the red side. Nothing happens on Coventry Street, which is the nicest thing about it.",
+      "highlight": [
+        "hat",
+        "vine_street",
+        "coventry"
+      ],
+      "packets": [
+        {
+          "connection": "m_22_vine_street_coventry",
+          "shape": "token",
+          "data": {
+            "roll": "6 + 2",
+            "spaces": 8,
+            "from": "Vine Street",
+            "to": "Coventry Street"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_22_vine_street_coventry"
+      ],
+      "id": 22
+    },
+    {
+      "name": "A two",
+      "title": "The boot rolls a two",
+      "description": "Park Lane, Super Tax, Mayfair. The shortest roll in the game and the only one that matters in this one.",
+      "highlight": [
+        "boot",
+        "park_lane",
+        "mayfair"
+      ],
+      "packets": [
+        {
+          "connection": "m_23_park_lane_mayfair",
+          "shape": "token",
+          "data": {
+            "roll": "1 + 1",
+            "spaces": 2,
+            "from": "Park Lane",
+            "to": "Mayfair",
+            "note": "a double \u2014 he rolls again afterwards"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_23_park_lane_mayfair"
+      ],
+      "id": 23
+    },
+    {
+      "name": "Buys Mayfair",
+      "title": "The boot buys Mayfair for \u00a3400",
+      "description": "The most expensive square on the board, and the second dark blue. The set is complete, and unimproved rent doubles from \u00a350 to \u00a3100 immediately.",
+      "highlight": [
+        "boot",
+        "bank",
+        "mayfair"
+      ],
+      "active_connections": [
+        "c_boot_bank"
+      ],
+      "camera": {
+        "focus": "mayfair",
+        "zoom": 1.6
+      },
+      "packet": {
+        "connection": "c_boot_bank",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "pays": "\u00a3400",
+          "for": "Mayfair",
+          "set": "dark blue \u2014 complete",
+          "houses": "\u00a3200 each"
+        }
+      },
+      "waterfall": {
+        "start": 0,
+        "weight": 400,
+        "label": "\u00a3400 \u00b7 Mayfair",
+        "color": "#b91c1c"
+      },
+      "id": 24
+    },
+    {
+      "scene": "mayfair",
+      "name": "The bare site",
+      "title": "A deed, and nothing built on it",
+      "description": "Mayfair as bought costs \u00a3400 and charges \u00a350. Owning Park Lane as well doubles that to \u00a3100 without a brick being laid.",
+      "highlight": [
+        "mf_site",
+        "mf_rent",
+        "mf_park"
+      ],
+      "active_connections": [
+        "c_mf_pair"
+      ],
+      "footer": [
+        {
+          "text": "Unimproved rent **doubles** on a completed colour group. \u00a350 \u2192 \u00a3100, for free.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 50,
+        "label": "\u00a350 \u00b7 printed rent, unimproved",
+        "color": "#b91c1c"
+      },
+      "id": 25
+    },
+    {
+      "scene": "mayfair",
+      "name": "One house",
+      "title": "The first house \u2014 \u00a3200, and rent quadruples",
+      "description": "Houses cost \u00a3200 each here, and must go on evenly: one on Park Lane before a second goes on Mayfair. The first house is the best purchase in the game.",
+      "highlight": [
+        "mf_site",
+        "mf_h1",
+        "mf_park"
+      ],
+      "active_connections": [
+        "c_mf_1",
+        "c_mf_pair"
+      ],
+      "packet": {
+        "connection": "c_mf_1",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "cost": "\u00a3200",
+          "houses": 1,
+          "rent_before": "\u00a3100",
+          "rent_after": "\u00a3200"
+        }
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "mf_h1",
+          "text": "\u00a3200 spent \u2192 rent \u00a3100 \u2192 \u00a3200",
+          "style": "success"
+        }
+      ],
+      "footer": [
+        {
+          "text": "The **even build rule**: no street in a set may be more than one house ahead of another.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 200,
+        "label": "\u00a3200 \u00b7 rent with one house",
+        "color": "#b91c1c"
+      },
+      "id": 26
+    },
+    {
+      "scene": "mayfair",
+      "name": "Two houses",
+      "title": "Two houses \u2014 \u00a3600",
+      "description": "Another \u00a3200 buys another \u00a3400 of rent. Park Lane goes to two at the same time, and is now charging \u00a3500.",
+      "highlight": [
+        "mf_h1",
+        "mf_h2",
+        "mf_rent"
+      ],
+      "active_connections": [
+        "c_mf_2"
+      ],
+      "packet": {
+        "connection": "c_mf_2",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "cost": "\u00a3200",
+          "houses": 2,
+          "rent": "\u00a3600",
+          "park_lane_rent": "\u00a3500"
+        }
+      },
+      "waterfall": {
+        "start": 0,
+        "weight": 600,
+        "label": "\u00a3600 \u00b7 rent with two houses",
+        "color": "#b91c1c"
+      },
+      "id": 27
+    },
+    {
+      "scene": "mayfair",
+      "name": "Three houses",
+      "title": "Three houses \u2014 \u00a31,400",
+      "description": "The steepest rung on the ladder: \u00a3200 spent, \u00a3800 more rent. This is where most sets stop, because this is where the money runs out.",
+      "highlight": [
+        "mf_h2",
+        "mf_h3",
+        "mf_rent"
+      ],
+      "active_connections": [
+        "c_mf_3"
+      ],
+      "packet": {
+        "connection": "c_mf_3",
+        "shape": "document",
+        "arrivalStyle": "success",
+        "data": {
+          "cost": "\u00a3200",
+          "houses": 3,
+          "rent": "\u00a31,400"
+        }
+      },
+      "footer": [
+        {
+          "text": "Three houses is the value peak. Everything after this costs more than it returns per pound.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 1400,
+        "label": "\u00a31,400 \u00b7 rent with three houses",
+        "color": "#b91c1c"
+      },
+      "id": 28
+    },
+    {
+      "scene": "mayfair",
+      "name": "Four houses",
+      "title": "Four houses \u2014 \u00a31,700",
+      "description": "\u00a3200 for \u00a3300 more rent, the worst step on the card. It is bought for one reason: a hotel needs four houses under it, on both streets.",
+      "highlight": [
+        "mf_h3",
+        "mf_h4",
+        "mf_park"
+      ],
+      "active_connections": [
+        "c_mf_4",
+        "c_mf_pair"
+      ],
+      "packet": {
+        "connection": "c_mf_4",
+        "shape": "document",
+        "arrivalStyle": "warning",
+        "data": {
+          "cost": "\u00a3200",
+          "houses": 4,
+          "rent": "\u00a31,700",
+          "park_lane": "4 houses, \u00a31,100"
+        }
+      },
+      "footer": [
+        {
+          "text": "Eight houses across the two streets: **\u00a31,600** spent on building alone.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 1700,
+        "label": "\u00a31,700 \u00b7 rent with four houses",
+        "color": "#b91c1c"
+      },
+      "id": 29
+    },
+    {
+      "scene": "mayfair",
+      "name": "The hotel",
+      "title": "The hotel \u2014 \u00a3200 and the four houses back",
+      "description": "A hotel does not sit on top of the houses; it replaces them. They return to the bank, where anyone else may buy them. Rent on Mayfair is now \u00a32,000.",
+      "highlight": [
+        "mf_h4",
+        "mf_hotel",
+        "mf_rent"
+      ],
+      "active_connections": [
+        "c_mf_5",
+        "c_mf_deed"
+      ],
+      "packets": [
+        {
+          "connection": "c_mf_5",
+          "shape": "document",
+          "arrivalStyle": "success",
+          "data": {
+            "cost": "\u00a3200 + four houses",
+            "hotels_in_box": 12,
+            "rent": "\u00a32,000"
+          }
+        },
+        {
+          "connection": "c_mf_deed",
+          "shape": "token",
+          "arrivalStyle": "error",
+          "data": {
+            "deed": "Mayfair",
+            "ladder": "50 \u00b7 200 \u00b7 600 \u00b7 1400 \u00b7 1700 \u00b7 2000",
+            "mortgage": "\u00a3200"
+          }
+        }
+      ],
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "mf_hotel",
+          "text": "\u00a350 \u2192 \u00a32,000 \u00b7 forty times the printed rent",
+          "style": "error"
+        }
+      ],
+      "footer": [
+        {
+          "text": "Total outlay on Mayfair: **\u00a3400 + \u00a31,000** in buildings. It repays itself on the first landing.",
+          "style": "info"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 2000,
+        "label": "\u00a32,000 \u00b7 rent with a hotel",
+        "color": "#b91c1c"
+      },
+      "id": 30
+    },
+    {
+      "name": "Passing GO",
+      "title": "The boot rolls five and passes GO",
+      "description": "Off Mayfair, over the corner, and \u00a3200 lands in his hand for doing nothing but arriving. Then he stops on Income Tax.",
+      "highlight": [
+        "boot",
+        "mayfair",
+        "go",
+        "income_tax"
+      ],
+      "packets": [
+        {
+          "connection": "m_31_mayfair_income_tax",
+          "shape": "token",
+          "data": {
+            "roll": "3 + 2",
+            "spaces": 5,
+            "from": "Mayfair",
+            "to": "Income Tax",
+            "passes_go": true
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_31_mayfair_income_tax"
+      ],
+      "camera": {
+        "fit": true
+      },
+      "footer": [
+        {
+          "text": "**\u00a3200** for passing GO \u2014 the same \u00a3200 whether you pass it or land on it exactly.",
+          "style": "success"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 200,
+        "label": "\u00a3200 \u00b7 passing GO",
+        "color": "#0f766e"
+      },
+      "id": 31
+    },
+    {
+      "name": "In and straight out",
+      "title": "\u00a3200 in, \u00a3200 out",
+      "description": "The bank pays him for passing GO and takes it straight back for Income Tax. A whole lap of the board, net zero, and a hotel on Mayfair.",
+      "highlight": [
+        "boot",
+        "bank",
+        "income_tax"
+      ],
+      "active_connections": [
+        "c_bank_boot",
+        "c_boot_bank"
+      ],
+      "packets": [
+        {
+          "connection": "c_bank_boot",
+          "shape": "blob",
+          "arrivalStyle": "success",
+          "data": {
+            "collects": "\u00a3200",
+            "reason": "passed GO"
+          }
+        },
+        {
+          "connection": "c_boot_bank",
+          "shape": "blob",
+          "arrivalStyle": "warning",
+          "data": {
+            "pays": "\u00a3200",
+            "reason": "Income Tax",
+            "net": "\u00a30"
+          }
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 200,
+        "label": "\u00a3200 \u00b7 Income Tax, straight back",
+        "color": "#b91c1c"
+      },
+      "id": 32
+    },
+    {
+      "name": "Hat rolls ten",
+      "title": "The hat rolls ten onto Park Lane",
+      "description": "Ten spaces past the greens and the last Chance square, onto the first of the two dark blues. Four houses are standing on it.",
+      "highlight": [
+        "hat",
+        "coventry",
+        "park_lane"
+      ],
+      "packets": [
+        {
+          "connection": "m_33_coventry_park_lane",
+          "shape": "token",
+          "data": {
+            "roll": "6 + 4",
+            "spaces": 10,
+            "from": "Coventry Street",
+            "to": "Park Lane"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_33_coventry_park_lane"
+      ],
+      "id": 33
+    },
+    {
+      "name": "Rent: \u00a31,100",
+      "title": "Park Lane with four houses \u2014 \u00a31,100",
+      "description": "The same amber pipe as the \u00a318 on Fleet Street, sixty-one times the size. He pays it, and has almost nothing left.",
+      "highlight": [
+        "hat",
+        "boot",
+        "park_lane"
+      ],
+      "active_connections": [
+        "c_hat_boot"
+      ],
+      "packet": {
+        "connection": "c_hat_boot",
+        "shape": "blob",
+        "arrivalStyle": "error",
+        "data": {
+          "rent": "\u00a31,100",
+          "property": "Park Lane",
+          "houses": 4,
+          "set_complete": true
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "park_lane",
+          "text": "rent(4 houses) = \u00a31,100 \u2014 payable immediately",
+          "style": "error"
+        }
+      ],
+      "footer": [
+        {
+          "text": "Short of cash, you may mortgage, sell buildings back at **half price**, or trade. You may not simply decline to pay.",
+          "style": "warning"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 1100,
+        "label": "\u00a31,100 \u00b7 rent, Park Lane",
+        "color": "#b91c1c"
+      },
+      "id": 34
+    },
+    {
+      "name": "Two again",
+      "title": "The hat rolls a two",
+      "description": "Park Lane, Super Tax, Mayfair. The same two spaces the boot rolled to buy it.",
+      "highlight": [
+        "hat",
+        "park_lane",
+        "mayfair"
+      ],
+      "packets": [
+        {
+          "connection": "m_35_park_lane_mayfair",
+          "shape": "token",
+          "data": {
+            "roll": "1 + 1",
+            "spaces": 2,
+            "from": "Park Lane",
+            "to": "Mayfair"
+          },
+          "arrivalStyle": "success"
+        }
+      ],
+      "active_connections": [
+        "m_35_park_lane_mayfair"
+      ],
+      "footer": [
+        {
+          "text": "Mayfair is one of the **least** landed-on squares on the board. It only has to happen once.",
+          "style": "warning"
+        }
+      ],
+      "id": 35
+    },
+    {
+      "name": "Two thousand",
+      "title": "Mayfair, with a hotel \u2014 \u00a32,000",
+      "description": "Rent is due the moment the token stops. The hat owns three streets, a station and \u00a3340; the bank will take the rest and there is still not enough.",
+      "highlight": [
+        "hat",
+        "boot",
+        "mayfair"
+      ],
+      "active_connections": [
+        "c_hat_boot"
+      ],
+      "packet": {
+        "connection": "c_hat_boot",
+        "shape": "blob",
+        "arrivalStyle": "error",
+        "data": {
+          "rent": "\u00a32,000",
+          "property": "Mayfair",
+          "hotel": 1,
+          "cash": "\u00a3340",
+          "shortfall": "\u00a31,660"
+        }
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "mayfair",
+          "text": "rent(hotel) = \u00a32,000 \u2014 bankrupt(top hat)",
+          "style": "error"
+        }
+      ],
+      "footer": [
+        {
+          "text": "**\u00a32,000.** Forty times the printed rent, and \u00a31,982 more than the first rent of the game.",
+          "style": "error"
+        },
+        {
+          "text": "Everything he owns passes to the boot: deeds, cash, and the mortgaged ones at 10% interest to lift.",
+          "style": "error"
+        }
+      ],
+      "waterfall": {
+        "start": 0,
+        "weight": 2000,
+        "label": "\u00a32,000 \u00b7 rent, Mayfair with a hotel",
+        "color": "#b91c1c"
+      },
+      "id": 36
+    },
+    {
+      "name": "Game over",
+      "title": "One player left",
+      "description": "A game ends when everyone but one is bankrupt. Two hours, one lap and a bit each, and the whole thing decided by a roll of two on the right square.",
+      "highlight": [],
+      "active_connections": [],
+      "camera": {
+        "fit": true
+      },
+      "footer": [
+        {
+          "text": "Money that actually changed hands: about **\u00a37,000**, and \u00a33,100 of it was the last two landings.",
+          "style": "info"
+        },
+        {
+          "text": "The official rules have no auction pot, no Free Parking jackpot and no \u00a3400 for landing on GO. Every game you have played had house rules in it.",
+          "style": "success"
+        }
+      ],
+      "id": 37
+    }
+  ]
+}

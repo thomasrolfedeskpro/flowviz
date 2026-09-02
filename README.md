@@ -56,6 +56,7 @@ shop; it is deliberately the simplest thing the tool can draw.
 | `airport-departure.json` | 20 / 18 | Two sub-scenes; passenger and suitcase reconverging |
 | `uk-power.json` | 33 / 34 | Pipe colour carrying meaning: a voltage ramp, then real cable colours |
 | `parcel-network.json` | 40 / 45 | The big one: four scenes three levels deep, 42 waterfall bars |
+| `monopoly.json` | 58 / 38 | The London board, exactly — 40 spaces, a game played out, two sub-scenes |
 
 *Size is components / steps, counting every nested scene.*
 
