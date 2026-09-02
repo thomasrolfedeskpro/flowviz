@@ -71,11 +71,63 @@ and packaging instructions are in [`skills/README.md`](./skills/README.md).
 
 ## Screenshots
 
-### Overview — isometric grid with zones and glass tube pipes
-<img width="1936" height="1255" alt="image" src="https://github.com/user-attachments/assets/e24c30c9-24e9-4ac7-9849-063b53eb8a34" />
+### Overview — isometric grid, zones and glass tube pipes
 
-### Stream indicators
-<img width="1638" height="830" alt="image" src="https://github.com/user-attachments/assets/fd6b8034-4cb4-49f0-a29b-3beadf2f5406" />
+Three bounded contexts, each in its own zone, joined by pipes that sit almost
+invisible until a step lights them.
+
+![Overview](docs/screenshots/01-overview.jpg)
+
+### Packets, repeat bursts and coloured pipes
+
+One step of a trace: twenty-five identical queries down a pipe the author
+coloured red, with the `×25` marker on its label and the diagnosis in the footer.
+
+![Packets in flight](docs/screenshots/02-packets.jpg)
+
+### The waterfall
+
+Bars on a shared axis beside the step list. The weights are unitless — these are
+milliseconds, but a flow can measure hours, kilometres or pounds instead.
+
+![Waterfall](docs/screenshots/03-waterfall.jpg)
+
+### Nested scenes
+
+A step tagged with a component's id plays *inside* it. A dashed boundary and the
+scene's name are drawn on the ground, and the step list indents everything that
+happens down there.
+
+![Inside a nested scene](docs/screenshots/04-nested-scene.jpg)
+
+### Pipe colour that means something
+
+Inside a house, the pipes are the real cable colours: brown line, blue neutral,
+green earth. On the network outside, the same flow grades them by voltage.
+
+![Pipe colour](docs/screenshots/05-pipe-colour.jpg)
+
+### Streams
+
+A chevron band for connections that stay open, as distinct from packets, which
+are for things that arrive.
+
+![Streams](docs/screenshots/06-streams.jpg)
+
+### Dark theme
+
+The Monopoly board: forty spaces generated round the perimeter of a 21×21 grid,
+because that is exactly what the real board is.
+
+![Dark theme](docs/screenshots/07-dark.jpg)
+
+### Edit mode
+
+Every field of every object is editable in place, including whole steps —
+packets, streams, annotations, footer notes and the waterfall bar. Edits are
+validated as you make them and written back to the flow's own JSON.
+
+![Edit mode](docs/screenshots/08-editing.jpg)
 
 
 ## Development
