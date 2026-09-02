@@ -1,0 +1,14 @@
+{
+  "name": "FlowViz",
+  "short_name": "FlowViz",
+  "description": "Animated isometric 3D data-flow diagrams from a JSON definition.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#edf0f5",
+  "theme_color": "#0d2b52",
+  "icons": [
+    { "src": "/favicon-96x96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "/android-icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon-256x256.png", "sizes": "256x256", "type": "image/png" }
+  ]
+}
