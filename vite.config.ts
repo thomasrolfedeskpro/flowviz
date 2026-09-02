@@ -9,7 +9,7 @@ import { parseFlowSchema } from './src/engine/flowSchema'
 // Exposes `virtual:flows` — every flow under public/flows with its title and the
 // path to fetch it from. Flows live in subdirectories: `examples/` ships with the
 // repo, `custom/` is git-ignored for personal and product-specific flows.
-// ponytail: read at module-load, so a newly added flow needs a dev-server restart.
+// Read at module-load, so a newly added flow needs a dev-server restart.
 const FLOW_ROOT = 'public/flows'
 
 /** Every .json under public/flows, one level of subdirectory deep, as paths
