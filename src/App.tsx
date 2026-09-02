@@ -46,6 +46,10 @@ import '@/styles/global.css'
 // Flows live in subdirectories (`examples/` ships, `custom/` is git-ignored), so
 // the manifest maps an id to its path. Falling back to the first flow keeps a
 // fresh clone working even though the previous default now lives in custom/.
+/** Width of the fixed step sidebar, matching `.sidebar` in the stylesheet. It
+ *  covers the canvas rather than sitting next to it. */
+const SIDEBAR_WIDTH = 250
+
 /** How many gestures you can walk back. Definitions are tens of kilobytes, so
  *  the depth costs little. */
 const UNDO_DEPTH = 50
@@ -443,6 +447,9 @@ function App() {
     s.setEditMode(editMode)
     s.setCameraFollow(cameraFollow)
     s.setTiming(timingRef.current)
+    // The sidebar is fixed over the canvas, not beside it, so tell the scene how
+    // much of its width is hidden and it will compose into what is visible.
+    s.setViewportInset(SIDEBAR_WIDTH)
   }, [theme, speed, editMode, cameraFollow])
 
   const setMode = useCallback((next: SceneMode) => {

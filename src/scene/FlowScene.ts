@@ -108,6 +108,13 @@ export class FlowScene extends SceneManager {
   /** Steps may move the camera. Off means the view is yours. */
   private cameraFollow: boolean = true
   private timing: Timing = DEFAULT_TIMING
+  /**
+   * Pixels of the canvas hidden behind fixed chrome on the right — the step
+   * sidebar sits over the diagram rather than beside it, so the canvas is wider
+   * than the part you can see. Without accounting for it every flow composes
+   * half the sidebar's width right of centre, and a wide one runs underneath.
+   */
+  private viewportInset = 0
   private pipeLabelEditCallback: ((connectionId: string, current: string) => void) | null = null
   private commitCallback: ((actions: FlowAction[]) => void) | null = null
   private pipeLabelHoverCallback: ((connectionId: string | null) => void) | null = null
@@ -1103,9 +1110,23 @@ export class FlowScene extends SceneManager {
    * constraint — so this can't be precomputed on the layer.
    */
   private overviewFrustumOf(layer: SceneLayer): number {
-    const el = this.renderer.domElement
-    const aspect = el.clientWidth / el.clientHeight || 1
+    const aspect = this.visibleAspect()
     return Math.max(layer.overviewHalfHeight, layer.overviewHalfWidth / aspect)
+  }
+
+  /** Aspect of the part of the canvas the user can actually see. */
+  private visibleAspect(): number {
+    const el = this.renderer.domElement
+    const visible = Math.max(1, el.clientWidth - this.viewportInset)
+    return visible / el.clientHeight || 1
+  }
+
+  /** How much chrome covers the right of the canvas. */
+  setViewportInset(px: number): void {
+    if (px === this.viewportInset) return
+    this.viewportInset = px
+    this.overviewFrustum = this.overviewFrustumOf(this.layer)
+    this.applyCamera()
   }
 
   /** Which scene is on screen: null for the top level, else a component id. */
@@ -1312,25 +1333,37 @@ export class FlowScene extends SceneManager {
     this.camera.right  =  this.currentFrustum * aspect
     this.camera.top    =  this.currentFrustum
     this.camera.bottom = -this.currentFrustum
-    this.camera.position.set(
-      this.cameraTarget.x + CAMERA_HEIGHT,
-      CAMERA_HEIGHT,
-      this.cameraTarget.z + CAMERA_HEIGHT,
-    )
-    this.camera.lookAt(this.cameraTarget)
+
+    // Look at a point offset to the right in screen space, which slides the
+    // diagram left into the visible half. cameraTarget itself is left alone so
+    // panning and framing keep meaning "what the viewer is looking at".
+    const look = this.cameraTarget.clone().add(this.screenRightShift())
+    this.camera.position.set(look.x + CAMERA_HEIGHT, CAMERA_HEIGHT, look.z + CAMERA_HEIGHT)
+    this.camera.lookAt(look)
     this.camera.updateProjectionMatrix()
   }
 
+  /**
+   * How far to slide the diagram left, as a world vector along screen-right.
+   *
+   * Only half of what centring in the visible width would suggest. There is
+   * chrome on both sides: the sidebar covers the full height on the right, so
+   * it counts in full when deciding how much *fits* — but the prose panel
+   * covers the top-left corner, and shifting all the way over tucks a wide
+   * diagram underneath it. Half clears the sidebar without reaching the panel.
+   */
+  private screenRightShift(): THREE.Vector3 {
+    if (!this.viewportInset) return new THREE.Vector3()
+    const perPixel = (this.currentFrustum * 2) / (this.renderer.domElement.clientHeight || 1)
+    // Screen-right on the ground plane is (x - z) / sqrt2 for this camera.
+    return new THREE.Vector3(1, 0, -1).normalize().multiplyScalar((this.viewportInset / 4) * perPixel)
+  }
+
   override resize(width: number, height: number): void {
-    const aspect = width / height || 1
-    this.camera.left   = -this.currentFrustum * aspect
-    this.camera.right  =  this.currentFrustum * aspect
-    this.camera.top    =  this.currentFrustum
-    this.camera.bottom = -this.currentFrustum
-    this.camera.position.set(this.cameraTarget.x + CAMERA_HEIGHT, CAMERA_HEIGHT, this.cameraTarget.z + CAMERA_HEIGHT)
-    this.camera.lookAt(this.cameraTarget)
-    this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height, false)
+    // Delegate rather than repeat the projection maths: this used to be a second
+    // copy of it, which silently dropped the viewport-inset composition.
+    this.applyCamera()
   }
 
   getConnectionLabelData(): Array<{ id: string; label: string; midpoint: THREE.Vector3 }> {

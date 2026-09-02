@@ -1032,6 +1032,17 @@ steps. Collapse them:
 Orient data flow **left to right** (increasing col). The viewer reads the diagram
 like a flowchart. Source systems go in low cols, destination systems in high cols.
 
+### 9.1b Keep the top-left corner clear
+
+The step's title, description and footer notes are drawn in a card pinned to the
+top-left of the canvas — roughly 400×300 px at its tallest. Anything you place
+in the first two or three cells of row 0 will sit behind it.
+
+Start the flow a little in from that corner, or put the opening component lower
+down. The camera composes the diagram to clear the step sidebar on the right,
+which pulls layouts slightly left, so the top-left is the one region worth
+leaving empty.
+
 ### 9.2 Branching
 
 Use **rows** for parallel paths. If a request can succeed or fail, put the success
