@@ -6,6 +6,28 @@ strict — invalid field names or values will silently break the visualisation.
 
 ---
 
+## Contents
+
+| § | |
+|---|---|
+| 1 | What FlowViz renders |
+| 1b | Where a flow file lives |
+| 2–4 | Top-level structure, `meta` (incl. `timing`), `layout` |
+| 5 | `zones` |
+| 6 | `components` — types, shapes, icons, logos, `detail` sub-scenes |
+| 7 | `connections` — routing and `color` |
+| 8 | `steps` — highlights, camera, annotations, packets, streams, footers, waterfall, scene |
+| 9 | Layout heuristics |
+| 10 | Step sequencing patterns |
+| 11 | Common mistakes to avoid |
+| 12 | Worked example |
+| 13 | Iterating in the browser |
+| 14 | Validation checklist |
+| 15 | The shipped examples, and what to copy from each |
+| 16 | Feature status |
+
+---
+
 ## 1. What FlowViz renders
 
 FlowViz produces an animated isometric 3D diagram. The viewer steps forward and
@@ -15,8 +37,13 @@ backward through a sequence of states. At each step:
 - A subset of **connections** (pipes between components) illuminate.
 - An optional **packet** (a glowing shape) travels along one connection and, on
   arrival, flashes a colour that reflects the outcome (success / error / warning).
+- **Streams** put a moving chevron band on connections that stay open.
 - Optional **annotation cards** appear with leader lines pointing to specific components.
-- The camera may pan and zoom to focus on a specific component.
+- **Footer notes** print emphasised lines under the step's description.
+- A **waterfall bar** can be placed on a shared axis beside the step list.
+- The camera may move to focus a named component, or reframe the whole scene.
+- Inside a nested scene, a dashed boundary and the scene's name are drawn on the
+  ground so it is obvious where you are.
 
 The goal is to tell a clear story about how data moves through a system — one
 meaningful event per step.
@@ -99,12 +126,16 @@ have no opinion.
 { "grid": { "cols": 12, "rows": 6 } }
 ```
 
-The grid defines the coordinate space. All positions are integer (col, row) values.
-`cols` controls width (left-to-right), `rows` controls depth (top-to-bottom in
-screen space).
+The grid defines the coordinate space. Component and zone positions are whole
+(col, row) cells; only connection `route` waypoints may be fractional, for
+threading a pipe through the middle of a cell rather than its corner. `cols`
+controls width (left-to-right), `rows` controls depth (top-to-bottom in screen
+space).
 
 **Sizing guidance:**
-- Default cell size is 3.0 world units. The camera auto-frames the full grid.
+- Default cell size is 3.0 world units. The camera frames the **declared grid**,
+  not the components in it — so a grid far larger than the layout uses makes
+  everything render smaller for no reason. Size it to the content plus a margin.
 - Use enough cols for the flow to spread horizontally. 8–16 is typical.
 - Use enough rows to separate parallel tracks. 4–10 is typical.
 - Leave empty cells — crowding is worse than padding.
@@ -130,15 +161,24 @@ outside the zone's top edge (folder-tab style).
 |------------|--------|-------|
 | `id`       | string | Unique. Referenced by child zones via `parentId`. |
 | `label`    | string | Short (1–3 words). Rendered as a flat plate on the ground plane outside the zone's near edge. |
-| `color`    | string | Hex colour. Used for fill, border, and label background. |
+| `color`    | string | Hex colour, used for the fill and the border. The label plate is always off-black with white text, whatever the zone colour, so it stays readable over any fill. |
 | `bounds`   | object | `col`/`row` = top-left corner. `width`/`height` in grid cells. |
 | `parentId` | string | Optional. ID of a parent zone. Nested zones render inside the parent with a slightly raised ground plane and independent label. Use to model sub-zones within a larger boundary (e.g. AZs inside a VPC). |
 | `outline`  | string | Optional. `"dashed"` draws the border as a dashed line instead of solid. Useful for logical boundaries (VPCs, cloud regions) that don't have a physical enclosure. |
-| `meta`     | object | Optional. `description` and `notes` strings shown in future tooltip UI. |
+| `meta`     | object | Optional. `description` and `notes` are shown in a tooltip when the zone's label is hovered. |
 
 **Zone sizing rule:** bounds should enclose all member components with at least
 one cell of padding on each side. This prevents the zone border from touching
 component meshes.
+
+**Pick the colour for how it looks at 12%.** Zone fill opacity is fixed by the
+renderer — 12%, plus 4% for each level of nesting — and is not author-settable.
+A colour therefore lands far paler than it looks in a swatch: a pale board green
+of `#cfd9c4` measures within five values of the page behind it, i.e. invisible.
+Choosing `#6f8f52`, much more saturated than the intended result, is what
+actually produces a soft green surface. For a large background zone especially,
+pick the colour you want *after* it has been mixed down, not the colour you want
+to see.
 
 **Zone gap rule (critical):** Adjacent zones that are side-by-side MUST have at
 least **1 empty grid column** between them. If zone A ends at col X (i.e.
@@ -449,8 +489,12 @@ Steps are the animation sequence. The engine presents them one at a time.
 ### 8.1 Step 0: the overview (required)
 
 **Always include a step with id `0` as the first step.** It should have no
-highlights, no annotations, no packet, and no camera focus. This is the resting
-state — the viewer sees the full architecture before anything happens.
+highlights, no annotations and no packet. This is the resting state — the viewer
+sees the whole thing before anything happens.
+
+Give it `camera: { "fit": true }`. A viewer who has walked to the end and jumps
+back to step 0 expects to see everything again, and `fit` is the only thing that
+reframes; `focus: null` deliberately leaves the view where it was.
 
 ```json
 {
@@ -459,11 +503,15 @@ state — the viewer sees the full architecture before anything happens.
   "description": "Brief description of the system before any events occur.",
   "highlight":   [],
   "active_connections": [],
-  "camera":      { "focus": null }
+  "camera":      { "fit": true }
 }
 ```
 
-### 8.2 Full step schema
+### 8.2 A representative step
+
+Not every field is shown here. `scene` (§8.14), `streams` (§8.11) and
+`camera.fit` (§8.6) are covered in their own sections, and `popouts` should not
+be used at all.
 
 ```json
 {
@@ -1290,7 +1338,7 @@ A minimal but complete example illustrating all features.
       "title": "Telemetry Pipeline Overview",
       "description": "A button click in the browser travels through a collector API and Kafka topic before landing in ClickHouse.",
       "highlight": [], "active_connections": [],
-      "camera": { "focus": null }
+      "camera": { "fit": true }
     },
     {
       "id": 1, "name": "User action",
@@ -1308,7 +1356,6 @@ A minimal but complete example illustrating all features.
       "title": "Event sent to Collector",
       "description": "SDK serializes the event and POSTs it to the collector endpoint.",
       "highlight": ["browser", "collector"], "active_connections": ["c1"],
-      "camera": { "focus": null },
       "packet": {
         "connection": "c1", "shape": "document",
         "arrivalStyle": "success",
@@ -1331,7 +1378,6 @@ A minimal but complete example illustrating all features.
       "title": "Event published to Kafka",
       "description": "Enriched event produced to the telemetry-events topic, keyed by userId.",
       "highlight": ["collector", "kafka"], "active_connections": ["c2"],
-      "camera": { "focus": null },
       "packet": {
         "connection": "c2", "shape": "envelope",
         "arrivalStyle": "success",
@@ -1343,7 +1389,6 @@ A minimal but complete example illustrating all features.
       "title": "Consumer writes to ClickHouse",
       "description": "A Kafka consumer reads the event and inserts it into ClickHouse.",
       "highlight": ["kafka", "clickhouse"], "active_connections": ["c3"],
-      "camera": { "focus": null },
       "packet": {
         "connection": "c3", "shape": "document",
         "arrivalStyle": "success",
@@ -1418,13 +1463,13 @@ deleting a component that owns a scene is refused, with an explanation.
 
 Before returning a flow JSON, verify each of these:
 
-- [ ] Step `id: 0` exists with `highlight: []`, `active_connections: []`, `camera: { "focus": null }`
+- [ ] Step `id: 0` exists with `highlight: []`, `active_connections: []`, `camera: { "fit": true }`
 - [ ] Every `connection.from` and `connection.to` references an existing component `id`
 - [ ] Every `step.highlight` entry references an existing component `id`
 - [ ] Every `step.active_connections` entry references an existing connection `id`
 - [ ] Every `step.packet.connection` references an existing connection `id`
 - [ ] Every `annotation.target` references an existing component `id`
-- [ ] Every `popout.anchor` references an existing component `id`
+- [ ] No `popouts` anywhere — the schema accepts them but nothing draws them
 - [ ] Zone `bounds` enclose their member components with at least 1 cell padding
 - [ ] Each component's `position.col + size.w` does not exceed `layout.grid.cols`
 - [ ] Each component's `position.row + size.h` does not exceed `layout.grid.rows`
@@ -1445,10 +1490,45 @@ Before returning a flow JSON, verify each of these:
 - [ ] `footer` notes carry their own units and are limited to one or two per step
 - [ ] `streams` appear only on long-lived open connections (streamed media, WebSockets, telemetry feeds) — never to show data merely moving
 - [ ] No unrelated component lies within 2 cells of a pipe midpoint on a crossing connection
+- [ ] Multiple `packets` in a step are things happening *at the same time* — one thing crossing several hops is one packet on one waypointed connection
+- [ ] `camera` is only ever `{ "fit": true }` or a named `focus`; no `focus: null`
+- [ ] `connection.color` is used where it carries meaning, not on every pipe
+- [ ] Large background zones use a colour chosen for how it looks at 12% opacity
+- [ ] The flow validates: `node skills/flowviz/scripts/flowviz-validate.mjs . public/flows/examples/<file>.json`
 
 ---
 
-## 15. Feature status
+## 15. The shipped examples, and what to copy from each
+
+Eleven flows live in `public/flows/examples/`. Between them they use every
+feature in this guide, so the fastest way to author something is to open the one
+whose *shape* matches what you are describing and follow it.
+
+| File | Cmp / Steps | Depth | Copy it for |
+|---|---|---|---|
+| `coffee-shop-order.json` | 6 / 6 | – | The minimum that works: no zones, no waterfall, one packet per step |
+| `water-cycle.json` | 7 / 8 | – | Streams vs packets, a closed loop, reverse direction, `elevation` |
+| `blood-circulation.json` | 8 / 11 | – | Two intertwined circuits, waypoint routing |
+| `farm-to-shelf.json` | 8 / 6 | 2 | The smallest nested-scene flow — read this before writing a `detail` |
+| `slow-checkout.json` | 10 / 15 | – | A trace: a waterfall as the main event, a `count` burst, a coloured slow pipe |
+| `card-payment.json` | 11 / 12 | – | A failure and a retry, brand logos, a millisecond waterfall |
+| `hexagonal-architecture.json` | 14 / 9 | – | Software architecture, zone nesting |
+| `airport-departure.json` | 20 / 18 | 2 | Two sub-scenes, two parallel journeys reconverging, a waterfall in minutes |
+| `uk-power.json` | 33 / 34 | 2 | `connection.color` carrying real meaning twice over: a voltage ramp, then cable colours |
+| `parcel-network.json` | 40 / 45 | 3 | Scale: three levels of nesting, 40+ waterfall bars, a failure and recovery |
+| `monopoly.json` | 58 / 38 | 2 | A generated layout, a waterfall used for money, one token routed round a board |
+
+*Cmp / Steps counts every nested scene. Depth is levels of `detail` below the
+top level.*
+
+Two of these were generated rather than hand-written — the Monopoly board's
+forty spaces, and its move routes. If a layout is regular enough to describe as
+a rule, write the rule: a generator gets forty properties in the right order in
+the right colours every time, and a person does not.
+
+---
+
+## 16. Feature status
 
 | Feature | Status |
 |---------|--------|
