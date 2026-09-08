@@ -1,74 +1,183 @@
-.controls {
+/* Bottom-left corner. It no longer has to dodge the step sidebar the way a
+   centred bar did, so it needs no knowledge of the sidebar's width. */
+.panel {
   position: fixed;
-  bottom: 2rem;
-  left: calc((100% - var(--sidebar-w)) / 2);
-  transform: translateX(-50%);
-  transition: left 0.18s ease;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 100;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 2rem;
-  padding: 0.6rem 1.2rem;
-  backdrop-filter: blur(8px);
-  z-index: 100;
+  border-radius: var(--radius-lg);
+  padding: 0.35rem;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-panel);
+  user-select: none;
 }
 
-.controls button {
-  background: var(--btn-bg);
-  border: 1px solid var(--btn-border);
-  border-radius: 1rem;
-  color: var(--text-primary);
+/* The row spaces its groups; a group packs its own buttons together. Two
+   levels, because a single flat gap either crowds unrelated controls or
+   scatters related ones. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.1rem;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+/* Hairline between the groups, inset so it reads as a separator rather than a
+   border cutting the panel in two. */
+.divider {
+  height: 1px;
+  background: var(--divider);
+  margin: 0.3rem 0.35rem;
+}
+
+/* ── buttons ─────────────────────────────────────────────────────────────── */
+
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.875rem;
-  padding: 0.4rem 0.9rem;
-  transition: background 0.15s;
+  padding: 0;
+  transition: background 0.14s, color 0.14s;
 }
 
-.controls button:hover:not(:disabled) {
+.iconBtn:hover:not(:disabled) {
   background: var(--btn-hover);
+  color: var(--text-primary);
 }
 
-.controls button:disabled {
-  opacity: 0.35;
+.iconBtn:disabled {
+  opacity: 0.28;
   cursor: not-allowed;
 }
 
+.iconBtn:focus-visible,
+.segBtn:focus-visible,
+.select:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* One language for "this is on", shared with the segmented switch below: the
+   accent, over a wash of the same hue. A toggle whose state you can only learn
+   by hovering it is not showing you its state. */
+.on {
+  color: var(--accent-blue);
+  background: var(--accent-blue-dim);
+}
+
+.on:hover:not(:disabled) {
+  color: var(--accent-blue);
+}
+
+/* Play is the one thing you press repeatedly, so it is the one thing that
+   looks like a button rather than an icon. */
+.play {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  color: var(--accent-fg);
+}
+
+.play:hover:not(:disabled) {
+  background: var(--accent-blue);
+  color: var(--accent-fg);
+  filter: brightness(1.12);
+}
+
+/* ── step counter ────────────────────────────────────────────────────────── */
+
 .counter {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  min-width: 3rem;
-  text-align: center;
-}
-
-.speedSelect {
-  background: var(--btn-bg);
-  border: 1px solid var(--btn-border);
-  border-radius: 1rem;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 0.8rem;
-  padding: 0.4rem 0.6rem;
-  transition: background 0.15s;
-}
-
-.speedSelect:hover {
-  background: var(--btn-hover);
-}
-
-/* Hands the camera back: steps stop pulling the view around. */
-.follow {
+  margin-left: auto;
+  padding: 0 0.4rem 0 0.5rem;
   display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  user-select: none;
+  align-items: baseline;
+  gap: 0.22rem;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.follow input {
-  cursor: pointer;
+.current {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
+
+.total {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ── segmented view switch ───────────────────────────────────────────────── */
+
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-sunken);
+  border-radius: calc(var(--radius-md) + 2px);
+  flex: 0 0 auto;
+}
+
+.segBtn {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 1.85rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.14s, color 0.14s;
+}
+
+.segBtn:hover {
+  color: var(--text-primary);
+}
+
+.segOn,
+.segOn:hover {
+  background: var(--accent-blue-dim);
+  color: var(--accent-blue);
+}
+
+/* ── speed ───────────────────────────────────────────────────────────────── */
+
+.select {
+  height: 2.15rem;
+  background: var(--surface-sunken);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  padding: 0 0.35rem;
+  transition: background 0.14s;
+}
+
+.select:hover {
+  background: var(--btn-hover);
+}
+
+

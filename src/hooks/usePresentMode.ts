@@ -32,7 +32,6 @@ function syncUrl(on: boolean): void {
 
 export interface PresentMode {
   presenting: boolean
-  enter:  () => void
   exit:   () => void
   toggle: () => void
 }
@@ -67,7 +66,6 @@ export function usePresentMode(): PresentMode {
 
   return {
     presenting,
-    enter:  useCallback(() => setPresenting(true),  []),
     exit:   useCallback(() => setPresenting(false), []),
     toggle: useCallback(() => setPresenting((v) => !v), []),
   }

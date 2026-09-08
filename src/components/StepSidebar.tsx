@@ -2,7 +2,6 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import type { Step } from '@/types/schema'
 import { waterfallLanes } from '@/utils/waterfall'
 import type { SceneInfo } from '@/utils/scenes'
-import type { Theme } from '@/scene/ThemeColors'
 import type { LintFinding } from '@/engine/geometryLint'
 import styles from '@/styles/StepSidebar.module.css'
 
@@ -20,17 +19,13 @@ interface Props {
   /** What the waterfall measures, from `meta.waterfallLabel`. Bars are unitless,
    *  so this is the only thing that says whether they are ms, miles or pounds. */
   waterfallLabel?: string
-  theme: Theme
   editMode: boolean
   flowId: string
   flows: FlowSummary[]
   /** Nested scenes by owning component id — used to indent their steps. */
   scenes?: Map<string, SceneInfo>
   onGoTo: (index: number) => void
-  onThemeToggle: () => void
   onEditModeToggle: () => void
-  /** Enter fullscreen, chrome-free playback. */
-  onPresent: () => void
   onSelectFlow: (id: string) => void
   /** Omitted when deleting isn't possible (no dev server to remove the file). */
   onDeleteFlow?: (flow: FlowSummary) => void
@@ -70,15 +65,12 @@ export function StepSidebar({
   steps,
   currentIndex,
   waterfallLabel,
-  theme,
   editMode,
   flowId,
   flows,
   scenes,
   onGoTo,
-  onThemeToggle,
   onEditModeToggle,
-  onPresent,
   onSelectFlow,
   onDeleteFlow,
   onCopyJson,
@@ -129,11 +121,6 @@ export function StepSidebar({
   useEffect(() => {
     if (tab === 'steps') activeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [currentIndex, tab])
-
-  // Publish the occupied width so fixed overlays (the playback bar) can avoid it.
-  useEffect(() => {
-    document.documentElement.dataset.sidebar = open ? 'wide' : 'normal'
-  }, [open])
 
   // Line the bar column up with the step list rather than guessing at the
   // height of the tabs and header above it.
@@ -231,25 +218,6 @@ export function StepSidebar({
               onClick={onEditModeToggle}
             >
               {editMode ? 'Done' : 'Edit layout'}
-            </button>
-            {/* Present mode hides this whole panel, so the way in has to live
-                outside it too — hence the F shortcut in the tooltip. */}
-            <button
-              className={styles.iconBtn}
-              onClick={onPresent}
-              title="Present — fullscreen, no chrome (F)"
-              aria-label="Present"
-            >
-              <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
-                <path
-                  d="M1.5 2.5h13v9h-13z"
-                  fill="none" stroke="currentColor" strokeWidth="1.4"
-                />
-                <path d="M6 14h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-            </button>
-            <button className={styles.themeBtn} onClick={onThemeToggle}>
-              {theme === 'dark' ? 'Light' : 'Dark'}
             </button>
           </div>
 

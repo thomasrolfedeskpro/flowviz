@@ -3,6 +3,8 @@ import { exportAnimationGif } from '@/utils/gifExport'
 import { exportAnimationWebm, pickVideoMimeType } from '@/utils/videoExport'
 import { captureStillPng } from '@/utils/pngExport'
 import { nextFrames } from '@/utils/exportDriver'
+import { ExportIcon } from '@/components/ControlIcons'
+import { Tooltip } from '@/components/Tooltip'
 import { downloadBlob, exportStem } from '@/utils/download'
 import type { FlowScene } from '@/scene/FlowScene'
 import type { StepEngine } from '@/engine/stepEngine'
@@ -123,6 +125,15 @@ export function ExportButton({ scene, engine, flowId, msPerStep }: ExportButtonP
         <div className={styles.error} role="alert">{failed}</div>
       )}
 
+      {/* The button is an icon now, so progress needs somewhere else to live —
+          a long capture with no visible sign of life reads as a hang. */}
+      {recording && (
+        <div className={styles.progress} role="status">
+          <span className={styles.dot} />
+          {progress}
+        </div>
+      )}
+
       {open && !recording && (
         <div className={styles.menu} role="menu">
           <button role="menuitem" onClick={handlePng}>
@@ -146,26 +157,20 @@ export function ExportButton({ scene, engine, flowId, msPerStep }: ExportButtonP
         </div>
       )}
 
-      <button
-        className={`${styles.btn} ${recording ? styles.recording : ''}`}
-        onClick={() => setOpen((v) => !v)}
-        disabled={recording || !ready}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title={recording ? undefined : OVERLAY_CAVEAT}
-      >
-        {recording ? (
-          <>
-            <span className={styles.dot} />
-            {progress}
-          </>
-        ) : (
-          <>
-            Export
-            <span className={styles.chevron} aria-hidden="true">▾</span>
-          </>
-        )}
-      </button>
+      {/* The tooltip wraps only the button: it establishes a containing block,
+          and the menu above has to position against the panel, not against this. */}
+      <Tooltip label={recording ? 'Recording…' : 'Export image or video'}>
+        <button
+          className={`${styles.btn} ${recording ? styles.recording : ''}`}
+          onClick={() => { setFailed(null); setOpen((v) => !v) }}
+          disabled={recording || !ready}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label="Export"
+        >
+          {recording ? <span className={styles.dot} /> : <ExportIcon />}
+        </button>
+      </Tooltip>
     </div>
   )
 }

@@ -165,7 +165,7 @@ function App() {
   /** Mirrors the scene's pointer mode, so the toolbar can show what's armed. */
   const [mode, setModeState] = useState<SceneMode>({ kind: 'select' })
   /** Fullscreen, chrome-free playback. */
-  const { presenting, enter: enterPresentMode, exit: exitPresent, toggle: togglePresent } = usePresentMode()
+  const { presenting, exit: exitPresent, toggle: togglePresent } = usePresentMode()
   /** Pointer has been still for a while — the playback bar gets out of the way. */
   const [presentIdle, setPresentIdle] = useState(false)
   /** A delete waiting on the prompt that says what else it would change. */
@@ -340,16 +340,6 @@ function App() {
 
   useEffect(() => { dirtyRef.current = dirty }, [dirty])
 
-  // The sidebar publishes the width it occupies, and it is unmounted while
-  // presenting — so nothing would reset it and the playback bar would stay
-  // shifted left, centred against a panel that is no longer there. On exit the
-  // sidebar remounts and re-asserts its own value.
-  useEffect(() => {
-    if (!presenting) return
-    document.documentElement.dataset.sidebar = 'hidden'
-    return () => { document.documentElement.dataset.sidebar = 'normal' }
-  }, [presenting])
-
   // Idle pointer fades the playback bar out, so a still frame is just the
   // diagram. Any movement or keypress brings it back.
   //
@@ -436,9 +426,9 @@ function App() {
   /**
    * Editing and presenting are mutually exclusive: present mode hides the whole
    * editing apparatus, and a dashed edit border around a presentation is noise.
-   * Handled at the two ways in rather than by an effect watching both flags —
-   * there is no way to start editing while presenting, since the only toggle
-   * lives in the sidebar that present mode unmounts.
+   * Handled where present mode is entered rather than by an effect watching
+   * both flags — there is no way to start editing while presenting, since the
+   * only toggle lives in the sidebar that present mode unmounts.
    *
    * Leaving edit mode keeps the edits. Only Discard throws them away.
    */
@@ -448,11 +438,6 @@ function App() {
     setEditTarget(null)
     sceneRef.current?.setEditMode(false)
   }, [editMode])
-
-  const handlePresent = useCallback(() => {
-    leaveEditMode()
-    enterPresentMode()
-  }, [leaveEditMode, enterPresentMode])
 
   /** The F key: into present mode from anywhere, and back out again. */
   const handleTogglePresent = useCallback(() => {
@@ -1008,7 +993,6 @@ function App() {
           steps={steps}
           currentIndex={stepState.currentIndex}
           waterfallLabel={flowDef?.meta.waterfallLabel}
-          theme={theme}
           editMode={editMode}
           flowId={flowId}
           flows={flowsForList}
@@ -1016,9 +1000,7 @@ function App() {
           onSelectFlow={handleSelectFlow}
           onDeleteFlow={import.meta.env.DEV ? handleDeleteFlow : undefined}
           onGoTo={handleGoTo}
-          onThemeToggle={handleThemeToggle}
           onEditModeToggle={handleEditModeToggle}
-          onPresent={handlePresent}
           onCopyJson={handleCopyJson}
           onSave={handleSave}
           saveState={saveState}
@@ -1149,8 +1131,21 @@ function App() {
               onCameraFollowChange={setCameraFollow}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
+              theme={theme}
+              onThemeToggle={handleThemeToggle}
+              presenting={presenting}
+              onTogglePresent={handleTogglePresent}
               editMode={editMode}
-            />
+            >
+              {/* Recordings hold each step for as long as playback does at the
+                  current speed, so an export matches what the viewer watched. */}
+              <ExportButton
+                scene={scene}
+                engine={engine}
+                flowId={flowId}
+                msPerStep={timing.step / speed}
+              />
+            </StepControls>
           </div>
         </>
       )}
@@ -1163,16 +1158,6 @@ function App() {
         </div>
       )}
 
-      {/* Recordings hold each step for as long as playback does at the current
-          speed, so an export matches what the viewer just watched. */}
-      {!presenting && (
-        <ExportButton
-          scene={scene}
-          engine={engine}
-          flowId={flowId}
-          msPerStep={timing.step / speed}
-        />
-      )}
     </div>
   )
 }

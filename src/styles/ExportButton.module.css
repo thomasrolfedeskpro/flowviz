@@ -1,54 +1,47 @@
-/* The menu opens upwards from a button pinned bottom-right, so the items never
-   run off the bottom of the viewport.
-   `right` clears the sidebar rather than sitting under it: the sidebar is fixed
-   to the same edge at a higher z-index, so a plain `right: 2rem` puts the button
-   behind an opaque panel where it can be neither seen nor clicked. Tracks
-   `--sidebar-w` so it moves when the waterfall column opens, matching the
-   playback bar. */
+/* Sits inline in the control panel, and deliberately establishes no containing
+   block of its own: the menu and any error then resolve against the panel and
+   open clear above it, rather than against this button and over the panel's own
+   transport row. */
 .root {
-  position: fixed;
-  bottom: 2rem;
-  right: calc(var(--sidebar-w) + 2rem);
-  transition: right 0.18s ease;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
+  display: inline-flex;
 }
 
+/* Sized and coloured as one of the panel's icon buttons. */
 .btn {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 2rem;
-  color: var(--text-primary);
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.875rem;
-  padding: 0.5rem 1.1rem;
-  backdrop-filter: blur(8px);
-  transition: background 0.15s, opacity 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  white-space: nowrap;
+  padding: 0;
+  transition: background 0.14s, color 0.14s;
 }
 
 .btn:hover:not(:disabled) {
   background: var(--btn-hover);
+  color: var(--text-primary);
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 0.28;
   cursor: not-allowed;
 }
 
-.chevron {
-  font-size: 0.7rem;
-  opacity: 0.7;
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
 }
 
-.recording {
-  border-color: #e53935;
+/* Recording is the one state worth shouting about: the button is otherwise
+   indistinguishable from its neighbours while a two-minute capture runs. */
+.recording,
+.recording:hover:not(:disabled) {
+  background: rgba(229, 57, 53, 0.16);
   color: #e53935;
 }
 
@@ -67,6 +60,10 @@
 }
 
 .menu {
+  position: absolute;
+  bottom: calc(100% + 0.45rem);
+  left: 0;
+  z-index: 1;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 0.75rem;
@@ -120,7 +117,29 @@
   padding-top: 0.5rem;
 }
 
+.progress {
+  position: absolute;
+  bottom: calc(100% + 0.45rem);
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
 .error {
+  position: absolute;
+  bottom: calc(100% + 0.45rem);
+  left: 0;
+  z-index: 1;
   background: var(--panel-bg);
   border: 1px solid #e53935;
   border-radius: 0.5rem;

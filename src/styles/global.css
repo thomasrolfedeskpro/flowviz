@@ -19,6 +19,8 @@
   --accent-blue:       rgba(100, 160, 255, 0.7);
   --accent-cyan:       rgba(0, 255, 204, 0.7);
   --accent-cyan-dim:   rgba(0, 255, 204, 0.18);
+  /* Accent wash behind an active toggle, in the accent's own hue. */
+  --accent-blue-dim:   rgba(100, 160, 255, 0.20);
   --leader-line:       rgba(255, 255, 255, 0.22);
   --code-fg:           #00ffcc;
   --code-bg:           rgba(0, 255, 204, 0.08);
@@ -59,8 +61,9 @@
   --ring:              0 0 0 3px rgba(100, 160, 255, 0.28);
   --shadow-panel:      0 24px 60px rgba(0, 0, 0, 0.55);
   --accent-fg:         #ffffff;
-  /* width the sidebar currently occupies — overlays centre against the rest */
-  --sidebar-w:         250px;
+  --tooltip-bg:        #2a2a42;
+  --tooltip-fg:        #f0f0f8;
+  --tooltip-border:    rgba(255, 255, 255, 0.14);
 }
 
 [data-theme="light"] {
@@ -78,6 +81,7 @@
   --accent-blue:       rgba(30, 90, 220, 0.8);
   --accent-cyan:       rgba(0, 140, 90, 0.8);
   --accent-cyan-dim:   rgba(0, 140, 90, 0.20);
+  --accent-blue-dim:   rgba(30, 90, 220, 0.12);
   --leader-line:       rgba(0, 0, 0, 0.22);
   --code-fg:           #007755;
   --code-bg:           rgba(0, 140, 90, 0.08);
@@ -112,15 +116,9 @@
   --field-border:      rgba(0, 0, 0, 0.16);
   --ring:              0 0 0 3px rgba(30, 90, 220, 0.18);
   --shadow-panel:      0 24px 60px rgba(20, 30, 60, 0.18);
-}
-
-[data-sidebar="wide"] {
-  --sidebar-w: 510px;   /* sidebar + waterfall column */
-}
-
-/* Present mode unmounts the sidebar, so overlays centre on the whole viewport. */
-[data-sidebar="hidden"] {
-  --sidebar-w: 0px;
+  --tooltip-bg:        #1f2333;
+  --tooltip-fg:        #f4f5fa;
+  --tooltip-border:    rgba(255, 255, 255, 0.10);
 }
 
 html, body, #root {
