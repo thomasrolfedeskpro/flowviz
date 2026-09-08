@@ -1,5 +1,6 @@
 import { useStepEngine } from '@/hooks/useStepEngine'
 import type { StepEngine } from '@/engine/stepEngine'
+import type { ViewMode } from '@/scene/viewMode'
 import styles from '@/styles/StepControls.module.css'
 
 const SPEED_OPTIONS = [
@@ -16,6 +17,8 @@ export function StepControls({
   onSpeedChange,
   cameraFollow,
   onCameraFollowChange,
+  viewMode,
+  onViewModeChange,
   editMode = false,
 }: {
   engine: StepEngine
@@ -25,6 +28,9 @@ export function StepControls({
   /** Whether steps are allowed to move the camera. */
   cameraFollow: boolean
   onCameraFollowChange: (follow: boolean) => void
+  /** Isometric, or looking straight down. */
+  viewMode: ViewMode
+  onViewModeChange: (mode: ViewMode) => void
   /** Playback is off while editing: nothing should move under an open editor,
    *  and a step that re-applies mid-edit fights whatever you just typed. */
   editMode?: boolean
@@ -61,6 +67,18 @@ export function StepControls({
         />
         Follow
       </label>
+      {/* Named rather than a toggle button: a button showing the other view is
+          ambiguous about which one you are looking at. */}
+      <select
+        className={styles.speedSelect}
+        value={viewMode}
+        onChange={(e) => onViewModeChange(e.target.value as ViewMode)}
+        aria-label="Camera view"
+        title="Camera view"
+      >
+        <option value="isometric">Isometric</option>
+        <option value="plan">Plan</option>
+      </select>
       <select
         className={styles.speedSelect}
         value={speed}

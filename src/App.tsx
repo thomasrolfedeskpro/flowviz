@@ -33,6 +33,7 @@ import type { Timing } from '@/engine/timing'
 import { useStepEngine } from '@/hooks/useStepEngine'
 import { useHover } from '@/hooks/useHover'
 import { usePresentMode } from '@/hooks/usePresentMode'
+import type { ViewMode } from '@/scene/viewMode'
 import type { FlowScene } from '@/scene/FlowScene'
 import type { OverlayBridge } from '@/scene/OverlayBridge'
 import type { Theme } from '@/scene/ThemeColors'
@@ -105,6 +106,15 @@ function stepIndexFromUrl(): number | null {
   return Number.isInteger(n) && n >= 1 ? n - 1 : null
 }
 
+/** `?view=plan` opens straight into the flat view. Anything else is isometric,
+ *  which is the default the tool is built around. */
+function viewModeFromUrl(): ViewMode {
+  return new URLSearchParams(window.location.search).get('view') === 'plan' ? 'plan' : 'isometric'
+}
+
+/** How long the camera takes to swing between the two views. */
+const VIEW_CHANGE_MS = 600
+
 /** How long the playback bar waits before fading out while presenting. */
 const PRESENT_IDLE_MS = 3500
 
@@ -126,6 +136,9 @@ function App() {
   const [speed, setSpeed] = useState(1)
   /** Whether steps that name a component may pull the camera to it. */
   const [cameraFollow, setCameraFollow] = useState(true)
+  /** Isometric, or straight down. Isometric is the point of the tool; plan view
+   *  is for when a dense diagram needs to be read rather than admired. */
+  const [viewMode, setViewMode] = useState<ViewMode>(viewModeFromUrl)
   const [saveState, setSaveState] = useState<
     { status: 'idle' | 'saving' | 'saved' | 'error'; message: string }
   >({ status: 'idle', message: '' })
@@ -369,6 +382,16 @@ function App() {
     sceneRef.current?.setCameraFollow(cameraFollow)
   }, [cameraFollow])
 
+  // Animated, because cutting between the two projections is disorienting —
+  // everything on screen moves at once and nothing tells you it was the camera.
+  useEffect(() => {
+    sceneRef.current?.setViewMode(viewMode, VIEW_CHANGE_MS)
+    const url = new URL(window.location.href)
+    if (viewMode === 'plan') url.searchParams.set('view', 'plan')
+    else                     url.searchParams.delete('view')
+    window.history.replaceState({}, '', `${url.pathname}${url.search}`)
+  }, [viewMode])
+
   useEffect(() => {
     speedRef.current = speed
     sceneRef.current?.setPlaybackSpeed(speed)
@@ -578,7 +601,10 @@ function App() {
     // much of its width is hidden and it will compose into what is visible.
     // Presenting takes the sidebar away, so the whole canvas is visible again.
     s.setViewportInset(presenting ? 0 : SIDEBAR_WIDTH)
-  }, [theme, speed, editMode, cameraFollow, presenting])
+    // No animation here: the scene has only just been built, so there is no
+    // previous view for it to have come from.
+    s.setViewMode(viewMode, 0)
+  }, [theme, speed, editMode, cameraFollow, presenting, viewMode])
 
   const setMode = useCallback((next: SceneMode) => {
     sceneRef.current?.setMode(next)
@@ -1121,6 +1147,8 @@ function App() {
               onSpeedChange={setSpeed}
               cameraFollow={cameraFollow}
               onCameraFollowChange={setCameraFollow}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
               editMode={editMode}
             />
           </div>

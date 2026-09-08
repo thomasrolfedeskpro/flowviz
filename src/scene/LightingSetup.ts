@@ -4,6 +4,8 @@ import type { Theme } from '@/scene/ThemeColors'
 
 export interface SceneLights {
   ambient: THREE.AmbientLight
+  /** The only light that casts. Exposed so the view can turn shadows off. */
+  key:     THREE.DirectionalLight
   fill:    THREE.DirectionalLight
 }
 
@@ -29,7 +31,24 @@ export function setupLighting(scene: THREE.Scene, theme: Theme = 'light'): Scene
   fill.position.set(10, 10, -10)
   scene.add(fill)
 
-  return { ambient, fill }
+  return { ambient, key, fill }
+}
+
+/**
+ * Shadows are drawn by the isometric view and dropped by the plan view.
+ *
+ * The key light sits off to one side, so a component's shadow falls beside it.
+ * Seen at an angle that reads as depth; seen from directly overhead it reads as
+ * a second, blurred copy of the component offset from the real one — noise on a
+ * diagram whose whole point in that view is to be flat.
+ *
+ * Toggling `castShadow` rather than `renderer.shadowMap.enabled`: the number of
+ * shadow-casting lights is part of the renderer's lights state, so three
+ * rebuilds the affected programs itself instead of leaving materials compiled
+ * against a shadow map that is no longer written.
+ */
+export function setShadowsEnabled(lights: SceneLights, enabled: boolean): void {
+  lights.key.castShadow = enabled
 }
 
 export function updateLighting(lights: SceneLights, theme: Theme): void {

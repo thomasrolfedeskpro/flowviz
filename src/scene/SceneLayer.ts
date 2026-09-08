@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { SceneBoundary } from '@/scene/SceneBoundary'
 import { DEFAULT_TIMING } from '@/engine/timing'
 import type { Timing } from '@/engine/timing'
+import type { ViewMode } from '@/scene/viewMode'
 import { ZoneRenderer } from '@/scene/ZoneRenderer'
 import { ComponentMesh } from '@/scene/ComponentMesh'
 import type { MeshState } from '@/scene/ComponentMesh'
@@ -76,6 +77,16 @@ export class SceneLayer {
    */
   readonly overviewHalfWidth: number
   readonly overviewHalfHeight: number
+  /** The same extents for a camera looking straight down. */
+  readonly planHalfWidth: number
+  readonly planHalfHeight: number
+
+  /** Half-extents of this scene as projected in `mode`. */
+  overviewHalf(mode: ViewMode): { width: number; height: number } {
+    return mode === 'plan'
+      ? { width: this.planHalfWidth,     height: this.planHalfHeight }
+      : { width: this.overviewHalfWidth, height: this.overviewHalfHeight }
+  }
 
   private hooks: SceneLayerHooks
   private theme: Theme
@@ -149,6 +160,11 @@ export class SceneLayer {
     const PAD = 1.08
     this.overviewHalfWidth  = ((extentX + extentZ) / Math.SQRT2) * PAD
     this.overviewHalfHeight = ((extentX + extentZ) / Math.sqrt(6)) * PAD
+
+    // Straight down, the ground plane is not projected at all: world X is
+    // screen-x and world Z is screen-y, so the half-extents are the grid's own.
+    this.planHalfWidth  = extentX * PAD
+    this.planHalfHeight = extentZ * PAD
 
     // Nested scenes build alongside, hidden until a step names them.
     for (const [childId, childGraph] of graph.scenes) {

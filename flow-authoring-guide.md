@@ -1378,6 +1378,7 @@ there could not be dragged back.
 | Raw JSON of one object, or of the whole flow | **JSON** in any editor's header; `{}` beside the gear for the whole file |
 | Delete a component, zone or pipe | **Delete** in its editor — it lists what else changes first |
 | Re-lay the whole scene | **Tidy layout** — layered left to right, rows banded by zone. One undo puts it back |
+| Look straight down instead | **Plan** in the playback bar — flat, square-on labels, no shadows. `?view=plan` opens there |
 
 **Safety net**
 
@@ -1510,6 +1511,7 @@ the right colours every time, and a person does not.
 | Elevation (`position.elevation`) | ✅ Rendered — lifts the component off the floor |
 | Geometry lint (`pnpm validate --lint`, layout notes in edit mode) | ✅ Interactive — advisory, never blocks a save |
 | Present mode — fullscreen, no chrome, `F` / `?present=1` | ✅ Interactive |
+| Plan view (`?view=plan`) — straight down, shadows off, labels square-on | ✅ Interactive |
 | Keyboard stepping — ← → space Home End | ✅ Interactive |
 | Deep link to a step (`?step=<n>`, 1-based) | ✅ Interactive |
 | Export PNG (this step), WebM and GIF (whole play-through) | ✅ Interactive |

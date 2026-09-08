@@ -7,7 +7,7 @@ import type { ZoneCorner, ZoneRenderer } from '@/scene/ZoneRenderer'
 import { SceneLayer } from '@/scene/SceneLayer'
 import { HoverSystem } from '@/scene/HoverSystem'
 import { setHoverOutline, setHoverOutlineScale, setHoverOutlineTheme } from '@/scene/hoverOutline'
-import { setupLighting, updateLighting } from '@/scene/LightingSetup'
+import { setupLighting, updateLighting, setShadowsEnabled } from '@/scene/LightingSetup'
 import type { SceneLights } from '@/scene/LightingSetup'
 import { THEME_COLORS } from '@/scene/ThemeColors'
 import type { Theme } from '@/scene/ThemeColors'
@@ -21,6 +21,8 @@ import { DEFAULT_TIMING } from '@/engine/timing'
 import type { Timing } from '@/engine/timing'
 import { Tween, Easing } from '@tweenjs/tween.js'
 import { tweenGroup } from '@/scene/tweenGroup'
+import { blendedGeometry, groundScreenRight } from '@/scene/viewMode'
+import type { ViewMode } from '@/scene/viewMode'
 
 const CAMERA_HEIGHT        = 50
 const WHEEL_ZOOM_IN        = 0.89
@@ -108,6 +110,12 @@ export class FlowScene extends SceneManager {
   /** Steps may move the camera. Off means the view is yours. */
   private cameraFollow: boolean = true
   private timing: Timing = DEFAULT_TIMING
+  /** Which way the camera looks at the flow. */
+  private viewMode: ViewMode = 'isometric'
+  /** Where the camera is between the two views: 0 isometric, 1 plan. Separate
+   *  from `viewMode` so the change can be animated rather than cut. */
+  private viewBlend = 0
+  private viewTween: Tween<{ b: number; f: number }> | null = null
   /**
    * Pixels of the canvas hidden behind fixed chrome on the right — the step
    * sidebar sits over the diagram rather than beside it, so the canvas is wider
@@ -1111,7 +1119,52 @@ export class FlowScene extends SceneManager {
    */
   private overviewFrustumOf(layer: SceneLayer): number {
     const aspect = this.visibleAspect()
-    return Math.max(layer.overviewHalfHeight, layer.overviewHalfWidth / aspect)
+    const half   = layer.overviewHalf(this.viewMode)
+    return Math.max(half.height, half.width / aspect)
+  }
+
+  /**
+   * Swap between the isometric view and looking straight down.
+   *
+   * Re-frames as it goes: the two projections give the same scene very
+   * different extents — isometric spreads a grid across its diagonal, plan view
+   * does not — so holding the old frustum would leave half the diagram off
+   * screen. Any focus or zoom in progress is dropped for the same reason.
+   */
+  setViewMode(mode: ViewMode, ms = 0): void {
+    if (mode === this.viewMode) return
+    this.viewMode = mode
+    setShadowsEnabled(this.lights, mode === 'isometric')
+
+    this.cameraTween?.stop()
+    this.cameraTween = null
+    this.viewTween?.stop()
+
+    this.overviewFrustum = this.overviewFrustumOf(this.layer)
+    const target = mode === 'plan' ? 1 : 0
+
+    if (ms <= 0) {
+      this.viewBlend = target
+      this.currentFrustum = this.overviewFrustum
+      this.applyCamera()
+      return
+    }
+
+    const from = { b: this.viewBlend, f: this.currentFrustum }
+    this.viewTween = new Tween(from, tweenGroup)
+      .to({ b: target, f: this.overviewFrustum }, ms)
+      .easing(Easing.Quadratic.InOut)
+      .onUpdate(({ b, f }) => {
+        this.viewBlend = b
+        this.currentFrustum = f
+        this.applyCamera()
+      })
+      .onComplete(() => { this.viewTween = null })
+      .start()
+  }
+
+  get currentViewMode(): ViewMode {
+    return this.viewMode
   }
 
   /** Aspect of the part of the canvas the user can actually see. */
@@ -1344,8 +1397,10 @@ export class FlowScene extends SceneManager {
     // Look at a point offset to the right in screen space, which slides the
     // diagram left into the visible half. cameraTarget itself is left alone so
     // panning and framing keep meaning "what the viewer is looking at".
+    const view = blendedGeometry(this.viewBlend)
     const look = this.cameraTarget.clone().add(this.screenRightShift())
-    this.camera.position.set(look.x + CAMERA_HEIGHT, CAMERA_HEIGHT, look.z + CAMERA_HEIGHT)
+    this.camera.up.copy(view.up)
+    this.camera.position.copy(look).addScaledVector(view.offset, CAMERA_HEIGHT)
     this.camera.lookAt(look)
     this.camera.updateProjectionMatrix()
   }
@@ -1362,8 +1417,11 @@ export class FlowScene extends SceneManager {
   private screenRightShift(): THREE.Vector3 {
     if (!this.viewportInsetPx) return new THREE.Vector3()
     const perPixel = (this.currentFrustum * 2) / (this.renderer.domElement.clientHeight || 1)
-    // Screen-right on the ground plane is (x - z) / sqrt2 for this camera.
-    return new THREE.Vector3(1, 0, -1).normalize().multiplyScalar((this.viewportInsetPx / 4) * perPixel)
+    // Computed from the camera basis rather than assumed, so it stays correct
+    // in plan view and part-way through the change. For the isometric camera it
+    // comes out as (1,0,-1)/√2, which is what this used to hardcode.
+    return groundScreenRight(blendedGeometry(this.viewBlend))
+      .multiplyScalar((this.viewportInsetPx / 4) * perPixel)
   }
 
   override resize(width: number, height: number): void {
