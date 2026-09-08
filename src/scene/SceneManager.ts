@@ -3,6 +3,20 @@ import { tweenGroup } from '@/scene/tweenGroup'
 
 const FRUSTUM = 12
 
+/**
+ * How far the camera can see in front of and behind itself.
+ *
+ * Symmetric, and it has to be: an orthographic camera clips at `near` just as a
+ * perspective one does, but here the ground plane is steeply inclined to the
+ * view axis, so the part of it nearest the viewer sits in *front* of the camera
+ * plane. With a small positive near, zooming out far enough pushes the bottom
+ * of the screen through it and the diagram is cut off along a horizontal line —
+ * bare background below, scene above. Distance costs nothing here because
+ * orthographic depth is linear, so the range is simply made large enough that
+ * no zoom can reach either end.
+ */
+const CAMERA_DEPTH = 2000
+
 export class SceneManager {
   renderer: THREE.WebGLRenderer
   scene:    THREE.Scene
@@ -36,8 +50,8 @@ export class SceneManager {
        FRUSTUM * aspect,
        FRUSTUM,
       -FRUSTUM,
-       0.1,
-       1000
+      -CAMERA_DEPTH,
+       CAMERA_DEPTH,
     )
 
     const D = 50

@@ -24,7 +24,10 @@ import { tweenGroup } from '@/scene/tweenGroup'
 import { blendedGeometry, groundScreenRight } from '@/scene/viewMode'
 import type { ViewMode } from '@/scene/viewMode'
 
-const CAMERA_HEIGHT        = 50
+/** How far the camera sits from what it is looking at, along the view axis.
+ *  Orthographic projection ignores distance, so this only has to be far enough
+ *  to keep the scene comfortably in front of the camera. */
+const CAMERA_DISTANCE      = 200
 const WHEEL_ZOOM_IN        = 0.89
 const WHEEL_ZOOM_OUT       = 1.12
 const FRUSTUM_MIN_RATIO    = 0.25
@@ -115,7 +118,7 @@ export class FlowScene extends SceneManager {
   /** Where the camera is between the two views: 0 isometric, 1 plan. Separate
    *  from `viewMode` so the change can be animated rather than cut. */
   private viewBlend = 0
-  private viewTween: Tween<{ b: number; f: number }> | null = null
+  private viewTween: Tween<{ b: number; f: number; x: number; z: number }> | null = null
   /**
    * Pixels of the canvas hidden behind fixed chrome on the right — the step
    * sidebar sits over the diagram rather than beside it, so the canvas is wider
@@ -174,18 +177,11 @@ export class FlowScene extends SceneManager {
     this.overviewFrustum = this.overviewFrustumOf(this.layer)
     this.cameraTarget    = this.overviewTarget.clone()
     this.currentFrustum  = this.overviewFrustum
-    const frustumNeeded  = this.overviewFrustum
 
-    // Position camera at overview
-    const t = this.overviewTarget
-    this.camera.position.set(t.x + CAMERA_HEIGHT, CAMERA_HEIGHT, t.z + CAMERA_HEIGHT)
-    this.camera.lookAt(t)
-    const aspect = canvas.clientWidth / canvas.clientHeight || 1
-    this.camera.left   = -frustumNeeded * aspect
-    this.camera.right  =  frustumNeeded * aspect
-    this.camera.top    =  frustumNeeded
-    this.camera.bottom = -frustumNeeded
-    this.camera.updateProjectionMatrix()
+    // Position the camera at the overview. applyCamera owns where the camera
+    // goes for the chosen view; duplicating that here is how the two drifted
+    // apart before.
+    this.applyCamera()
 
     // Apply initial theme to renderer before the first frame is drawn
     this.renderer.setClearColor(THEME_COLORS[this.currentTheme].clearColor)
@@ -432,10 +428,14 @@ export class FlowScene extends SceneManager {
     offset.addScaledVector(right, -dx * scaleX)
     offset.addScaledVector(up,     dy * scaleY / up.lengthSq())
 
+    // Move what the camera is looking at and let applyCamera place it. Moving
+    // the camera by hand and looking straight at cameraTarget is how this used
+    // to work, and it disagreed with applyCamera about the composition offset:
+    // the first drag of a pan dropped that offset, so the diagram jumped
+    // sideways and the view axis tilted by about a degree — which reads as the
+    // camera snapping to a slightly different angle the moment you grab it.
     this.cameraTarget.add(offset)
-    this.camera.position.add(offset)
-    this.camera.lookAt(this.cameraTarget)
-    this.camera.updateProjectionMatrix()
+    this.applyCamera()
   }
 
   private onPointerUp = (): void => {
@@ -1140,23 +1140,34 @@ export class FlowScene extends SceneManager {
     this.cameraTween = null
     this.viewTween?.stop()
 
+    // Re-fit rather than half-fit. The old version reset the frustum but left
+    // the camera wherever it had been panned to, so coming back from plan view
+    // landed somewhere other than where you left isometric.
     this.overviewFrustum = this.overviewFrustumOf(this.layer)
+    const home   = this.layer.overviewTarget
     const target = mode === 'plan' ? 1 : 0
 
     if (ms <= 0) {
       this.viewBlend = target
       this.currentFrustum = this.overviewFrustum
+      this.cameraTarget.copy(home)
       this.applyCamera()
       return
     }
 
-    const from = { b: this.viewBlend, f: this.currentFrustum }
+    const from = {
+      b: this.viewBlend,
+      f: this.currentFrustum,
+      x: this.cameraTarget.x,
+      z: this.cameraTarget.z,
+    }
     this.viewTween = new Tween(from, tweenGroup)
-      .to({ b: target, f: this.overviewFrustum }, ms)
+      .to({ b: target, f: this.overviewFrustum, x: home.x, z: home.z }, ms)
       .easing(Easing.Quadratic.InOut)
-      .onUpdate(({ b, f }) => {
+      .onUpdate(({ b, f, x, z }) => {
         this.viewBlend = b
         this.currentFrustum = f
+        this.cameraTarget.set(x, 0, z)
         this.applyCamera()
       })
       .onComplete(() => { this.viewTween = null })
@@ -1400,7 +1411,7 @@ export class FlowScene extends SceneManager {
     const view = blendedGeometry(this.viewBlend)
     const look = this.cameraTarget.clone().add(this.screenRightShift())
     this.camera.up.copy(view.up)
-    this.camera.position.copy(look).addScaledVector(view.offset, CAMERA_HEIGHT)
+    this.camera.position.copy(look).addScaledVector(view.offset, CAMERA_DISTANCE)
     this.camera.lookAt(look)
     this.camera.updateProjectionMatrix()
   }
