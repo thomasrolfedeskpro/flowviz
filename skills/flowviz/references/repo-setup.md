@@ -107,7 +107,10 @@ grep -c 'Save to file' src/components/StepSidebar.tsx
 ## Validation failures
 
 `flowviz-validate.mjs` runs the repo's zod schema and then builds the graph, so
-its messages are the app's own. The common ones:
+its messages are the app's own. On a checkout that has `scripts/validate-flow.mjs`
+it just calls that — same checks, reported as `ok` / `FAIL` per file, every error
+listed at once. Older checkouts go through a temporary vitest run instead. The
+common messages:
 
 - **`References unknown component: x`** — a step or connection names something
   that isn't in that scene. In a nested flow, check you're in the right scene:
@@ -118,8 +121,8 @@ its messages are the app's own. The common ones:
 - **`Cannot read properties of undefined`** from the graph build — usually a
   connection whose `from`/`to` points at a component you renamed.
 
-If the error mentions a file inside `node_modules` or the vitest runner rather
-than the flow, that's an environment problem — check the install and the node
+If the error mentions a file inside `node_modules`, or the runner rather than
+the flow, that's an environment problem — check the install and the node
 version (`.nvmrc` or `engines` in `package.json` if present).
 
 ## Nothing renders, but validation passed

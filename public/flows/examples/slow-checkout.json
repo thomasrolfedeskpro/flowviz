@@ -2,6 +2,7 @@
   "meta": {
     "title": "Anatomy of a Slow Checkout",
     "description": "One POST /checkout that took 3,520 ms. Follow the trace hop by hop and find out where the time actually went.",
+    "waterfallLabel": "Latency",
     "timing": {
       "step": 2400,
       "packet": 1600,

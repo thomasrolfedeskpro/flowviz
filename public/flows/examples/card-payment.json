@@ -1,7 +1,8 @@
 {
   "meta": {
     "title": "Card Payment Authorisation",
-    "description": "A contactless card payment in a shop, from tap to settlement \u2014 including a decline for insufficient funds and a successful retry on a second card. A simplified model: real card schemes add tokenisation, 3-D Secure, stand-in processing and interchange accounting that are left out here."
+    "description": "A contactless card payment in a shop, from tap to settlement \u2014 including a decline for insufficient funds and a successful retry on a second card. A simplified model: real card schemes add tokenisation, 3-D Secure, stand-in processing and interchange accounting that are left out here.",
+    "waterfallLabel": "Latency"
   },
   "layout": {
     "grid": {

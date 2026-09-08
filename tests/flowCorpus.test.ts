@@ -13,6 +13,7 @@ import { applyActions, flowReducer } from '@/state/flowActions'
 import type { FlowAction } from '@/state/flowActions'
 import { componentGridPosition } from '@/state/gridUnits'
 import { buildGraph } from '@/engine/parseFlow'
+import { lintGeometry } from '@/engine/geometryLint'
 import type { FlowDefinition } from '@/types/schema'
 
 /** Every path where two definitions differ, as dotted strings. The whole point
@@ -53,6 +54,18 @@ describe('every flow on disk', () => {
   it.each(files)('%s: a commit with no actions changes nothing', (file) => {
     const def = read(file)
     expect(applyActions(def, [] as FlowAction[])).toBe(def)
+  })
+
+  /**
+   * The error tier only fires on things nobody does deliberately: two
+   * components on the same cells, something off the grid, a zone outside its
+   * parent. Every flow here is clean today, so this holds the line — warnings
+   * are left alone, because a hand-tuned layout is allowed to trade them away
+   * (monopoly is a Monopoly board; it has no room for zone padding).
+   */
+  it.each(files)('%s: no error-level layout findings', (file) => {
+    const errors = lintGeometry(read(file)).filter((f) => f.severity === 'error')
+    expect(errors.map((f) => `${f.rule}: ${f.message}`)).toEqual([])
   })
 
   it.each(files)('%s: moving one component touches only its position', (file) => {

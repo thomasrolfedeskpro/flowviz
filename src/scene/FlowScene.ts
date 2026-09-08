@@ -114,7 +114,7 @@ export class FlowScene extends SceneManager {
    * than the part you can see. Without accounting for it every flow composes
    * half the sidebar's width right of centre, and a wide one runs underneath.
    */
-  private viewportInset = 0
+  private viewportInsetPx = 0
   private pipeLabelEditCallback: ((connectionId: string, current: string) => void) | null = null
   private commitCallback: ((actions: FlowAction[]) => void) | null = null
   private pipeLabelHoverCallback: ((connectionId: string | null) => void) | null = null
@@ -1117,14 +1117,21 @@ export class FlowScene extends SceneManager {
   /** Aspect of the part of the canvas the user can actually see. */
   private visibleAspect(): number {
     const el = this.renderer.domElement
-    const visible = Math.max(1, el.clientWidth - this.viewportInset)
+    const visible = Math.max(1, el.clientWidth - this.viewportInsetPx)
     return visible / el.clientHeight || 1
+  }
+
+  /** What the inset is now, so a caller that changes it temporarily — an export
+   *  composing for the whole canvas — can put it back without knowing the
+   *  sidebar's width itself. */
+  get viewportInset(): number {
+    return this.viewportInsetPx
   }
 
   /** How much chrome covers the right of the canvas. */
   setViewportInset(px: number): void {
-    if (px === this.viewportInset) return
-    this.viewportInset = px
+    if (px === this.viewportInsetPx) return
+    this.viewportInsetPx = px
     this.overviewFrustum = this.overviewFrustumOf(this.layer)
     this.applyCamera()
   }
@@ -1353,10 +1360,10 @@ export class FlowScene extends SceneManager {
    * diagram underneath it. Half clears the sidebar without reaching the panel.
    */
   private screenRightShift(): THREE.Vector3 {
-    if (!this.viewportInset) return new THREE.Vector3()
+    if (!this.viewportInsetPx) return new THREE.Vector3()
     const perPixel = (this.currentFrustum * 2) / (this.renderer.domElement.clientHeight || 1)
     // Screen-right on the ground plane is (x - z) / sqrt2 for this camera.
-    return new THREE.Vector3(1, 0, -1).normalize().multiplyScalar((this.viewportInset / 4) * perPixel)
+    return new THREE.Vector3(1, 0, -1).normalize().multiplyScalar((this.viewportInsetPx / 4) * perPixel)
   }
 
   override resize(width: number, height: number): void {

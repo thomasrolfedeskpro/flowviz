@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "validate": "node scripts/validate-flow.mjs",
+    "rules": "node scripts/generate-rules-doc.mjs"
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",

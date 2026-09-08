@@ -325,21 +325,6 @@
           "text": "Order.create() → OrderRepository.save(order)"
         }
       ],
-      "popouts": [
-        {
-          "title": "DynamoDB PutItem",
-          "anchor": "orders_db",
-          "data": {
-            "TableName": "Orders",
-            "Item": {
-              "orderId": "ord_9c1e",
-              "customerId": "cust_7f3a",
-              "status": "PENDING",
-              "createdAt": 1718000000000
-            }
-          }
-        }
-      ],
       "packet": {
         "connection": "c_olambda_db",
         "shape": "document",

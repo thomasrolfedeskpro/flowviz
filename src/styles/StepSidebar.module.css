@@ -481,6 +481,66 @@
   margin-bottom: 0.15rem;
 }
 
+/* ── layout notes: the same shape as problems, in the warning tone, because
+      they read the same way but never gate anything ── */
+
+.warnings {
+  margin-bottom: 0.45rem;
+  border: 1px solid var(--callout-warning-border);
+  border-radius: var(--radius-md);
+  background: var(--callout-warning-bg);
+  overflow: hidden;
+}
+
+.warningsHead {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  background: none;
+  border: none;
+  color: var(--callout-warning-accent);
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.warningsCount {
+  display: grid;
+  place-items: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.2rem;
+  border-radius: var(--radius-sm);
+  background: var(--callout-warning-accent);
+  color: var(--panel-bg);
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.warningList {
+  margin: 0;
+  padding: 0.1rem 0.5rem 0.45rem 1.4rem;
+  max-height: 9rem;
+  overflow-y: auto;
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  scrollbar-width: thin;
+}
+
+.warningList li {
+  overflow-wrap: anywhere;
+  margin-bottom: 0.15rem;
+}
+
+/* The error-tier rules — overlaps, off-grid, a zone outside its parent. Still
+   advisory, but they are mistakes rather than judgement calls. */
+.warnSevere {
+  color: var(--callout-error-fg);
+}
+
 /* ── waterfall: its own column, slid out from behind the sidebar ── */
 
 .waterfall {
@@ -520,8 +580,17 @@
   font-size: 0.66rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--text-muted);
+  /* No text-transform: uppercase. This heading is the author's own words, and
+     CSS uppercasing runs Unicode case mapping over them — "µs" becomes "ΜS",
+     a Greek capital Mu that reads as milliseconds. Wrong by a factor of 1000
+     in a heading whose whole job is naming the unit. */
+  /* The label can also be longer than "Waterfall", so it truncates rather than
+     pushing the column wider. */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .waterfallList {

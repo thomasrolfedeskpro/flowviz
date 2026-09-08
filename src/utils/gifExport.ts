@@ -1,14 +1,22 @@
+/**
+ * Animated GIF of a play-through: one still per step.
+ *
+ * A GIF frame is captured after its step has settled, so packets appear where
+ * they arrived rather than mid-flight — a slideshow of resting states. That is
+ * the format's limit, not a bug; `videoExport.ts` records the motion. GIF stays
+ * because it pastes inline in places WebM still does not.
+ *
+ * Only the WebGL canvas is captured — DOM overlays are not in the frames.
+ */
+
 import { GIFEncoder, quantize, applyPalette } from 'gifenc'
+import { walkPlaythrough } from '@/utils/exportDriver'
+import type { PlaythroughEngine } from '@/utils/exportDriver'
 
 const MAX_GIF_WIDTH = 960
 
 interface ExportTarget {
   captureFrame(): string
-}
-
-interface ExportEngine {
-  goTo(index: number): void
-  getState(): { totalSteps: number }
 }
 
 function scaleCanvas(
@@ -41,31 +49,27 @@ async function dataURLToCanvas(dataURL: string): Promise<HTMLCanvasElement> {
 
 export async function exportAnimationGif(
   scene:      ExportTarget,
-  engine:     ExportEngine,
+  engine:     PlaythroughEngine,
   msPerStep:  number = 3000,
   onProgress: (step: number, total: number) => void = () => {},
 ): Promise<Blob> {
-  const total = engine.getState().totalSteps
-  const gif   = GIFEncoder()
+  const gif = GIFEncoder()
 
-  for (let i = 0; i < total; i++) {
-    engine.goTo(i)
-    onProgress(i + 1, total)
+  await walkPlaythrough(engine, {
+    msPerStep,
+    onProgress,
+    onSettled: async () => {
+      const raw    = await dataURLToCanvas(scene.captureFrame())
+      const scaled = scaleCanvas(raw, MAX_GIF_WIDTH)
 
-    // Wait for packet animations and camera tweens to settle
-    await new Promise<void>(r => setTimeout(r, msPerStep))
+      const ctx       = scaled.getContext('2d')!
+      const imageData = ctx.getImageData(0, 0, scaled.width, scaled.height)
 
-    const dataURL = scene.captureFrame()
-    const raw     = await dataURLToCanvas(dataURL)
-    const scaled  = scaleCanvas(raw, MAX_GIF_WIDTH)
-
-    const ctx       = scaled.getContext('2d')!
-    const imageData = ctx.getImageData(0, 0, scaled.width, scaled.height)
-
-    const palette  = quantize(imageData.data, 256)
-    const indices  = applyPalette(imageData.data, palette)
-    gif.writeFrame(indices, scaled.width, scaled.height, { palette, delay: msPerStep })
-  }
+      const palette = quantize(imageData.data, 256)
+      const indices = applyPalette(imageData.data, palette)
+      gif.writeFrame(indices, scaled.width, scaled.height, { palette, delay: msPerStep })
+    },
+  })
 
   gif.finish()
   return new Blob([gif.bytes().buffer as ArrayBuffer], { type: 'image/gif' })

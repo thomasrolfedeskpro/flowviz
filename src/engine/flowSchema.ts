@@ -95,12 +95,6 @@ const AnnotationSchema = z.object({
   style:  enumStr(ANNOTATION_STYLES, 'Invalid annotation style').optional(),
 })
 
-const PopoutSchema = z.object({
-  title:  z.string(),
-  anchor: z.string(),
-  data:   z.record(z.string(), z.unknown()),
-})
-
 // Two packet schemas so arrival-style errors carry the correct label.
 // step.packet  → "Invalid packet arrivalStyle"
 // step.packets → "Invalid packets[].arrivalStyle"
@@ -157,7 +151,6 @@ const StepSchema = z.object({
   annotations: z.array(AnnotationSchema).optional(),
   footer:      z.array(FooterNoteSchema).optional(),
   waterfall:   WaterfallSchema.optional(),
-  popouts:     z.array(PopoutSchema).optional(),
   packet:      PacketSchema.nullable().optional(),
   packets:     z.array(MultiPacketSchema).optional(),
   stream:      StreamDefSchema.nullable().optional(),
@@ -168,8 +161,9 @@ const StepSchema = z.object({
 
 export const FlowDefinitionSchema = z.object({
   meta: z.object({
-    title:       z.string(),
-    description: z.string().optional(),
+    title:          z.string(),
+    description:    z.string().optional(),
+    waterfallLabel: z.string().optional(),
     // Durations in milliseconds. Zero would mean "instant", which reads as a
     // rendering bug rather than a choice, so they have to be positive.
     timing: z.object({

@@ -86,12 +86,6 @@ function stepCascade(
       notes.push('annotates it')
     }
 
-    const popouts = step.popouts?.filter((p) => !componentIds.has(p.anchor))
-    if (popouts && popouts.length !== step.popouts!.length) {
-      patch.popouts = popouts.length ? popouts : undefined
-      notes.push('anchors a popout to it')
-    }
-
     if (step.camera?.focus && componentIds.has(step.camera.focus)) {
       const camera = { ...step.camera, focus: null }
       patch.camera = camera.zoom ? camera : undefined

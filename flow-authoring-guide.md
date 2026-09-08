@@ -17,7 +17,7 @@ strict — invalid field names or values will silently break the visualisation.
 | 6 | `components` — types, shapes, icons, logos, `detail` sub-scenes |
 | 7 | `connections` — routing and `color` |
 | 8 | `steps` — highlights, camera, annotations, packets, streams, footers, waterfall, scene |
-| 9 | Layout heuristics |
+| 9 | Layout heuristics (the enforceable ones live in `docs/flow-rules.md`) |
 | 10 | Step sequencing patterns |
 | 11 | Common mistakes to avoid |
 | 12 | Worked example |
@@ -91,13 +91,17 @@ Every field is required. `zones` may be an empty array if zones are not needed.
 
 ```json
 {
-  "title":       "OAuth 2.0 PKCE Flow",
-  "description": "How a browser-based app obtains an access token without a client secret.",
-  "timing":      { "step": 3000, "packet": 2000, "transition": 800, "stream": 3500 }
+  "title":          "OAuth 2.0 PKCE Flow",
+  "description":    "How a browser-based app obtains an access token without a client secret.",
+  "waterfallLabel": "Latency",
+  "timing":         { "step": 3000, "packet": 2000, "transition": 800, "stream": 3500 }
 }
 ```
 
 `title` is shown in the step HUD. `description` is optional context.
+`waterfallLabel` names the waterfall column and its toggle — set it whenever the
+flow has bars (§ 8.13), since the bars themselves are unitless. Omitted, the
+column reads "Waterfall".
 
 ### `meta.timing`
 
@@ -509,9 +513,8 @@ reframes; `focus: null` deliberately leaves the view where it was.
 
 ### 8.2 A representative step
 
-Not every field is shown here. `scene` (§8.14), `streams` (§8.11) and
-`camera.fit` (§8.6) are covered in their own sections, and `popouts` should not
-be used at all.
+Not every field is shown here. `scene` (§8.13), `streams` (§8.10) and
+`camera.fit` (§8.6) are covered in their own sections.
 
 ```json
 {
@@ -667,27 +670,7 @@ the annotation card and the packet arrival to communicate the same outcome.
 - Keep text under ~80 characters so it fits the card without wrapping excessively.
 - Use at most 2–3 annotations per step. More than that creates visual noise.
 
-### 8.8 `popouts`
-
-Array of data popout panels. Each shows a structured key-value payload anchored
-to a component. **Currently not rendered in the UI — reserve for future use.**
-
-```json
-{
-  "title":  "Event payload",
-  "anchor": "browser",
-  "data": {
-    "event":     "button_click",
-    "userId":    "u_9f3a",
-    "timestamp": 1718000000000
-  }
-}
-```
-
-Include popouts for completeness in the JSON even if they are not yet displayed.
-They will be rendered in a future release.
-
-### 8.9 `packet`
+### 8.8 `packet`
 
 A glowing shape that travels along a connection pipe. Stays at the destination
 after arrival until the next step. The user can hover it to inspect the payload.
@@ -769,7 +752,7 @@ context-independent.
 values are shown verbatim in the hover tooltip. Use realistic values, not
 placeholders like `"<user_id>"`. Real data makes the diagram more instructive.
 
-### 8.10 `packets` — multiple simultaneous packets
+### 8.9 `packets` — multiple simultaneous packets
 
 Use `packets` (plural) when several data flows happen in the same step — for
 example a fan-out from one source to three consumers, or a two-sided handshake.
@@ -825,7 +808,7 @@ handshake, or two genuinely concurrent things — drawing a card *and* collectin
 the money for it. If you would describe it as "and at the same time", `packets`
 is correct.
 
-### 8.11 `streams` / `stream` — continuous data stream animation
+### 8.10 `streams` / `stream` — continuous data stream animation
 
 Streams render as a continuous river of chevron arrows flowing along a connection pipe.
 
@@ -874,7 +857,7 @@ Streams render as a continuous river of chevron arrows flowing along a connectio
 
 ---
 
-### 8.12 `footer` — emphasised notes under the step description (optional)
+### 8.11 `footer` — emphasised notes under the step description (optional)
 
 `description` is prose. `footer` is for the one or two facts you want a viewer to
 not miss: a measurement, a warning, a conclusion. Notes render under the
@@ -909,7 +892,7 @@ description in the top-left panel, each on its own tinted line.
 - `error` / `warning` should mean something is genuinely wrong or costly, not
   just interesting. Reserve them so they keep their weight.
 
-### 8.13 `waterfall` — a measured bar beside each step
+### 8.12 `waterfall` — a measured bar beside each step
 
 Give steps a `waterfall` bar and the Steps sidebar gains a small chart toggle.
 Turning it on slides a waterfall column out from behind the sidebar, with each
@@ -920,6 +903,12 @@ top to bottom in step order.
 - Clicking a bar jumps to its step, exactly like clicking the step row.
 - The two columns scroll together, so a bar never drifts from its step.
 - With no `waterfall` data anywhere in the flow, the toggle does not appear.
+- The column is titled from `meta.waterfallLabel` — say what the bars measure,
+  since they carry no unit themselves. Omitted, it reads "Waterfall".
+
+```json
+"meta": { "title": "…", "waterfallLabel": "Latency" }
+```
 
 ```json
 "waterfall": { "start": 240, "weight": 3180, "label": "3,180 ms · ×25", "color": "#ef4444" }
@@ -963,6 +952,8 @@ continues from the last measured one rather than leaving a hole.
 | A migration | records touched | `"84k records"` | Which table dominates |
 
 **Rules:**
+- Set `meta.waterfallLabel` whenever the flow has bars. "Waterfall" tells a
+  reader nothing about whether they are looking at milliseconds or pounds.
 - Every `weight` in one flow must measure the same thing, or the bars are
   meaningless. Same for `start`.
 - Only add bars where comparing steps is useful. If every step costs the same,
@@ -975,7 +966,7 @@ continues from the last measured one rather than leaving a hole.
 - Keep `name` short (§ 8.3): while the column is open, step names are trimmed to
   one line to hold the rows level with their bars.
 
-### 8.14 `scene` — which scene a step happens in
+### 8.13 `scene` — which scene a step happens in
 
 Steps stay one flat list in flow order. A step tagged with `scene` happens inside
 that component's `detail`; a step with no `scene` is at the top level.
@@ -1009,15 +1000,15 @@ need to pad a scene's last step to protect it.
 - Give the outer scene a step before and after the excursion, so the reader sees
   where they went in and came back to.
 
-### 8.15 Aggregating repeated work
+### 8.14 Aggregating repeated work
 
 A trace or log with hundreds of repeated operations must not become hundreds of
 steps. Collapse them:
 
 - One step per *kind* of repeated operation, with `packet.count` carrying how
   many times it happened — not one step per repeat.
-- Put the aggregate in the `footer` (`"**25 queries**, 3,180 ms total"`) and the
-  spread in a `popout` if it matters (min / median / max).
+- Put the aggregate in the `footer` (`"**25 queries**, 3,180 ms total"`), with
+  the spread there too if it matters (min / median / max).
 - Keep a repeat as its own step when it is the point of the diagram (an N+1
   problem deserves its own step); fold it into a neighbouring step when it is
   incidental.
@@ -1027,21 +1018,15 @@ steps. Collapse them:
 
 ## 9. Layout heuristics
 
+The rules that can be checked are checked: see
+**[`docs/flow-rules.md`](./docs/flow-rules.md)**, which is generated from the
+linter, and run `pnpm validate --lint <file>` to have them measured for you
+rather than eyeballed. This section is the part that is judgement.
+
 ### 9.1 Grid orientation
 
 Orient data flow **left to right** (increasing col). The viewer reads the diagram
 like a flowchart. Source systems go in low cols, destination systems in high cols.
-
-### 9.1b Keep the top-left corner clear
-
-The step's title, description and footer notes are drawn in a card pinned to the
-top-left of the canvas — roughly 400×300 px at its tallest. Anything you place
-in the first two or three cells of row 0 will sit behind it.
-
-Start the flow a little in from that corner, or put the opening component lower
-down. The camera composes the diagram to clear the step sidebar on the right,
-which pulls layouts slightly left, so the top-left is the one region worth
-leaving empty.
 
 ### 9.2 Branching
 
@@ -1056,20 +1041,21 @@ that is a sign the zone is too broad.
 
 ### 9.4 Spacing
 
-Leave at least one empty cell of gap between zone boundaries. Components placed
-at the very edge of a zone will visually clip the zone border.
+Zone gaps and component padding are linted (`zone-gap`, `zone-padding`), as is
+the top-left corner the step card covers (`top-left-occupied`). Leave the corner
+alone and give zones room; the linter will tell you when you haven't.
 
 ### 9.5 Connection crossings
 
-Auto-routing produces smooth S-curves. Crossings are inevitable when flows
-branch back leftward. To reduce crossings:
+Crossings are inevitable when flows branch back leftward. To reduce them:
+
 - Route "return" connections (responses) above or below the "request" connections.
 - Use `size.h > 1` on components that need space for multiple ports.
 - Add waypoints only as a last resort.
 
 ### 9.6 Grid size formula
 
-A reliable starting formula:
+A reliable starting point:
 
 ```
 cols = max_parallel_components_in_flow * 2 + 2
@@ -1079,102 +1065,38 @@ rows = max_parallel_tracks + 2
 For a simple linear pipeline with 4 components: `cols = 10, rows = 4`.
 For a flow with a 3-way fan-out: `cols = 10, rows = 6`.
 
-### 9.7 Component spacing and pipe clearance
+Oversizing is linted (`grid-slack`): a grid much bigger than its content draws
+as empty floor and shrinks the diagram in frame.
 
-**The problem.** FlowViz routes connections as cubic-Bezier S-curves: the pipe
-exits the source component horizontally (along the column/X axis), curves, and
-arrives at the destination along the row/Z axis. A packet travelling this curve
-sweeps a wide arc in world space. Each frame, the engine tests every active
-packet's XZ position against every component's XZ bounding box — if the packet
-is inside a component's footprint, that component goes semi-transparent (30%
-opacity) to simulate the packet "passing through" it. This is intentional when
-the packet is actually bound for that component, but it is a visual bug when the
-component is unrelated to the active connection.
+### 9.7 Where a pipe actually goes
 
-When components are packed tightly — for example, two service boxes separated by
-only 1 empty cell with a third component positioned nearby — the S-curve
-connecting the first two can arc through the bounding box of the third, making it
-unintentionally go semi-transparent mid-animation.
+Auto-routing is a cubic Bezier whose two control points sit at their own
+endpoint's row. The path is therefore **monotonic in z**: it stays strictly
+within the band between the two endpoint rows and never overshoots either.
 
-**The S-curve bulges widest at its midpoint.** The lateral deviation of the curve
-is greatest halfway between the source and destination. Components near the
-midpoint of a long connection are therefore at highest risk, even if they appear
-to be "off to the side" on the grid.
+- A **same-row** connection is a straight line down that row. It cannot touch a
+  component on any other row.
+- A **row-changing** connection sweeps once between its two rows, across the
+  columns between its two ends.
 
-**Minimum spacing rule.** Leave at least **2 empty grid cells** between any
-component and a pipe path that does not terminate at it. One cell is not enough —
-the S-curve control points extend into adjacent cells and the bounding box test
-operates in world units (each cell = 3.0 world units; each component mesh
-occupies 2.4 × 2.4 world units within its cell), so a 1-cell gap still puts the
-curve within the bounding box at the midpoint.
+So the components at risk are the ones **inside that band** — between the
+endpoints in both column and row — not the ones "near the midpoint" generally.
+The renderer tests each packet's position against every component's box each
+frame and drops any it is inside to 30% opacity, which is intended for the
+destination and a bug for a bystander.
 
-**Row separation for parallel tracks.** Components on different flow paths
-(different rows/tracks) whose column range overlaps with an active connection
-should be separated by at least **1 empty row**, preferably **2**, from the
-connection's start and end rows. If a connection runs from row 2 to row 4 (a
-2-row drop), a component at row 3 whose column falls near the midpoint of that
-connection is almost certain to trigger the transparency effect.
+You do not need to reason about this by hand: `pipe-through-component` replays
+that exact test over the baked curve and names anything caught.
 
-**WRONG — component too close to a crossing pipe:**
+**Quick diagnostic.** If a component fades during a step where it is not
+highlighted and its connection is not active, a pipe is sweeping over it. Move
+it out of the band between that pipe's ends, or add waypoints to route around
+it.
 
-```
-Cols:   0    1    2    3    4    5    6
-Row 1:  [A]                          [B]
-Row 2:            [C]
-```
-
-Component C is at col 2, row 2. The auto-route S-curve from A (col 0, row 1) to
-B (col 5, row 1) exits A horizontally, dips toward row 2 near the midpoint
-(around col 2–3), then returns to row 1 to arrive at B. C sits exactly where the
-curve bulges — it will go semi-transparent when a packet travels A→B even though
-C has nothing to do with that connection.
-
-**CORRECT — 2-cell row gap between the pipe path and the bystander component:**
-
-```
-Cols:   0    1    2    3    4    5    6
-Row 1:  [A]                          [B]
-Row 2:       (empty)
-Row 3:       (empty)
-Row 4:            [C]
-```
-
-C is now 3 rows below A and B. The S-curve's lateral swing never reaches row 4.
-
-**Also CORRECT — place the bystander in a different column range entirely:**
-
-```
-Cols:   0    1    2    3    4    5    6    7    8
-Row 1:  [A]                          [B]
-Row 2:                                         [C]
-```
-
-C is beyond the column range of the A→B connection, so the curve never sweeps
-near its bounding box.
-
-**Use zone sub-regions to enforce track separation.** If your flow has two
-parallel tracks that share a column range (e.g. a request path on row 2 and a
-notification path on row 5), place them in separate named sub-zones with a 2-row
-gap between zone boundaries. The zone visual boundary acts as a reminder to
-preserve clearance, and future authors editing the flow can see at a glance which
-rows are in use.
-
-```json
-{ "id": "z_request_track",  "label": "Request Path",  "color": "#2d9f6a",
-  "bounds": { "col": 3, "row": 1, "width": 10, "height": 2 } },
-{ "id": "z_notify_track",   "label": "Notify Path",   "color": "#9f7a2d",
-  "bounds": { "col": 3, "row": 5, "width": 10, "height": 2 } }
-```
-
-The 2-row gap between these zones (rows 3 and 4 are empty) ensures that an
-S-curve on the request track (rows 1–2) cannot reach a component on the notify
-track (rows 5–6).
-
-**Quick diagnostic.** If a component goes semi-transparent during a step where
-it is not highlighted and its connection is not active, a crossing pipe is the
-cause. Fix it by moving the component further from the crossing connection's
-midpoint column or by adding explicit waypoints to the connection to route it
-away from the bystander.
+> Earlier revisions of this guide said the curve "bulges widest at its midpoint"
+> and could dip a row below a same-row connection. Measured against the
+> renderer, it does not: a same-row pipe never leaves its row. The 2-cell
+> clearance rule that advice implied was over-cautious.
 
 ---
 
@@ -1455,12 +1377,16 @@ there could not be dragged back.
 | Flow title, description, grid, timing | The gear beside **Done** |
 | Raw JSON of one object, or of the whole flow | **JSON** in any editor's header; `{}` beside the gear for the whole file |
 | Delete a component, zone or pipe | **Delete** in its editor — it lists what else changes first |
+| Re-lay the whole scene | **Tidy layout** — layered left to right, rows banded by zone. One undo puts it back |
 
 **Safety net**
 
 - ⌘Z / ⇧⌘Z undo and redo everything, including drags and deletes.
 - The flow is validated on every edit. Problems appear above **Save to file**,
   which stays disabled until they are fixed.
+- Layout findings appear separately as **layout notes**, in amber. They never
+  disable saving — a bad layout still loads, and every drag passes through one
+  on the way to a good one. See [`docs/flow-rules.md`](./docs/flow-rules.md).
 - **Save to file** writes the definition back to its own JSON, including edits
   made inside a nested scene. What you loaded is what gets written, plus your
   changes and nothing else. **Copy JSON** puts the same thing on the clipboard.
@@ -1472,40 +1398,36 @@ deleting a component that owns a scene is refused, with an explanation.
 
 ## 14. Validation checklist
 
-Before returning a flow JSON, verify each of these:
+Anything mechanical is checked for you. Run this before handing a flow back, and
+fix what it reports:
+
+```bash
+pnpm validate --lint public/flows/custom/<file>.json
+```
+
+That covers every id reference, enum value, duplicate id, cross-scene mistake and
+grid/zone/pipe geometry rule — the whole of
+[`docs/flow-rules.md`](./docs/flow-rules.md). What it cannot judge, and you still
+have to:
 
 - [ ] Step `id: 0` exists with `highlight: []`, `active_connections: []`, `camera: { "fit": true }`
-- [ ] Every `connection.from` and `connection.to` references an existing component `id`
-- [ ] Every `step.highlight` entry references an existing component `id`
-- [ ] Every `step.active_connections` entry references an existing connection `id`
-- [ ] Every `step.packet.connection` references an existing connection `id`
-- [ ] Every `annotation.target` references an existing component `id`
-- [ ] No `popouts` anywhere — the schema accepts them but nothing draws them
-- [ ] Zone `bounds` enclose their member components with at least 1 cell padding
-- [ ] Each component's `position.col + size.w` does not exceed `layout.grid.cols`
-- [ ] Each component's `position.row + size.h` does not exceed `layout.grid.rows`
-- [ ] No two components occupy overlapping grid cells
 - [ ] Steps with a `packet` also have the packet's `connection` in `active_connections`
-- [ ] Steps with `stream` / `streams` reference only existing connection IDs
 - [ ] Data flows left-to-right (increasing col) in the general case
 - [ ] `packet.data` contains realistic representative values, not placeholders
 - [ ] `logo` components also have a `color` matching the brand's hex colour
 - [ ] `icon` values are camelCase Font Awesome solid icon names (no `fa` prefix)
 - [ ] `logo` values are camelCase Font Awesome brands icon names (no `fa` prefix)
 - [ ] Packets with a meaningful outcome have `arrivalStyle` set
-- [ ] Every id is unique across the whole flow, including inside `detail` scenes
-- [ ] Each step's references all live in that step's own scene
 - [ ] Steps for one scene are grouped, with an outer step either side
 - [ ] Repeated operations use one step with `packet.count`, not one step each
 - [ ] Every `waterfall.weight`/`start` in the flow measures the same thing, with the unit in `label`
+- [ ] `meta.waterfallLabel` names what that is, if the flow has bars at all
 - [ ] `footer` notes carry their own units and are limited to one or two per step
 - [ ] `streams` appear only on long-lived open connections (streamed media, WebSockets, telemetry feeds) — never to show data merely moving
-- [ ] No unrelated component lies within 2 cells of a pipe midpoint on a crossing connection
 - [ ] Multiple `packets` in a step are things happening *at the same time* — one thing crossing several hops is one packet on one waypointed connection
 - [ ] `camera` is only ever `{ "fit": true }` or a named `focus`; no `focus: null`
 - [ ] `connection.color` is used where it carries meaning, not on every pipe
 - [ ] Large background zones use a colour chosen for how it looks at 12% opacity
-- [ ] The flow validates: `node skills/flowviz/scripts/flowviz-validate.mjs . public/flows/examples/<file>.json`
 
 ---
 
@@ -1585,5 +1507,9 @@ the right colours every time, and a person does not.
 | Save edits back to the flow file | ✅ Interactive (dev server) |
 | Delete a visualization from the list | ✅ Interactive (dev server) |
 | `step.name` sidebar label | ✅ Rendered (falls back to `title`) |
-| Popout panels (`step.popouts`) | 🔲 Schema accepted, nothing draws them — do not use |
 | Elevation (`position.elevation`) | ✅ Rendered — lifts the component off the floor |
+| Geometry lint (`pnpm validate --lint`, layout notes in edit mode) | ✅ Interactive — advisory, never blocks a save |
+| Present mode — fullscreen, no chrome, `F` / `?present=1` | ✅ Interactive |
+| Keyboard stepping — ← → space Home End | ✅ Interactive |
+| Deep link to a step (`?step=<n>`, 1-based) | ✅ Interactive |
+| Export PNG (this step), WebM and GIF (whole play-through) | ✅ Interactive |

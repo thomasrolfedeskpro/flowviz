@@ -2,6 +2,7 @@
   "meta": {
     "title": "UK domestic power — generation to the socket",
     "description": "One kilowatt-hour followed from an offshore wind farm and a gas turbine hall, down the 400 kV supergrid, through four substations, along a service cable and into a house — then inside the consumer unit, and inside the ring final circuit itself. The pipes are colour-coded twice over. On the network the colour is the voltage: 400 kV deep red, 275 kV red, 132 kV orange, 33 kV amber, 11 kV yellow, 400 V grey. Inside the property the colour is the actual cable — brown line, blue neutral, green CPC (real earth sleeving is green-and-yellow, which a single colour cannot show). Simplified for teaching: this is an explainer, not a wiring guide.",
+    "waterfallLabel": "Distance",
     "timing": {
       "step": 3800,
       "packet": 2600,
@@ -20,7 +21,12 @@
       "id": "z_generation",
       "label": "Generation",
       "color": "#38bdf8",
-      "bounds": { "col": 0, "row": 0, "width": 7, "height": 9 },
+      "bounds": {
+        "col": 0,
+        "row": 0,
+        "width": 7,
+        "height": 9
+      },
       "meta": {
         "description": "Where the electricity is actually made. Generators produce at a low voltage — typically tens of kilovolts at the stator terminals — and a step-up transformer on site is what puts it onto the grid.",
         "notes": "Nothing here stores anything. Generation is matched to demand second by second because the grid has almost no buffer."
@@ -30,7 +36,12 @@
       "id": "z_transmission",
       "label": "Transmission",
       "color": "#b91c1c",
-      "bounds": { "col": 8, "row": 0, "width": 5, "height": 9 },
+      "bounds": {
+        "col": 8,
+        "row": 0,
+        "width": 5,
+        "height": 9
+      },
       "meta": {
         "description": "The high-voltage backbone. UK transmission runs at 400 kV and 275 kV, because pushing the same power at a higher voltage means a lower current and far less heat lost in the conductors.",
         "notes": "Long distances, few connections, very large kit. This is the part on pylons that everyone can see."
@@ -40,7 +51,12 @@
       "id": "z_distribution",
       "label": "Distribution",
       "color": "#f59e0b",
-      "bounds": { "col": 14, "row": 0, "width": 13, "height": 9 },
+      "bounds": {
+        "col": 14,
+        "row": 0,
+        "width": 13,
+        "height": 9
+      },
       "meta": {
         "description": "A ladder down: 132 kV, then 33 kV, then 11 kV, then 400 V three-phase in the street. Each rung is a substation and each rung serves more customers over a shorter distance.",
         "notes": "Run by the regional distribution network operator, not the transmission operator. Two different companies own the two halves of the journey."
@@ -50,7 +66,12 @@
       "id": "z_property",
       "label": "The property",
       "color": "#8b5a2b",
-      "bounds": { "col": 28, "row": 0, "width": 11, "height": 9 },
+      "bounds": {
+        "col": 28,
+        "row": 0,
+        "width": 11,
+        "height": 9
+      },
       "meta": {
         "description": "Service cable, cut-out fuse, meter, tails, consumer unit. The ownership boundary sits inside this box: everything up to and including the meter belongs to the supplier or the network operator.",
         "notes": "Most UK homes are TN-C-S (PME), where the property's earth is derived from the incoming supply neutral rather than from a rod in the garden."
@@ -65,8 +86,14 @@
       "icon": "wind",
       "color": "#38bdf8",
       "shape": "hexagon",
-      "position": { "col": 1, "row": 1 },
-      "size": { "w": 2, "h": 2 },
+      "position": {
+        "col": 1,
+        "row": 1
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
       "meta": {
         "description": "An array of turbines roughly 120 km offshore, collected at an offshore substation and brought ashore on an export cable.",
         "notes": "Output follows the wind, not demand. What the grid buys from it is whatever it happens to be making."
@@ -78,8 +105,14 @@
       "type": "external",
       "icon": "fire",
       "color": "#f97316",
-      "position": { "col": 1, "row": 5 },
-      "size": { "w": 2, "h": 2 },
+      "position": {
+        "col": 1,
+        "row": 5
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
       "meta": {
         "description": "A combined-cycle gas turbine station: gas turbines plus a steam turbine running on their exhaust heat.",
         "notes": "This is the dispatchable half of the pair. It exists to be turned up when the wind drops."
@@ -92,8 +125,14 @@
       "icon": "boltLightning",
       "color": "#b91c1c",
       "shape": "hexagon",
-      "position": { "col": 4, "row": 3 },
-      "size": { "w": 2, "h": 2 },
+      "position": {
+        "col": 4,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
       "meta": {
         "description": "Lifts the generator's output to transmission voltage so it can be pushed hundreds of kilometres.",
         "notes": "Halve the current and you quarter the resistive loss. That single fact is why the whole grid is built out of transformers."
@@ -106,8 +145,14 @@
       "icon": "towerObservation",
       "color": "#b91c1c",
       "shape": "hexagon",
-      "position": { "col": 9, "row": 1 },
-      "size": { "w": 3, "h": 2 },
+      "position": {
+        "col": 9,
+        "row": 1
+      },
+      "size": {
+        "w": 3,
+        "h": 2
+      },
       "meta": {
         "description": "The highest voltage on the UK system. Steel lattice pylons carrying two three-phase circuits, one up each side.",
         "notes": "The conductors are bare aluminium. The insulation is the air gap, which is why the pylons are as tall as they are."
@@ -120,8 +165,14 @@
       "icon": "towerCell",
       "color": "#dc2626",
       "shape": "hexagon",
-      "position": { "col": 9, "row": 5 },
-      "size": { "w": 3, "h": 2 },
+      "position": {
+        "col": 9,
+        "row": 5
+      },
+      "size": {
+        "w": 3,
+        "h": 2
+      },
       "meta": {
         "description": "The second transmission voltage. Common in Scotland and around older parts of the English network.",
         "notes": "400 kV and 275 kV are both transmission. Everything below them is distribution."
@@ -134,8 +185,14 @@
       "icon": "industry",
       "color": "#ea580c",
       "shape": "octagon",
-      "position": { "col": 15, "row": 3 },
-      "size": { "w": 2, "h": 2 },
+      "position": {
+        "col": 15,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
       "meta": {
         "description": "400/132 kV. The handover between the transmission operator and the regional distribution network operator.",
         "notes": "Metering here is what settles the wholesale market for the whole region."
@@ -148,8 +205,14 @@
       "icon": "gears",
       "color": "#f59e0b",
       "shape": "octagon",
-      "position": { "col": 18, "row": 3 },
-      "size": { "w": 2, "h": 2 },
+      "position": {
+        "col": 18,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
       "meta": {
         "description": "132/33 kV. Serves a town or a large district.",
         "notes": "From here down, everything is normally arranged so that any one circuit can fail without cutting supply."
@@ -162,8 +225,14 @@
       "icon": "sliders",
       "color": "#eab308",
       "shape": "cylinder",
-      "position": { "col": 21, "row": 3 },
-      "size": { "w": 2, "h": 2 },
+      "position": {
+        "col": 21,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
       "meta": {
         "description": "33 kV in, 11 kV out. The last stage that still lives behind a fence with a locked gate.",
         "notes": "11 kV is the workhorse voltage of the UK distribution network — buried under most streets in the country."
@@ -176,8 +245,14 @@
       "icon": "circleNodes",
       "color": "#eab308",
       "shape": "cylinder",
-      "position": { "col": 24, "row": 3 },
-      "size": { "w": 2, "h": 2 },
+      "position": {
+        "col": 24,
+        "row": 3
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
       "meta": {
         "description": "11 kV to 400 V three-phase. The green box on the corner, or a brick kiosk, feeding a few dozen to a few hundred homes.",
         "notes": "Its transformer's star point is earthed here. That is where a TN-C-S property's earth ultimately comes from."
@@ -189,8 +264,14 @@
       "type": "external",
       "icon": "road",
       "color": "#78716c",
-      "position": { "col": 29, "row": 2 },
-      "size": { "w": 2, "h": 1 },
+      "position": {
+        "col": 29,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
       "meta": {
         "description": "Roughly 30 m of buried cable from the street main to the house, carrying one phase and the combined neutral-earth conductor.",
         "notes": "Which of the three phases a house gets is essentially arbitrary — the network operator balances the street as it connects properties."
@@ -202,8 +283,14 @@
       "type": "service",
       "icon": "shieldHalved",
       "color": "#78716c",
-      "position": { "col": 32, "row": 2 },
-      "size": { "w": 2, "h": 1 },
+      "position": {
+        "col": 32,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
       "meta": {
         "description": "The sealed black box where the service cable ends. It holds the supplier's cut-out fuse, typically 60–100 A.",
         "notes": "Sealed for a reason: it is live even with everything in the house switched off, and it is not the householder's to open."
@@ -215,8 +302,14 @@
       "type": "service",
       "icon": "gaugeHigh",
       "color": "#14b8a6",
-      "position": { "col": 35, "row": 2 },
-      "size": { "w": 2, "h": 1 },
+      "position": {
+        "col": 35,
+        "row": 2
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
       "meta": {
         "description": "The supplier's meter. Measures energy in kilowatt-hours and, if it is a smart meter, reports it without anyone visiting.",
         "notes": "The meter is the ownership boundary. Everything after the tails belongs to the householder."
@@ -228,8 +321,14 @@
       "type": "external",
       "icon": "towerBroadcast",
       "color": "#6b7a8f",
-      "position": { "col": 32, "row": 4 },
-      "size": { "w": 2, "h": 1 },
+      "position": {
+        "col": 32,
+        "row": 4
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
       "meta": {
         "description": "The wide-area radio link the meter uses to send readings back to the supplier.",
         "notes": "Data, not power — the only connection in this diagram that does not carry current."
@@ -241,8 +340,14 @@
       "type": "external",
       "icon": "link",
       "color": "#8b5a2b",
-      "position": { "col": 35, "row": 4 },
-      "size": { "w": 2, "h": 1 },
+      "position": {
+        "col": 35,
+        "row": 4
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
       "meta": {
         "description": "Two short 25 mm² single-core cables — brown line and blue neutral — from the meter to the consumer unit.",
         "notes": "Kept as short as practical, because they sit between the cut-out fuse and the main switch with nothing else protecting them."
@@ -255,8 +360,14 @@
       "icon": "earthEurope",
       "color": "#16a34a",
       "shape": "triangle",
-      "position": { "col": 29, "row": 6 },
-      "size": { "w": 2, "h": 1 },
+      "position": {
+        "col": 29,
+        "row": 6
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
       "meta": {
         "description": "In a TN-C-S (PME) installation the property's earth is taken from the incoming supply neutral at the service head.",
         "notes": "Simplified here. PME has real limitations — it is why EV charge points and outbuildings often need their own arrangements."
@@ -269,20 +380,34 @@
       "icon": "sitemap",
       "color": "#8b5a2b",
       "shape": "octagon",
-      "position": { "col": 34, "row": 6 },
-      "size": { "w": 3, "h": 2 },
+      "position": {
+        "col": 34,
+        "row": 6
+      },
+      "size": {
+        "w": 3,
+        "h": 2
+      },
       "meta": {
         "description": "The fuse board. Splits one incoming supply into the house's final circuits and protects each of them. Opens into a scene of its own.",
         "notes": "Nothing in here makes electricity safer to touch. It makes faults disconnect quickly, which is a different claim."
       },
       "detail": {
-        "grid": { "cols": 21, "rows": 12 },
+        "grid": {
+          "cols": 21,
+          "rows": 12
+        },
         "zones": [
           {
             "id": "z_cu_incoming",
             "label": "Incoming & bars",
             "color": "#8b5a2b",
-            "bounds": { "col": 0, "row": 2, "width": 7, "height": 7 },
+            "bounds": {
+              "col": 0,
+              "row": 2,
+              "width": 7,
+              "height": 7
+            },
             "meta": {
               "description": "Where the tails land: the main switch, the neutral bar and the main earthing terminal."
             }
@@ -291,7 +416,12 @@
             "id": "z_cu_protection",
             "label": "Protection",
             "color": "#2563eb",
-            "bounds": { "col": 8, "row": 2, "width": 6, "height": 7 },
+            "bounds": {
+              "col": 8,
+              "row": 2,
+              "width": 6,
+              "height": 7
+            },
             "meta": {
               "description": "Residual-current protection. An RCD covering a bank of circuits, and individual RCBOs that combine overload and residual protection in one device."
             }
@@ -300,7 +430,12 @@
             "id": "z_cu_ways",
             "label": "Final circuits",
             "color": "#16a34a",
-            "bounds": { "col": 15, "row": 0, "width": 5, "height": 12 },
+            "bounds": {
+              "col": 15,
+              "row": 0,
+              "width": 5,
+              "height": 12
+            },
             "meta": {
               "description": "One way per circuit, each rated for the cable behind it rather than for the appliance in front of it."
             }
@@ -313,8 +448,14 @@
             "type": "service",
             "icon": "powerOff",
             "color": "#8b5a2b",
-            "position": { "col": 1, "row": 3 },
-            "size": { "w": 2, "h": 2 },
+            "position": {
+              "col": 1,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
             "meta": {
               "description": "A double-pole switch, typically 100 A, that isolates line and neutral for the whole board.",
               "notes": "The only device in the board a householder is really expected to operate deliberately."
@@ -326,8 +467,14 @@
             "type": "queue",
             "icon": "waveSquare",
             "color": "#2563eb",
-            "position": { "col": 4, "row": 3 },
-            "size": { "w": 2, "h": 1 },
+            "position": {
+              "col": 4,
+              "row": 3
+            },
+            "size": {
+              "w": 2,
+              "h": 1
+            },
             "meta": {
               "description": "A brass bar every circuit's blue conductor lands on.",
               "notes": "On a split board each RCD has its own neutral bar. Cross them over and the RCD trips the moment a load is switched on."
@@ -339,8 +486,14 @@
             "type": "queue",
             "icon": "earthEurope",
             "color": "#16a34a",
-            "position": { "col": 1, "row": 6 },
-            "size": { "w": 2, "h": 2 },
+            "position": {
+              "col": 1,
+              "row": 6
+            },
+            "size": {
+              "w": 2,
+              "h": 2
+            },
             "meta": {
               "description": "Where every circuit protective conductor lands, plus the main bonding to gas and water pipework.",
               "notes": "Under PME this bar is connected back to the incoming supply neutral."
@@ -352,8 +505,14 @@
             "type": "service",
             "icon": "shieldHalved",
             "color": "#2563eb",
-            "position": { "col": 9, "row": 3 },
-            "size": { "w": 3, "h": 2 },
+            "position": {
+              "col": 9,
+              "row": 3
+            },
+            "size": {
+              "w": 3,
+              "h": 2
+            },
             "meta": {
               "description": "Compares the current flowing out on the line against the current coming back on the neutral. An imbalance means current is leaving by some other route.",
               "notes": "Nominal 30 mA sensitivity, disconnecting in well under 40 ms. It protects people; it does not protect cables."
@@ -365,8 +524,14 @@
             "type": "service",
             "icon": "sliders",
             "color": "#2563eb",
-            "position": { "col": 9, "row": 6 },
-            "size": { "w": 3, "h": 2 },
+            "position": {
+              "col": 9,
+              "row": 6
+            },
+            "size": {
+              "w": 3,
+              "h": 2
+            },
             "meta": {
               "description": "One device per circuit combining overcurrent and residual protection, so a fault on one circuit takes out only that circuit.",
               "notes": "The modern arrangement. It is why a board full of RCBOs is far less annoying to live with than a split-load board."
@@ -378,20 +543,34 @@
             "type": "service",
             "icon": "plug",
             "color": "#8b5a2b",
-            "position": { "col": 16, "row": 1 },
-            "size": { "w": 3, "h": 2 },
+            "position": {
+              "col": 16,
+              "row": 1
+            },
+            "size": {
+              "w": 3,
+              "h": 2
+            },
             "meta": {
               "description": "The socket circuit: 2.5 mm² twin-and-earth on a 32 A breaker, fed from both ends. Opens into a scene of its own.",
               "notes": "A ring is a British peculiarity. It lets a 32 A circuit run on cable that would not be rated for 32 A as a single radial."
             },
             "detail": {
-              "grid": { "cols": 20, "rows": 10 },
+              "grid": {
+                "cols": 20,
+                "rows": 10
+              },
               "zones": [
                 {
                   "id": "z_ring_board",
                   "label": "At the board",
                   "color": "#8b5a2b",
-                  "bounds": { "col": 0, "row": 3, "width": 4, "height": 4 },
+                  "bounds": {
+                    "col": 0,
+                    "row": 3,
+                    "width": 4,
+                    "height": 4
+                  },
                   "meta": {
                     "description": "One 32 A breaker, and two cables in each terminal rather than one. That is the whole trick."
                   }
@@ -400,7 +579,12 @@
                   "id": "z_ring_out",
                   "label": "Leg A",
                   "color": "#16a34a",
-                  "bounds": { "col": 5, "row": 0, "width": 14, "height": 4 },
+                  "bounds": {
+                    "col": 5,
+                    "row": 0,
+                    "width": 14,
+                    "height": 4
+                  },
                   "meta": {
                     "description": "The outward half of the loop, through the sockets nearest the board."
                   }
@@ -409,7 +593,12 @@
                   "id": "z_ring_ret",
                   "label": "Leg B",
                   "color": "#f59e0b",
-                  "bounds": { "col": 5, "row": 6, "width": 14, "height": 4 },
+                  "bounds": {
+                    "col": 5,
+                    "row": 6,
+                    "width": 14,
+                    "height": 4
+                  },
                   "meta": {
                     "description": "The return half. Same cable, same sockets, arriving back at the same terminal from the other direction."
                   }
@@ -423,8 +612,14 @@
                   "icon": "circleDot",
                   "color": "#8b5a2b",
                   "shape": "cylinder",
-                  "position": { "col": 1, "row": 4 },
-                  "size": { "w": 2, "h": 2 },
+                  "position": {
+                    "col": 1,
+                    "row": 4
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 2
+                  },
                   "meta": {
                     "description": "Both ends of the ring land here. Two brown conductors into the breaker, two blue into the neutral bar, two bare CPCs into the earth bar.",
                     "notes": "If one leg is left off, the circuit still works — it has silently become a long radial on undersized cable. That is the classic ring fault."
@@ -436,8 +631,14 @@
                   "type": "external",
                   "icon": "link",
                   "color": "#8b5a2b",
-                  "position": { "col": 6, "row": 1 },
-                  "size": { "w": 2, "h": 1 },
+                  "position": {
+                    "col": 6,
+                    "row": 1
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
                   "meta": {
                     "description": "2.5 mm² twin-and-earth leaving the board in one direction."
                   }
@@ -448,8 +649,14 @@
                   "type": "client",
                   "icon": "plug",
                   "color": "#8b5a2b",
-                  "position": { "col": 10, "row": 1 },
-                  "size": { "w": 2, "h": 1 },
+                  "position": {
+                    "col": 10,
+                    "row": 1
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
                   "meta": {
                     "description": "A double socket, wired in and out — two cables in the back box, not one.",
                     "notes": "Every socket on a ring is a junction. Nothing is a dead end until the loop closes."
@@ -461,8 +668,14 @@
                   "type": "client",
                   "icon": "plug",
                   "color": "#8b5a2b",
-                  "position": { "col": 14, "row": 1 },
-                  "size": { "w": 2, "h": 1 },
+                  "position": {
+                    "col": 14,
+                    "row": 1
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
                   "meta": {
                     "description": "The furthest point on the outward leg."
                   }
@@ -473,8 +686,14 @@
                   "type": "client",
                   "icon": "plug",
                   "color": "#8b5a2b",
-                  "position": { "col": 14, "row": 7 },
-                  "size": { "w": 2, "h": 1 },
+                  "position": {
+                    "col": 14,
+                    "row": 7
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
                   "meta": {
                     "description": "The far end of the loop, roughly equidistant from the board in either direction."
                   }
@@ -485,8 +704,14 @@
                   "type": "client",
                   "icon": "plug",
                   "color": "#8b5a2b",
-                  "position": { "col": 10, "row": 7 },
-                  "size": { "w": 2, "h": 1 },
+                  "position": {
+                    "col": 10,
+                    "row": 7
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
                   "meta": {
                     "description": "On the way back to the board."
                   }
@@ -497,8 +722,14 @@
                   "type": "external",
                   "icon": "link",
                   "color": "#8b5a2b",
-                  "position": { "col": 6, "row": 7 },
-                  "size": { "w": 2, "h": 1 },
+                  "position": {
+                    "col": 6,
+                    "row": 7
+                  },
+                  "size": {
+                    "w": 2,
+                    "h": 1
+                  },
                   "meta": {
                     "description": "The same cable arriving back at the board from the other direction, closing the loop."
                   }
@@ -568,8 +799,14 @@
                   "label": "CPC — the earth rings too",
                   "color": "#16a34a",
                   "route": [
-                    { "col": 4, "row": 9 },
-                    { "col": 8, "row": 9 }
+                    {
+                      "col": 4,
+                      "row": 9
+                    },
+                    {
+                      "col": 8,
+                      "row": 9
+                    }
                   ]
                 }
               ]
@@ -581,8 +818,14 @@
             "type": "service",
             "icon": "lightbulb",
             "color": "#8b5a2b",
-            "position": { "col": 16, "row": 4 },
-            "size": { "w": 3, "h": 1 },
+            "position": {
+              "col": 16,
+              "row": 4
+            },
+            "size": {
+              "w": 3,
+              "h": 1
+            },
             "meta": {
               "description": "A 6 A radial on 1.0 or 1.5 mm² cable, feeding ceiling roses upstairs or down.",
               "notes": "Small breaker, small cable, small load. Lighting is a rounding error next to a shower."
@@ -594,8 +837,14 @@
             "type": "service",
             "icon": "kitchenSet",
             "color": "#8b5a2b",
-            "position": { "col": 16, "row": 6 },
-            "size": { "w": 3, "h": 1 },
+            "position": {
+              "col": 16,
+              "row": 6
+            },
+            "size": {
+              "w": 3,
+              "h": 1
+            },
             "meta": {
               "description": "A dedicated radial to a cooker control unit, commonly around 32 A on 6 mm² cable.",
               "notes": "Sized with diversity applied — nobody runs every ring, every hob and the grill flat out at once."
@@ -607,8 +856,14 @@
             "type": "service",
             "icon": "shower",
             "color": "#8b5a2b",
-            "position": { "col": 16, "row": 8 },
-            "size": { "w": 3, "h": 1 },
+            "position": {
+              "col": 16,
+              "row": 8
+            },
+            "size": {
+              "w": 3,
+              "h": 1
+            },
             "meta": {
               "description": "The largest single load in most houses: 40 A or more, on 10 mm² cable, with its own isolator.",
               "notes": "An electric shower is a kettle that never switches off while it runs. It is why the cut-out fuse rating matters."
@@ -620,8 +875,14 @@
             "type": "service",
             "icon": "chargingStation",
             "color": "#8b5a2b",
-            "position": { "col": 16, "row": 10 },
-            "size": { "w": 3, "h": 1 },
+            "position": {
+              "col": 16,
+              "row": 10
+            },
+            "size": {
+              "w": 3,
+              "h": 1
+            },
             "meta": {
               "description": "A dedicated 32 A circuit to a 7 kW wall charger.",
               "notes": "The one addition most likely to make an older board and an older service head look undersized."
@@ -708,8 +969,14 @@
             "label": "CPC 1.5 mm²",
             "color": "#16a34a",
             "route": [
-              { "col": 7, "row": 10 },
-              { "col": 13, "row": 6 }
+              {
+                "col": 7,
+                "row": 10
+              },
+              {
+                "col": 13,
+                "row": 6
+              }
             ]
           },
           {
@@ -868,7 +1135,9 @@
       "description": "Two power stations, two transmission voltages, four substations, thirty metres of buried cable and a fuse board — and then a loop of 2.5 mm² cable round a house. Colour carries meaning throughout: voltage on the network, real cable colours inside the property.",
       "highlight": [],
       "active_connections": [],
-      "camera": { "fit": true },
+      "camera": {
+        "fit": true
+      },
       "footer": [
         {
           "text": "Network pipes are graded by voltage: **400 kV** deepest red down to **400 V** grey. Inside the house they use the real cable colours.",
@@ -881,9 +1150,17 @@
       "name": "Offshore wind",
       "title": "The wind farm is making power right now",
       "description": "Turbines about 120 km offshore feed an offshore substation, which sends the output ashore on an export cable. Power does not arrive in parcels — the connection is live and current flows down it continuously, which is what the chevrons mean everywhere in this flow.",
-      "highlight": ["wind_farm", "gen_transformer"],
-      "active_connections": ["c_wind_gen"],
-      "stream": { "connection": "c_wind_gen", "color": "#ea580c" },
+      "highlight": [
+        "wind_farm",
+        "gen_transformer"
+      ],
+      "active_connections": [
+        "c_wind_gen"
+      ],
+      "stream": {
+        "connection": "c_wind_gen",
+        "color": "#ea580c"
+      },
       "footer": [
         {
           "text": "Chevrons mean a continuous flow. The few **packets** in this flow are discrete events: a meter reading, a fault, a switch operation.",
@@ -902,9 +1179,16 @@
       "name": "Gas fills the gap",
       "title": "A gas station covers what the wind does not",
       "description": "A combined-cycle gas turbine station burns gas in turbines and reuses their exhaust heat to drive a steam turbine. Its generators produce at a low voltage — tens of kilovolts at the terminals — which is far too low to send anywhere useful.",
-      "highlight": ["gas_ccgt", "gen_transformer"],
-      "active_connections": ["c_gas_gen"],
-      "stream": { "connection": "c_gas_gen" },
+      "highlight": [
+        "gas_ccgt",
+        "gen_transformer"
+      ],
+      "active_connections": [
+        "c_gas_gen"
+      ],
+      "stream": {
+        "connection": "c_gas_gen"
+      },
       "footer": [
         {
           "text": "This pipe is deliberately **uncoloured** — generator terminal voltage is below the scale used for the rest of the network.",
@@ -917,9 +1201,14 @@
       "name": "Step up",
       "title": "Straight into a step-up transformer",
       "description": "Every generator on the system sits behind a transformer that lifts its output to transmission voltage. Push the same power at a higher voltage and the current falls; resistive loss falls with the square of the current, so the whole grid is built around this one trade.",
-      "highlight": ["gen_transformer"],
+      "highlight": [
+        "gen_transformer"
+      ],
       "active_connections": [],
-      "camera": { "focus": "gen_transformer", "zoom": 1.6 },
+      "camera": {
+        "focus": "gen_transformer",
+        "zoom": 1.6
+      },
       "annotations": [
         {
           "type": "transform",
@@ -933,11 +1222,24 @@
       "name": "400 kV supergrid",
       "title": "Onto the 400 kV transmission network",
       "description": "The highest voltage on the UK system, on the steel lattice pylons everyone recognises. Bare aluminium conductors, insulated by nothing but the air gap — which is why the towers are as tall as they are.",
-      "highlight": ["gen_transformer", "pylons_400", "gsp"],
-      "active_connections": ["c_gen_400", "c_400_gsp"],
+      "highlight": [
+        "gen_transformer",
+        "pylons_400",
+        "gsp"
+      ],
+      "active_connections": [
+        "c_gen_400",
+        "c_400_gsp"
+      ],
       "streams": [
-        { "connection": "c_gen_400", "color": "#b91c1c" },
-        { "connection": "c_400_gsp", "color": "#b91c1c" }
+        {
+          "connection": "c_gen_400",
+          "color": "#b91c1c"
+        },
+        {
+          "connection": "c_400_gsp",
+          "color": "#b91c1c"
+        }
       ],
       "waterfall": {
         "start": 120,
@@ -951,11 +1253,23 @@
       "name": "275 kV too",
       "title": "The other transmission voltage",
       "description": "UK transmission is 400 kV and 275 kV. The 275 kV circuits are common in Scotland and around older parts of the English network, and they meet the 400 kV system at the same substations.",
-      "highlight": ["pylons_275", "gsp"],
-      "active_connections": ["c_gen_275", "c_275_gsp"],
+      "highlight": [
+        "pylons_275",
+        "gsp"
+      ],
+      "active_connections": [
+        "c_gen_275",
+        "c_275_gsp"
+      ],
       "streams": [
-        { "connection": "c_gen_275", "color": "#dc2626" },
-        { "connection": "c_275_gsp", "color": "#dc2626" }
+        {
+          "connection": "c_gen_275",
+          "color": "#dc2626"
+        },
+        {
+          "connection": "c_275_gsp",
+          "color": "#dc2626"
+        }
       ],
       "footer": [
         {
@@ -969,9 +1283,17 @@
       "name": "Down to 132 kV",
       "title": "The grid supply point hands over",
       "description": "A grid supply point steps 400 kV down to 132 kV, and in the process hands the electricity from the transmission operator to the regional distribution network operator. Everything from here on is somebody else's asset.",
-      "highlight": ["gsp", "primary_sub"],
-      "active_connections": ["c_gsp_primary"],
-      "stream": { "connection": "c_gsp_primary", "color": "#ea580c" },
+      "highlight": [
+        "gsp",
+        "primary_sub"
+      ],
+      "active_connections": [
+        "c_gsp_primary"
+      ],
+      "stream": {
+        "connection": "c_gsp_primary",
+        "color": "#ea580c"
+      },
       "waterfall": {
         "start": 420,
         "weight": 45,
@@ -984,9 +1306,17 @@
       "name": "33 kV primary",
       "title": "132 kV to 33 kV at the primary substation",
       "description": "A primary substation serves a town or a large district. The pattern from here down is always the same: a lower voltage, a shorter distance, and more customers behind each transformer.",
-      "highlight": ["primary_sub", "secondary_sub"],
-      "active_connections": ["c_primary_secondary"],
-      "stream": { "connection": "c_primary_secondary", "color": "#f59e0b" },
+      "highlight": [
+        "primary_sub",
+        "secondary_sub"
+      ],
+      "active_connections": [
+        "c_primary_secondary"
+      ],
+      "stream": {
+        "connection": "c_primary_secondary",
+        "color": "#f59e0b"
+      },
       "waterfall": {
         "start": 465,
         "weight": 18,
@@ -999,9 +1329,17 @@
       "name": "11 kV to the street",
       "title": "33 kV down to 11 kV",
       "description": "11 kV is the workhorse of UK distribution — buried under most streets in the country and switched from substations behind locked gates. It is the last voltage that is still nowhere near a house.",
-      "highlight": ["secondary_sub", "local_sub"],
-      "active_connections": ["c_secondary_local"],
-      "stream": { "connection": "c_secondary_local", "color": "#eab308" },
+      "highlight": [
+        "secondary_sub",
+        "local_sub"
+      ],
+      "active_connections": [
+        "c_secondary_local"
+      ],
+      "stream": {
+        "connection": "c_secondary_local",
+        "color": "#eab308"
+      },
       "waterfall": {
         "start": 483,
         "weight": 6,
@@ -1014,10 +1352,23 @@
       "name": "11 kV / 400 V",
       "title": "The green box on the corner",
       "description": "The local distribution substation takes 11 kV and produces 400 V three-phase, feeding a few dozen to a few hundred homes. Its transformer's star point is earthed here — remember that, because the house's earth comes from it.",
-      "highlight": ["local_sub", "service_cable"],
-      "active_connections": ["c_local_service"],
-      "camera": { "focus": "local_sub", "zoom": 1.5 },
-      "streams": [{ "connection": "c_local_service", "color": "#78716c" }],
+      "highlight": [
+        "local_sub",
+        "service_cable"
+      ],
+      "active_connections": [
+        "c_local_service"
+      ],
+      "camera": {
+        "focus": "local_sub",
+        "zoom": 1.5
+      },
+      "streams": [
+        {
+          "connection": "c_local_service",
+          "color": "#78716c"
+        }
+      ],
       "footer": [
         {
           "text": "**400 V between phases, 230 V from any one phase to neutral.** A house gets one phase; the substation shares the three out to balance the street.",
@@ -1030,9 +1381,19 @@
       "name": "Service cable",
       "title": "Thirty metres under the front garden",
       "description": "One phase and the combined neutral-earth conductor travel about 30 m from the street main to the house. After 489 kilometres, the last leg is shorter than a cricket pitch.",
-      "highlight": ["service_cable", "cutout_fuse"],
-      "active_connections": ["c_service_cutout"],
-      "streams": [{ "connection": "c_service_cutout", "color": "#78716c" }],
+      "highlight": [
+        "service_cable",
+        "cutout_fuse"
+      ],
+      "active_connections": [
+        "c_service_cutout"
+      ],
+      "streams": [
+        {
+          "connection": "c_service_cutout",
+          "color": "#78716c"
+        }
+      ],
       "waterfall": {
         "start": 489,
         "weight": 0.03,
@@ -1045,9 +1406,19 @@
       "name": "Supplier's cut-out",
       "title": "The sealed box with the fuse in it",
       "description": "The service cable ends at the service head, which holds the supplier's cut-out fuse — typically 60 to 100 A. It is sealed, it is live whatever the householder switches off, and it is not theirs to open.",
-      "highlight": ["cutout_fuse", "meter"],
-      "active_connections": ["c_cutout_meter"],
-      "streams": [{ "connection": "c_cutout_meter", "color": "#8b5a2b" }],
+      "highlight": [
+        "cutout_fuse",
+        "meter"
+      ],
+      "active_connections": [
+        "c_cutout_meter"
+      ],
+      "streams": [
+        {
+          "connection": "c_cutout_meter",
+          "color": "#8b5a2b"
+        }
+      ],
       "annotations": [
         {
           "type": "callout",
@@ -1068,9 +1439,17 @@
       "name": "Half-hourly read",
       "title": "The meter is the ownership boundary",
       "description": "The meter belongs to the supplier and counts kilowatt-hours. A smart meter sends a reading over a wide-area radio link — one of the few genuinely discrete events in this whole diagram, so it gets a packet rather than a stream.",
-      "highlight": ["meter", "dcc_link"],
-      "active_connections": ["c_meter_dcc"],
-      "camera": { "focus": "meter", "zoom": 1.5 },
+      "highlight": [
+        "meter",
+        "dcc_link"
+      ],
+      "active_connections": [
+        "c_meter_dcc"
+      ],
+      "camera": {
+        "focus": "meter",
+        "zoom": 1.5
+      },
       "packet": {
         "connection": "c_meter_dcc",
         "shape": "document",
@@ -1095,11 +1474,24 @@
       "name": "Meter tails",
       "title": "Two short cables into the board",
       "description": "Brown line and blue neutral, 25 mm² single-core, kept as short as practical. They sit between the cut-out fuse and the main switch with nothing else protecting them, which is exactly why nobody wants them long.",
-      "highlight": ["meter", "meter_tails", "consumer_unit"],
-      "active_connections": ["c_meter_tails", "c_tails_cu"],
+      "highlight": [
+        "meter",
+        "meter_tails",
+        "consumer_unit"
+      ],
+      "active_connections": [
+        "c_meter_tails",
+        "c_tails_cu"
+      ],
       "streams": [
-        { "connection": "c_meter_tails", "color": "#8b5a2b" },
-        { "connection": "c_tails_cu", "color": "#8b5a2b" }
+        {
+          "connection": "c_meter_tails",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_tails_cu",
+          "color": "#8b5a2b"
+        }
       ],
       "footer": [
         {
@@ -1119,11 +1511,24 @@
       "name": "Where earth comes from",
       "title": "The earth is borrowed from the neutral",
       "description": "Most UK homes are TN-C-S, usually called PME: the earth is derived from the incoming supply neutral at the service head rather than from a rod in the garden. Green pipes in this flow are protective conductors, never power.",
-      "highlight": ["local_sub", "pme_earth", "consumer_unit"],
-      "active_connections": ["c_local_earth", "c_earth_cu"],
+      "highlight": [
+        "local_sub",
+        "pme_earth",
+        "consumer_unit"
+      ],
+      "active_connections": [
+        "c_local_earth",
+        "c_earth_cu"
+      ],
       "streams": [
-        { "connection": "c_local_earth", "color": "#16a34a" },
-        { "connection": "c_earth_cu", "color": "#16a34a" }
+        {
+          "connection": "c_local_earth",
+          "color": "#16a34a"
+        },
+        {
+          "connection": "c_earth_cu",
+          "color": "#16a34a"
+        }
       ],
       "footer": [
         {
@@ -1138,7 +1543,9 @@
       "name": "Main switch",
       "title": "Inside the board: the main switch",
       "description": "A double-pole switch, typically 100 A, isolating both line and neutral for the whole board. It is the one device in here a householder is genuinely expected to operate.",
-      "highlight": ["cu_main_switch"],
+      "highlight": [
+        "cu_main_switch"
+      ],
       "active_connections": [],
       "annotations": [
         {
@@ -1154,12 +1561,29 @@
       "scene": "consumer_unit",
       "title": "Line and neutral split at the bars",
       "description": "Brown goes on to the protective devices; blue lands on a neutral bar that every circuit's return conductor shares. On a split board each RCD gets its own neutral bar, and crossing them over is one of the most common wiring mistakes there is.",
-      "highlight": ["cu_main_switch", "cu_neutral_bar", "cu_rcd"],
-      "active_connections": ["c_cu_switch_rcd", "c_cu_switch_neutral", "c_cu_neutral_rcd"],
+      "highlight": [
+        "cu_main_switch",
+        "cu_neutral_bar",
+        "cu_rcd"
+      ],
+      "active_connections": [
+        "c_cu_switch_rcd",
+        "c_cu_switch_neutral",
+        "c_cu_neutral_rcd"
+      ],
       "streams": [
-        { "connection": "c_cu_switch_rcd", "color": "#8b5a2b" },
-        { "connection": "c_cu_switch_neutral", "color": "#2563eb" },
-        { "connection": "c_cu_neutral_rcd", "color": "#2563eb" }
+        {
+          "connection": "c_cu_switch_rcd",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_cu_switch_neutral",
+          "color": "#2563eb"
+        },
+        {
+          "connection": "c_cu_neutral_rcd",
+          "color": "#2563eb"
+        }
       ]
     },
     {
@@ -1168,9 +1592,14 @@
       "name": "How the RCD watches",
       "title": "The RCD counts what goes out and what comes back",
       "description": "An RCD compares the current leaving on the line against the current returning on the neutral. If they do not match, the missing current is leaving by some other route — through a person, or through an earth fault.",
-      "highlight": ["cu_rcd"],
+      "highlight": [
+        "cu_rcd"
+      ],
       "active_connections": [],
-      "camera": { "focus": "cu_rcd", "zoom": 1.6 },
+      "camera": {
+        "focus": "cu_rcd",
+        "zoom": 1.6
+      },
       "annotations": [
         {
           "type": "transform",
@@ -1191,9 +1620,19 @@
       "name": "RCBOs",
       "title": "One device per circuit",
       "description": "An RCBO combines overcurrent and residual protection in a single module, so a fault on the shower does not take out the cooker. It is why a board full of RCBOs is far less annoying to live with than an older split-load board.",
-      "highlight": ["cu_main_switch", "cu_rcbo_bank"],
-      "active_connections": ["c_cu_switch_rcbo"],
-      "streams": [{ "connection": "c_cu_switch_rcbo", "color": "#8b5a2b" }]
+      "highlight": [
+        "cu_main_switch",
+        "cu_rcbo_bank"
+      ],
+      "active_connections": [
+        "c_cu_switch_rcbo"
+      ],
+      "streams": [
+        {
+          "connection": "c_cu_switch_rcbo",
+          "color": "#8b5a2b"
+        }
+      ]
     },
     {
       "id": 19,
@@ -1201,7 +1640,15 @@
       "name": "Five final circuits",
       "title": "The board fans out",
       "description": "Sockets on a 32 A ring, lighting on a 6 A radial, the cooker on about 32 A, the shower on 40 A or more, and a 32 A circuit for the car. Each breaker is sized for the cable behind it, not for the appliance in front of it.",
-      "highlight": ["cu_rcd", "cu_rcbo_bank", "mcb_ring", "mcb_lighting", "mcb_cooker", "mcb_shower", "mcb_ev"],
+      "highlight": [
+        "cu_rcd",
+        "cu_rcbo_bank",
+        "mcb_ring",
+        "mcb_lighting",
+        "mcb_cooker",
+        "mcb_shower",
+        "mcb_ev"
+      ],
       "active_connections": [
         "c_cu_rcd_ring",
         "c_cu_rcd_light",
@@ -1210,11 +1657,26 @@
         "c_cu_rcbo_ev"
       ],
       "streams": [
-        { "connection": "c_cu_rcd_ring", "color": "#8b5a2b" },
-        { "connection": "c_cu_rcd_light", "color": "#8b5a2b" },
-        { "connection": "c_cu_rcbo_cooker", "color": "#8b5a2b" },
-        { "connection": "c_cu_rcbo_shower", "color": "#8b5a2b" },
-        { "connection": "c_cu_rcbo_ev", "color": "#8b5a2b" }
+        {
+          "connection": "c_cu_rcd_ring",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_cu_rcd_light",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_cu_rcbo_cooker",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_cu_rcbo_shower",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_cu_rcbo_ev",
+          "color": "#8b5a2b"
+        }
       ],
       "footer": [
         {
@@ -1229,11 +1691,24 @@
       "name": "Main earthing terminal",
       "title": "Every circuit protective conductor lands here",
       "description": "The bare copper CPC inside each twin-and-earth cable is sleeved green-and-yellow and lands on this bar, along with the main bonding to gas and water pipework. Under PME the bar is connected back to the incoming supply neutral.",
-      "highlight": ["cu_earth_bar", "mcb_ring", "mcb_shower"],
-      "active_connections": ["c_cu_earth_ring", "c_cu_earth_shower"],
+      "highlight": [
+        "cu_earth_bar",
+        "mcb_ring",
+        "mcb_shower"
+      ],
+      "active_connections": [
+        "c_cu_earth_ring",
+        "c_cu_earth_shower"
+      ],
       "streams": [
-        { "connection": "c_cu_earth_ring", "color": "#16a34a" },
-        { "connection": "c_cu_earth_shower", "color": "#16a34a" }
+        {
+          "connection": "c_cu_earth_ring",
+          "color": "#16a34a"
+        },
+        {
+          "connection": "c_cu_earth_shower",
+          "color": "#16a34a"
+        }
       ],
       "footer": [
         {
@@ -1248,9 +1723,19 @@
       "name": "32 A ring circuit",
       "title": "Down the socket circuit",
       "description": "The 32 A way feeding the sockets is the one circuit in the house that is not a simple radial. It opens into a scene of its own.",
-      "highlight": ["cu_rcd", "mcb_ring"],
-      "active_connections": ["c_cu_rcd_ring"],
-      "streams": [{ "connection": "c_cu_rcd_ring", "color": "#8b5a2b" }]
+      "highlight": [
+        "cu_rcd",
+        "mcb_ring"
+      ],
+      "active_connections": [
+        "c_cu_rcd_ring"
+      ],
+      "streams": [
+        {
+          "connection": "c_cu_rcd_ring",
+          "color": "#8b5a2b"
+        }
+      ]
     },
     {
       "id": 22,
@@ -1258,11 +1743,24 @@
       "name": "Fed from both ends",
       "title": "Inside the ring: two cables in one terminal",
       "description": "A ring final circuit leaves the 32 A breaker, goes round the house through every socket, and comes back to the same terminal. Two brown conductors in the breaker, two blue on the neutral bar, two CPCs on the earth bar.",
-      "highlight": ["ring_terminal", "ring_leg_a", "ring_leg_b"],
-      "active_connections": ["c_ring_t_a", "c_ring_b_t"],
+      "highlight": [
+        "ring_terminal",
+        "ring_leg_a",
+        "ring_leg_b"
+      ],
+      "active_connections": [
+        "c_ring_t_a",
+        "c_ring_b_t"
+      ],
       "streams": [
-        { "connection": "c_ring_t_a", "color": "#8b5a2b" },
-        { "connection": "c_ring_b_t", "color": "#8b5a2b" }
+        {
+          "connection": "c_ring_t_a",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_ring_b_t",
+          "color": "#8b5a2b"
+        }
       ],
       "footer": [
         {
@@ -1277,11 +1775,24 @@
       "name": "Leg A outward",
       "title": "Out through the first sockets",
       "description": "Each socket is wired in and out: two cables land in the back box, not one. Nothing on a ring is a dead end until the loop closes back at the board.",
-      "highlight": ["ring_leg_a", "socket_kitchen", "socket_lounge"],
-      "active_connections": ["c_ring_a_kitchen", "c_ring_kitchen_lounge"],
+      "highlight": [
+        "ring_leg_a",
+        "socket_kitchen",
+        "socket_lounge"
+      ],
+      "active_connections": [
+        "c_ring_a_kitchen",
+        "c_ring_kitchen_lounge"
+      ],
       "streams": [
-        { "connection": "c_ring_a_kitchen", "color": "#8b5a2b" },
-        { "connection": "c_ring_kitchen_lounge", "color": "#8b5a2b" }
+        {
+          "connection": "c_ring_a_kitchen",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_ring_kitchen_lounge",
+          "color": "#8b5a2b"
+        }
       ]
     },
     {
@@ -1290,9 +1801,19 @@
       "name": "Round the far end",
       "title": "The furthest point from the board",
       "description": "Halfway round, the cable is about as far from the consumer unit as it gets — and current is arriving there from both directions at once, which is exactly the point of the arrangement.",
-      "highlight": ["socket_lounge", "socket_bedroom"],
-      "active_connections": ["c_ring_lounge_bedroom"],
-      "streams": [{ "connection": "c_ring_lounge_bedroom", "color": "#8b5a2b" }],
+      "highlight": [
+        "socket_lounge",
+        "socket_bedroom"
+      ],
+      "active_connections": [
+        "c_ring_lounge_bedroom"
+      ],
+      "streams": [
+        {
+          "connection": "c_ring_lounge_bedroom",
+          "color": "#8b5a2b"
+        }
+      ],
       "waterfall": {
         "start": 489.032,
         "weight": 0.02,
@@ -1306,11 +1827,24 @@
       "name": "Leg B returns",
       "title": "And back to the same terminal",
       "description": "The return leg comes home through the remaining sockets. Because the load is shared between two paths, each conductor carries less than the total — which is what lets 2.5 mm² cable sit behind a 32 A breaker.",
-      "highlight": ["socket_bedroom", "socket_hall", "ring_leg_b"],
-      "active_connections": ["c_ring_bedroom_hall", "c_ring_hall_b"],
+      "highlight": [
+        "socket_bedroom",
+        "socket_hall",
+        "ring_leg_b"
+      ],
+      "active_connections": [
+        "c_ring_bedroom_hall",
+        "c_ring_hall_b"
+      ],
       "streams": [
-        { "connection": "c_ring_bedroom_hall", "color": "#8b5a2b" },
-        { "connection": "c_ring_hall_b", "color": "#8b5a2b" }
+        {
+          "connection": "c_ring_bedroom_hall",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_ring_hall_b",
+          "color": "#8b5a2b"
+        }
       ],
       "footer": [
         {
@@ -1325,9 +1859,19 @@
       "name": "Earth rings too",
       "title": "The protective conductor makes the same loop",
       "description": "The bare CPC inside the same cable rings the house exactly as the line and neutral do, so every socket has two paths back to the earth bar. Drawn as its own green route here for clarity — in reality it is inside the same twin-and-earth sheath.",
-      "highlight": ["ring_terminal", "socket_hall"],
-      "active_connections": ["c_ring_cpc"],
-      "streams": [{ "connection": "c_ring_cpc", "color": "#16a34a" }]
+      "highlight": [
+        "ring_terminal",
+        "socket_hall"
+      ],
+      "active_connections": [
+        "c_ring_cpc"
+      ],
+      "streams": [
+        {
+          "connection": "c_ring_cpc",
+          "color": "#16a34a"
+        }
+      ]
     },
     {
       "id": 27,
@@ -1335,9 +1879,17 @@
       "name": "A load appears",
       "title": "Somebody plugs in a kettle",
       "description": "Switching on a load is a discrete event, so it gets a packet. Current now flows to the kitchen socket from both directions round the loop, splitting roughly in proportion to how much cable is on each side.",
-      "highlight": ["ring_leg_a", "socket_kitchen"],
-      "active_connections": ["c_ring_a_kitchen"],
-      "camera": { "focus": "socket_kitchen", "zoom": 1.6 },
+      "highlight": [
+        "ring_leg_a",
+        "socket_kitchen"
+      ],
+      "active_connections": [
+        "c_ring_a_kitchen"
+      ],
+      "camera": {
+        "focus": "socket_kitchen",
+        "zoom": 1.6
+      },
       "packet": {
         "connection": "c_ring_a_kitchen",
         "shape": "sphere",
@@ -1363,8 +1915,14 @@
       "name": "Earth fault",
       "title": "An appliance goes live to its casing",
       "description": "A damaged flex lets the line conductor touch the earthed metal casing of an appliance in the bedroom. Current leaves the circuit through the CPC instead of returning on the neutral, and heads straight back to the board.",
-      "highlight": ["socket_bedroom", "socket_hall", "ring_terminal"],
-      "active_connections": ["c_ring_cpc"],
+      "highlight": [
+        "socket_bedroom",
+        "socket_hall",
+        "ring_terminal"
+      ],
+      "active_connections": [
+        "c_ring_cpc"
+      ],
       "packet": {
         "connection": "c_ring_cpc",
         "direction": "reverse",
@@ -1398,9 +1956,17 @@
       "name": "RCD trips",
       "title": "Back at the board, the RCD opens",
       "description": "The RCD sees line and neutral disagree by far more than 30 mA and disconnects the circuits behind it in well under 40 ms. The sockets and the lights on that side of the board go dead together.",
-      "highlight": ["cu_rcd", "mcb_ring"],
-      "active_connections": ["c_cu_rcd_ring"],
-      "camera": { "focus": "cu_rcd", "zoom": 1.7 },
+      "highlight": [
+        "cu_rcd",
+        "mcb_ring"
+      ],
+      "active_connections": [
+        "c_cu_rcd_ring"
+      ],
+      "camera": {
+        "focus": "cu_rcd",
+        "zoom": 1.7
+      },
       "packet": {
         "connection": "c_cu_rcd_ring",
         "shape": "token",
@@ -1409,7 +1975,10 @@
           "device": "RCD 63 A / 30 mA",
           "imbalance_ma": 210,
           "trip_time_ms": 22,
-          "circuits_lost": ["ring final", "lighting radial"]
+          "circuits_lost": [
+            "ring final",
+            "lighting radial"
+          ]
         }
       },
       "annotations": [
@@ -1433,12 +2002,30 @@
       "name": "The rest stays on",
       "title": "Everything on the RCBOs is unaffected",
       "description": "The cooker, the shower and the car charger each have their own device, so none of them notice. This is the practical argument for RCBOs over a split-load board: a fault stays where it happened.",
-      "highlight": ["cu_rcbo_bank", "mcb_cooker", "mcb_shower", "mcb_ev"],
-      "active_connections": ["c_cu_rcbo_cooker", "c_cu_rcbo_shower", "c_cu_rcbo_ev"],
+      "highlight": [
+        "cu_rcbo_bank",
+        "mcb_cooker",
+        "mcb_shower",
+        "mcb_ev"
+      ],
+      "active_connections": [
+        "c_cu_rcbo_cooker",
+        "c_cu_rcbo_shower",
+        "c_cu_rcbo_ev"
+      ],
       "streams": [
-        { "connection": "c_cu_rcbo_cooker", "color": "#8b5a2b" },
-        { "connection": "c_cu_rcbo_shower", "color": "#8b5a2b" },
-        { "connection": "c_cu_rcbo_ev", "color": "#8b5a2b" }
+        {
+          "connection": "c_cu_rcbo_cooker",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_cu_rcbo_shower",
+          "color": "#8b5a2b"
+        },
+        {
+          "connection": "c_cu_rcbo_ev",
+          "color": "#8b5a2b"
+        }
       ],
       "footer": [
         {
@@ -1453,8 +2040,15 @@
       "name": "Reset the RCD",
       "title": "Unplug the appliance, reset the switch",
       "description": "Once the faulty appliance is unplugged, the RCD latches back on and the sockets come alive again. Resetting a device that trips repeatedly without finding out why is how a warning becomes a fire.",
-      "highlight": ["cu_main_switch", "cu_rcd", "mcb_ring"],
-      "active_connections": ["c_cu_switch_rcd", "c_cu_rcd_ring"],
+      "highlight": [
+        "cu_main_switch",
+        "cu_rcd",
+        "mcb_ring"
+      ],
+      "active_connections": [
+        "c_cu_switch_rcd",
+        "c_cu_rcd_ring"
+      ],
       "packet": {
         "connection": "c_cu_rcd_ring",
         "shape": "token",
@@ -1462,7 +2056,10 @@
         "data": {
           "action": "RCD reset",
           "imbalance_ma": 0,
-          "circuits_restored": ["ring final", "lighting radial"]
+          "circuits_restored": [
+            "ring final",
+            "lighting radial"
+          ]
         }
       },
       "annotations": [
@@ -1485,10 +2082,23 @@
       "name": "Back to the street",
       "title": "Out of the board and back to the network",
       "description": "None of that reached beyond the front door. The cut-out fuse never blew, the local substation never noticed, and the meter carried on counting the rest of the house.",
-      "highlight": ["consumer_unit", "meter", "local_sub"],
-      "active_connections": ["c_tails_cu"],
-      "camera": { "fit": true },
-      "streams": [{ "connection": "c_tails_cu", "color": "#8b5a2b" }],
+      "highlight": [
+        "consumer_unit",
+        "meter",
+        "local_sub"
+      ],
+      "active_connections": [
+        "c_tails_cu"
+      ],
+      "camera": {
+        "fit": true
+      },
+      "streams": [
+        {
+          "connection": "c_tails_cu",
+          "color": "#8b5a2b"
+        }
+      ],
       "footer": [
         {
           "text": "Protection is **graded**: the smallest device nearest the fault should operate first, and it did.",
@@ -1501,7 +2111,11 @@
       "name": "End to end",
       "title": "Roughly 489 kilometres, and then twenty metres",
       "description": "From a turbine 120 km offshore to a socket in a hallway: six voltage steps down, two owners, and a loop of 2.5 mm² cable at the end of it. The waterfall shows the scale — almost the whole journey happens before the electricity reaches the street.",
-      "highlight": ["wind_farm", "gas_ccgt", "consumer_unit"],
+      "highlight": [
+        "wind_farm",
+        "gas_ccgt",
+        "consumer_unit"
+      ],
       "active_connections": [],
       "footer": [
         {

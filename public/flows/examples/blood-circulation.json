@@ -3,230 +3,730 @@
     "title": "Blood Flow Through the Human Body",
     "description": "The full double circuit, laid out as a body. The four heart chambers sit in the chest; each organ has a separate artery bringing oxygen-rich blood in and a vein carrying oxygen-poor blood back out. Right heart (blue) drives the lungs; left heart (red) drives the body."
   },
-  "layout": { "grid": { "cols": 14, "rows": 18 } },
+  "layout": {
+    "grid": {
+      "cols": 14,
+      "rows": 20
+    }
+  },
   "zones": [
     {
-      "id": "z_head", "label": "Head", "color": "#b678a8",
-      "bounds": { "col": 6, "row": 1, "width": 4, "height": 2 },
-      "meta": { "description": "The brain — the body's most oxygen-hungry organ." }
+      "id": "z_head",
+      "label": "Head",
+      "color": "#b678a8",
+      "bounds": {
+        "col": 5,
+        "row": 0,
+        "width": 4,
+        "height": 3
+      },
+      "meta": {
+        "description": "The brain — the body's most oxygen-hungry organ."
+      }
     },
     {
-      "id": "z_lungs", "label": "Lungs", "color": "#7fb2e0",
-      "bounds": { "col": 6, "row": 4, "width": 4, "height": 3 },
-      "meta": { "description": "Where deoxygenated blood dumps CO2 and reloads with O2." }
+      "id": "z_lungs",
+      "label": "Lungs",
+      "color": "#7fb2e0",
+      "bounds": {
+        "col": 6,
+        "row": 3,
+        "width": 4,
+        "height": 4
+      },
+      "meta": {
+        "description": "Where deoxygenated blood dumps CO2 and reloads with O2."
+      }
     },
     {
-      "id": "z_heart", "label": "Heart", "color": "#c0392b",
-      "bounds": { "col": 3, "row": 8, "width": 10, "height": 3 },
-      "meta": { "description": "Four chambers. Right side (blue) pumps to the lungs; left side (red) pumps to the body." }
+      "id": "z_heart",
+      "label": "Heart",
+      "color": "#c0392b",
+      "bounds": {
+        "col": 3,
+        "row": 8,
+        "width": 10,
+        "height": 3
+      },
+      "meta": {
+        "description": "Four chambers. Right side (blue) pumps to the lungs; left side (red) pumps to the body."
+      }
     },
     {
-      "id": "z_abdomen", "label": "Abdomen", "color": "#d98a5a",
-      "bounds": { "col": 2, "row": 12, "width": 4, "height": 2 },
-      "meta": { "description": "Digestive organs supplied by branches of the aorta." }
+      "id": "z_abdomen",
+      "label": "Abdomen",
+      "color": "#d98a5a",
+      "bounds": {
+        "col": 2,
+        "row": 12,
+        "width": 4,
+        "height": 4
+      },
+      "meta": {
+        "description": "Digestive organs supplied by branches of the aorta."
+      }
     },
     {
-      "id": "z_limbs", "label": "Limbs & Muscle", "color": "#9c4a3c",
-      "bounds": { "col": 7, "row": 15, "width": 4, "height": 3 },
-      "meta": { "description": "Skeletal muscle — oxygen demand climbs steeply during exercise." }
+      "id": "z_limbs",
+      "label": "Limbs & Muscle",
+      "color": "#9c4a3c",
+      "bounds": {
+        "col": 7,
+        "row": 15,
+        "width": 5,
+        "height": 5
+      },
+      "meta": {
+        "description": "Skeletal muscle — oxygen demand climbs steeply during exercise."
+      }
     }
   ],
   "components": [
     {
-      "id": "brain", "label": "Brain", "type": "service",
-      "icon": "brain", "color": "#b678a8",
-      "position": { "col": 7, "row": 1 }, "size": { "w": 2, "h": 1 },
-      "meta": { "description": "Fed by the carotid arteries, drained by the jugular veins. Uses ~20% of the body's oxygen." }
+      "id": "brain",
+      "label": "Brain",
+      "type": "service",
+      "icon": "brain",
+      "color": "#b678a8",
+      "position": {
+        "col": 6,
+        "row": 1
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Fed by the carotid arteries, drained by the jugular veins. Uses ~20% of the body's oxygen."
+      }
     },
     {
-      "id": "lungs", "label": "Lungs", "type": "service",
-      "icon": "lungs", "color": "#7fb2e0",
-      "position": { "col": 7, "row": 4 }, "size": { "w": 2, "h": 2 },
-      "meta": { "description": "Alveolar gas exchange: blood releases CO2 and absorbs O2 from inhaled air." }
+      "id": "lungs",
+      "label": "Lungs",
+      "type": "service",
+      "icon": "lungs",
+      "color": "#7fb2e0",
+      "position": {
+        "col": 7,
+        "row": 4
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "Alveolar gas exchange: blood releases CO2 and absorbs O2 from inhaled air."
+      }
     },
     {
-      "id": "ra", "label": "Right Atrium", "type": "service",
+      "id": "ra",
+      "label": "Right Atrium",
+      "type": "service",
       "color": "#3b6ea5",
-      "position": { "col": 4, "row": 9 },
-      "meta": { "description": "Collects deoxygenated blood returning from the whole body via the vena cava." }
+      "position": {
+        "col": 4,
+        "row": 9
+      },
+      "meta": {
+        "description": "Collects deoxygenated blood returning from the whole body via the vena cava."
+      }
     },
     {
-      "id": "rv", "label": "Right Ventricle", "type": "service",
-      "icon": "heartPulse", "color": "#3b6ea5",
-      "position": { "col": 6, "row": 9 },
-      "meta": { "description": "Pumps deoxygenated blood to the lungs through the pulmonary artery." }
+      "id": "rv",
+      "label": "Right Ventricle",
+      "type": "service",
+      "icon": "heartPulse",
+      "color": "#3b6ea5",
+      "position": {
+        "col": 6,
+        "row": 9
+      },
+      "meta": {
+        "description": "Pumps deoxygenated blood to the lungs through the pulmonary artery."
+      }
     },
     {
-      "id": "la", "label": "Left Atrium", "type": "service",
+      "id": "la",
+      "label": "Left Atrium",
+      "type": "service",
       "color": "#c0392b",
-      "position": { "col": 9, "row": 9 },
-      "meta": { "description": "Receives freshly oxygenated blood back from the lungs via the pulmonary veins." }
+      "position": {
+        "col": 9,
+        "row": 9
+      },
+      "meta": {
+        "description": "Receives freshly oxygenated blood back from the lungs via the pulmonary veins."
+      }
     },
     {
-      "id": "lv", "label": "Left Ventricle", "type": "service",
-      "icon": "heartPulse", "color": "#c0392b",
-      "position": { "col": 11, "row": 9 },
-      "meta": { "description": "The strongest chamber; drives oxygenated blood to the entire body through the aorta." }
+      "id": "lv",
+      "label": "Left Ventricle",
+      "type": "service",
+      "icon": "heartPulse",
+      "color": "#c0392b",
+      "position": {
+        "col": 11,
+        "row": 9
+      },
+      "meta": {
+        "description": "The strongest chamber; drives oxygenated blood to the entire body through the aorta."
+      }
     },
     {
-      "id": "stomach", "label": "Stomach", "type": "service",
-      "icon": "bowlFood", "color": "#d98a5a",
-      "position": { "col": 3, "row": 12 }, "size": { "w": 2, "h": 1 },
-      "meta": { "description": "Digestive organs. Blood delivers O2 and picks up absorbed nutrients." }
+      "id": "stomach",
+      "label": "Stomach",
+      "type": "service",
+      "icon": "bowlFood",
+      "color": "#d98a5a",
+      "position": {
+        "col": 3,
+        "row": 14
+      },
+      "size": {
+        "w": 2,
+        "h": 1
+      },
+      "meta": {
+        "description": "Digestive organs. Blood delivers O2 and picks up absorbed nutrients."
+      }
     },
     {
-      "id": "muscles", "label": "Muscles", "type": "service",
-      "icon": "dumbbell", "color": "#9c4a3c",
-      "position": { "col": 8, "row": 15 }, "size": { "w": 2, "h": 2 },
-      "meta": { "description": "Skeletal muscle in the limbs. Burns O2 and glucose to contract, producing CO2." }
+      "id": "muscles",
+      "label": "Muscles",
+      "type": "service",
+      "icon": "dumbbell",
+      "color": "#9c4a3c",
+      "position": {
+        "col": 9,
+        "row": 17
+      },
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "meta": {
+        "description": "Skeletal muscle in the limbs. Burns O2 and glucose to contract, producing CO2."
+      }
     }
   ],
   "connections": [
-    { "id": "c_art_brain",   "from": "lv", "to": "brain",   "label": "Carotid Artery", "route": [ { "col": 12, "row": 6 }, { "col": 10, "row": 2 } ] },
-    { "id": "c_vein_brain",  "from": "brain", "to": "ra",    "label": "Jugular Vein",   "route": [ { "col": 5, "row": 2 }, { "col": 3, "row": 6 } ] },
-    { "id": "c_art_stomach", "from": "lv", "to": "stomach",  "label": "Coeliac Artery", "route": "auto" },
-    { "id": "c_vein_stomach","from": "stomach", "to": "ra",  "label": "Hepatic Vein",   "route": "auto" },
-    { "id": "c_art_muscles", "from": "lv", "to": "muscles",  "label": "Aorta",          "route": "auto" },
-    { "id": "c_vein_muscles","from": "muscles", "to": "ra",  "label": "Vena Cava",      "route": "auto" },
-    { "id": "c_tricuspid",   "from": "ra", "to": "rv",       "label": "Tricuspid Valve","route": "auto" },
-    { "id": "c_mitral",      "from": "la", "to": "lv",       "label": "Mitral Valve",   "route": "auto" },
-    { "id": "c_pulm_art",    "from": "rv", "to": "lungs",    "label": "Pulmonary Artery","route": "auto" },
-    { "id": "c_pulm_vein",   "from": "lungs", "to": "la",    "label": "Pulmonary Vein", "route": "auto" }
+    {
+      "id": "c_art_brain",
+      "from": "lv",
+      "to": "brain",
+      "label": "Carotid Artery",
+      "route": [
+        {
+          "col": 13,
+          "row": 5
+        },
+        {
+          "col": 10,
+          "row": 2
+        }
+      ]
+    },
+    {
+      "id": "c_vein_brain",
+      "from": "brain",
+      "to": "ra",
+      "label": "Jugular Vein",
+      "route": [
+        {
+          "col": 5,
+          "row": 2
+        },
+        {
+          "col": 3,
+          "row": 5
+        }
+      ]
+    },
+    {
+      "id": "c_art_stomach",
+      "from": "lv",
+      "to": "stomach",
+      "label": "Coeliac Artery",
+      "route": "auto"
+    },
+    {
+      "id": "c_vein_stomach",
+      "from": "stomach",
+      "to": "ra",
+      "label": "Hepatic Vein",
+      "route": "auto"
+    },
+    {
+      "id": "c_art_muscles",
+      "from": "lv",
+      "to": "muscles",
+      "label": "Aorta",
+      "route": "auto"
+    },
+    {
+      "id": "c_vein_muscles",
+      "from": "muscles",
+      "to": "ra",
+      "label": "Vena Cava",
+      "route": "auto"
+    },
+    {
+      "id": "c_tricuspid",
+      "from": "ra",
+      "to": "rv",
+      "label": "Tricuspid Valve",
+      "route": "auto"
+    },
+    {
+      "id": "c_mitral",
+      "from": "la",
+      "to": "lv",
+      "label": "Mitral Valve",
+      "route": "auto"
+    },
+    {
+      "id": "c_pulm_art",
+      "from": "rv",
+      "to": "lungs",
+      "label": "Pulmonary Artery",
+      "route": "auto"
+    },
+    {
+      "id": "c_pulm_vein",
+      "from": "lungs",
+      "to": "la",
+      "label": "Pulmonary Vein",
+      "route": "auto"
+    }
   ],
   "steps": [
     {
-      "id": 0, "name": "Overview",
+      "id": 0,
+      "name": "Overview",
       "title": "Blood flow around the body",
       "description": "Every organ has two pipes: a red artery bringing oxygen-rich blood in, and a blue vein carrying oxygen-poor blood back to the heart. The heart's right side (blue) serves the lungs; its left side (red) serves the body.",
       "highlight": [],
-      "active_connections": ["c_art_brain","c_vein_brain","c_art_stomach","c_vein_stomach","c_art_muscles","c_vein_muscles","c_tricuspid","c_mitral","c_pulm_art","c_pulm_vein"],
-      "camera": { "focus": null },
+      "active_connections": [
+        "c_art_brain",
+        "c_vein_brain",
+        "c_art_stomach",
+        "c_vein_stomach",
+        "c_art_muscles",
+        "c_vein_muscles",
+        "c_tricuspid",
+        "c_mitral",
+        "c_pulm_art",
+        "c_pulm_vein"
+      ],
+      "camera": {
+        "focus": null
+      },
       "streams": [
-        { "connection": "c_art_brain",    "color": "#e53935" },
-        { "connection": "c_art_stomach",  "color": "#e53935" },
-        { "connection": "c_art_muscles",  "color": "#e53935" },
-        { "connection": "c_pulm_vein",    "color": "#e53935" },
-        { "connection": "c_mitral",       "color": "#e53935" },
-        { "connection": "c_vein_brain",   "color": "#3b6ea5" },
-        { "connection": "c_vein_stomach", "color": "#3b6ea5" },
-        { "connection": "c_vein_muscles", "color": "#3b6ea5" },
-        { "connection": "c_pulm_art",     "color": "#3b6ea5" },
-        { "connection": "c_tricuspid",    "color": "#3b6ea5" }
+        {
+          "connection": "c_art_brain",
+          "color": "#e53935"
+        },
+        {
+          "connection": "c_art_stomach",
+          "color": "#e53935"
+        },
+        {
+          "connection": "c_art_muscles",
+          "color": "#e53935"
+        },
+        {
+          "connection": "c_pulm_vein",
+          "color": "#e53935"
+        },
+        {
+          "connection": "c_mitral",
+          "color": "#e53935"
+        },
+        {
+          "connection": "c_vein_brain",
+          "color": "#3b6ea5"
+        },
+        {
+          "connection": "c_vein_stomach",
+          "color": "#3b6ea5"
+        },
+        {
+          "connection": "c_vein_muscles",
+          "color": "#3b6ea5"
+        },
+        {
+          "connection": "c_pulm_art",
+          "color": "#3b6ea5"
+        },
+        {
+          "connection": "c_tricuspid",
+          "color": "#3b6ea5"
+        }
       ]
     },
     {
-      "id": 1, "name": "Heart pumps out",
+      "id": 1,
+      "name": "Heart pumps out",
       "title": "The left ventricle pumps oxygen-rich blood to the body",
       "description": "The left ventricle contracts and forces bright-red blood into the aorta, which branches to the brain, the digestive organs and the muscles at once.",
-      "highlight": ["lv", "brain", "stomach", "muscles"],
-      "active_connections": ["c_art_brain", "c_art_stomach", "c_art_muscles"],
-      "camera": { "focus": "lv", "zoom": 1.3 },
+      "highlight": [
+        "lv",
+        "brain",
+        "stomach",
+        "muscles"
+      ],
+      "active_connections": [
+        "c_art_brain",
+        "c_art_stomach",
+        "c_art_muscles"
+      ],
+      "camera": {
+        "focus": "lv",
+        "zoom": 1.3
+      },
       "annotations": [
-        { "type": "callout", "target": "lv", "text": "leftVentricle.contract() → aorta", "style": "success" }
+        {
+          "type": "callout",
+          "target": "lv",
+          "text": "leftVentricle.contract() → aorta",
+          "style": "success"
+        }
       ],
       "packets": [
-        { "connection": "c_art_brain",   "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "pO2_mmHg": 100, "dest": "brain" } },
-        { "connection": "c_art_stomach", "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "pO2_mmHg": 100, "dest": "stomach" } },
-        { "connection": "c_art_muscles", "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "pO2_mmHg": 100, "dest": "muscles" } }
+        {
+          "connection": "c_art_brain",
+          "shape": "blob",
+          "arrivalStyle": "success",
+          "data": {
+            "state": "oxygenated",
+            "pO2_mmHg": 100,
+            "dest": "brain"
+          }
+        },
+        {
+          "connection": "c_art_stomach",
+          "shape": "blob",
+          "arrivalStyle": "success",
+          "data": {
+            "state": "oxygenated",
+            "pO2_mmHg": 100,
+            "dest": "stomach"
+          }
+        },
+        {
+          "connection": "c_art_muscles",
+          "shape": "blob",
+          "arrivalStyle": "success",
+          "data": {
+            "state": "oxygenated",
+            "pO2_mmHg": 100,
+            "dest": "muscles"
+          }
+        }
       ]
     },
     {
-      "id": 2, "name": "Brain: O2 in",
+      "id": 2,
+      "name": "Brain: O2 in",
       "title": "Oxygen-rich blood enters the brain",
       "description": "Blood climbs the carotid artery into the head. The brain takes about a fifth of all the oxygen the body uses.",
-      "highlight": ["brain", "lv"], "active_connections": ["c_art_brain"],
-      "camera": { "focus": "brain", "zoom": 1.6 },
-      "annotations": [
-        { "type": "callout", "target": "brain", "text": "carotid → neurons.consume(O2)", "style": "success" }
+      "highlight": [
+        "brain",
+        "lv"
       ],
-      "packet": { "connection": "c_art_brain", "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "vessel": "carotid artery" } }
+      "active_connections": [
+        "c_art_brain"
+      ],
+      "camera": {
+        "focus": "brain",
+        "zoom": 1.6
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "brain",
+          "text": "carotid → neurons.consume(O2)",
+          "style": "success"
+        }
+      ],
+      "packet": {
+        "connection": "c_art_brain",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "state": "oxygenated",
+          "vessel": "carotid artery"
+        }
+      }
     },
     {
-      "id": 3, "name": "Stomach: O2 in",
+      "id": 3,
+      "name": "Stomach: O2 in",
       "title": "Oxygen-rich blood enters the digestive organs",
       "description": "A branch of the aorta feeds the stomach and gut, where blood also picks up nutrients absorbed from food.",
-      "highlight": ["stomach", "lv"], "active_connections": ["c_art_stomach"],
-      "camera": { "focus": "stomach", "zoom": 1.6 },
-      "annotations": [
-        { "type": "callout", "target": "stomach", "text": "coeliacArtery → deliver(O2) + absorb(nutrients)", "style": "success" }
+      "highlight": [
+        "stomach",
+        "lv"
       ],
-      "packet": { "connection": "c_art_stomach", "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "vessel": "coeliac artery" } }
+      "active_connections": [
+        "c_art_stomach"
+      ],
+      "camera": {
+        "focus": "stomach",
+        "zoom": 1.6
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "stomach",
+          "text": "coeliacArtery → deliver(O2) + absorb(nutrients)",
+          "style": "success"
+        }
+      ],
+      "packet": {
+        "connection": "c_art_stomach",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "state": "oxygenated",
+          "vessel": "coeliac artery"
+        }
+      }
     },
     {
-      "id": 4, "name": "Muscles: O2 in",
+      "id": 4,
+      "name": "Muscles: O2 in",
       "title": "Oxygen-rich blood enters the muscles",
       "description": "The aorta carries blood down to the skeletal muscles of the limbs, which burn oxygen and glucose to contract.",
-      "highlight": ["muscles", "lv"], "active_connections": ["c_art_muscles"],
-      "camera": { "focus": "muscles", "zoom": 1.6 },
-      "annotations": [
-        { "type": "transform", "target": "muscles", "text": "O2 + glucose → ATP + CO2" }
+      "highlight": [
+        "muscles",
+        "lv"
       ],
-      "packet": { "connection": "c_art_muscles", "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "vessel": "aorta" } }
+      "active_connections": [
+        "c_art_muscles"
+      ],
+      "camera": {
+        "focus": "muscles",
+        "zoom": 1.6
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "muscles",
+          "text": "O2 + glucose → ATP + CO2"
+        }
+      ],
+      "packet": {
+        "connection": "c_art_muscles",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "state": "oxygenated",
+          "vessel": "aorta"
+        }
+      }
     },
     {
-      "id": 5, "name": "Veins return",
+      "id": 5,
+      "name": "Veins return",
       "title": "Oxygen-poor blood drains back to the heart",
       "description": "Having given up their oxygen, the brain, stomach and muscles return dark CO2-rich blood through their veins into the right atrium.",
-      "highlight": ["brain", "stomach", "muscles", "ra"],
-      "active_connections": ["c_vein_brain", "c_vein_stomach", "c_vein_muscles"],
-      "camera": { "focus": null },
+      "highlight": [
+        "brain",
+        "stomach",
+        "muscles",
+        "ra"
+      ],
+      "active_connections": [
+        "c_vein_brain",
+        "c_vein_stomach",
+        "c_vein_muscles"
+      ],
+      "camera": {
+        "focus": null
+      },
       "packets": [
-        { "connection": "c_vein_brain",   "shape": "blob", "data": { "state": "deoxygenated", "pO2_mmHg": 40, "pCO2_mmHg": 46, "vessel": "jugular vein" } },
-        { "connection": "c_vein_stomach", "shape": "blob", "data": { "state": "deoxygenated", "pO2_mmHg": 40, "pCO2_mmHg": 46, "vessel": "hepatic vein" } },
-        { "connection": "c_vein_muscles", "shape": "blob", "data": { "state": "deoxygenated", "pO2_mmHg": 40, "pCO2_mmHg": 46, "vessel": "vena cava" } }
+        {
+          "connection": "c_vein_brain",
+          "shape": "blob",
+          "data": {
+            "state": "deoxygenated",
+            "pO2_mmHg": 40,
+            "pCO2_mmHg": 46,
+            "vessel": "jugular vein"
+          }
+        },
+        {
+          "connection": "c_vein_stomach",
+          "shape": "blob",
+          "data": {
+            "state": "deoxygenated",
+            "pO2_mmHg": 40,
+            "pCO2_mmHg": 46,
+            "vessel": "hepatic vein"
+          }
+        },
+        {
+          "connection": "c_vein_muscles",
+          "shape": "blob",
+          "data": {
+            "state": "deoxygenated",
+            "pO2_mmHg": 40,
+            "pCO2_mmHg": 46,
+            "vessel": "vena cava"
+          }
+        }
       ]
     },
     {
-      "id": 6, "name": "Through right heart",
+      "id": 6,
+      "name": "Through right heart",
       "title": "Right atrium fills the right ventricle",
       "description": "The right atrium contracts and the tricuspid valve opens, dropping the returned blood into the right ventricle.",
-      "highlight": ["ra", "rv"], "active_connections": ["c_tricuspid"],
-      "camera": { "focus": "rv", "zoom": 1.5 },
-      "annotations": [
-        { "type": "transform", "target": "ra", "text": "rightAtrium.contract() → tricuspid.open()" }
+      "highlight": [
+        "ra",
+        "rv"
       ],
-      "packet": { "connection": "c_tricuspid", "shape": "blob", "data": { "state": "deoxygenated", "valve": "tricuspid" } }
+      "active_connections": [
+        "c_tricuspid"
+      ],
+      "camera": {
+        "focus": "rv",
+        "zoom": 1.5
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "ra",
+          "text": "rightAtrium.contract() → tricuspid.open()"
+        }
+      ],
+      "packet": {
+        "connection": "c_tricuspid",
+        "shape": "blob",
+        "data": {
+          "state": "deoxygenated",
+          "valve": "tricuspid"
+        }
+      }
     },
     {
-      "id": 7, "name": "To the lungs",
+      "id": 7,
+      "name": "To the lungs",
       "title": "Right ventricle pumps blood to the lungs",
       "description": "The right ventricle contracts, driving deoxygenated blood up the pulmonary artery to the lungs — the short pulmonary circuit.",
-      "highlight": ["rv", "lungs"], "active_connections": ["c_pulm_art"],
-      "camera": { "focus": null },
-      "annotations": [
-        { "type": "callout", "target": "rv", "text": "rightVentricle.contract() → pulmonaryArtery", "style": "info" }
+      "highlight": [
+        "rv",
+        "lungs"
       ],
-      "packet": { "connection": "c_pulm_art", "shape": "blob", "data": { "state": "deoxygenated", "pO2_mmHg": 40, "pCO2_mmHg": 46, "circuit": "pulmonary" } }
+      "active_connections": [
+        "c_pulm_art"
+      ],
+      "camera": {
+        "focus": null
+      },
+      "annotations": [
+        {
+          "type": "callout",
+          "target": "rv",
+          "text": "rightVentricle.contract() → pulmonaryArtery",
+          "style": "info"
+        }
+      ],
+      "packet": {
+        "connection": "c_pulm_art",
+        "shape": "blob",
+        "data": {
+          "state": "deoxygenated",
+          "pO2_mmHg": 40,
+          "pCO2_mmHg": 46,
+          "circuit": "pulmonary"
+        }
+      }
     },
     {
-      "id": 8, "name": "Gas exchange",
+      "id": 8,
+      "name": "Gas exchange",
       "title": "The lungs reload the blood with oxygen",
       "description": "In the alveoli the blood dumps its CO2 and absorbs fresh O2 from inhaled air, turning bright red again.",
-      "highlight": ["lungs"], "active_connections": [],
-      "camera": { "focus": "lungs", "zoom": 1.6 },
+      "highlight": [
+        "lungs"
+      ],
+      "active_connections": [],
+      "camera": {
+        "focus": "lungs",
+        "zoom": 1.6
+      },
       "annotations": [
-        { "type": "transform", "target": "lungs", "text": "alveoli: releaseCO2() ⇄ absorbO2()", "style": "success" }
+        {
+          "type": "transform",
+          "target": "lungs",
+          "text": "alveoli: releaseCO2() ⇄ absorbO2()",
+          "style": "success"
+        }
       ],
       "packet": null
     },
     {
-      "id": 9, "name": "Back to left heart",
+      "id": 9,
+      "name": "Back to left heart",
       "title": "Oxygen-rich blood returns to the left atrium",
       "description": "Freshly oxygenated blood flows down the pulmonary veins into the left atrium.",
-      "highlight": ["lungs", "la"], "active_connections": ["c_pulm_vein"],
-      "camera": { "focus": null },
-      "packet": { "connection": "c_pulm_vein", "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "pO2_mmHg": 100, "pCO2_mmHg": 40, "vessel": "pulmonary vein" } }
+      "highlight": [
+        "lungs",
+        "la"
+      ],
+      "active_connections": [
+        "c_pulm_vein"
+      ],
+      "camera": {
+        "focus": null
+      },
+      "packet": {
+        "connection": "c_pulm_vein",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "state": "oxygenated",
+          "pO2_mmHg": 100,
+          "pCO2_mmHg": 40,
+          "vessel": "pulmonary vein"
+        }
+      }
     },
     {
-      "id": 10, "name": "Ready to pump",
+      "id": 10,
+      "name": "Ready to pump",
       "title": "Left atrium fills the left ventricle — the cycle repeats",
       "description": "The mitral valve opens and oxygen-rich blood fills the left ventricle, ready to be pumped around the body again.",
-      "highlight": ["la", "lv"], "active_connections": ["c_mitral"],
-      "camera": { "focus": "lv", "zoom": 1.5 },
-      "annotations": [
-        { "type": "transform", "target": "la", "text": "mitral.open() → leftVentricle.fill()", "style": "success" }
+      "highlight": [
+        "la",
+        "lv"
       ],
-      "packet": { "connection": "c_mitral", "shape": "blob", "arrivalStyle": "success", "data": { "state": "oxygenated", "valve": "mitral" } }
+      "active_connections": [
+        "c_mitral"
+      ],
+      "camera": {
+        "focus": "lv",
+        "zoom": 1.5
+      },
+      "annotations": [
+        {
+          "type": "transform",
+          "target": "la",
+          "text": "mitral.open() → leftVentricle.fill()",
+          "style": "success"
+        }
+      ],
+      "packet": {
+        "connection": "c_mitral",
+        "shape": "blob",
+        "arrivalStyle": "success",
+        "data": {
+          "state": "oxygenated",
+          "valve": "mitral"
+        }
+      }
     }
   ]
 }

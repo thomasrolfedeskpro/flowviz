@@ -49,7 +49,8 @@ validator rejects.
 
 So: `flow-authoring-guide.md` in the checkout is authoritative, and
 `src/types/schema.ts` is the final word on which fields exist. Read them before
-writing anything. If you want to use a feature, grep the schema for it first:
+writing anything. If the checkout has `docs/flow-rules.md`, read that first — it
+is generated from the linter, so it is the enforceable subset, and it is short. If you want to use a feature, grep the schema for it first:
 
 ```bash
 grep -nE '\b(footer|waterfall|detail|scene|count|shape)\b' src/types/schema.ts
@@ -149,8 +150,9 @@ manifest won't read.
 Editing: change the existing file in place; do not rewrite it wholesale, because
 someone tuned that layout by hand.
 
-Follow the guide's layout rules — the spacing ones exist because packets sweep
-wide arcs and clip neighbouring components. Then validate:
+Follow the layout rules in `docs/flow-rules.md` — chiefly: don't leave a
+component sitting in the band a pipe sweeps between its two ends, because the
+renderer fades anything a packet passes over. Then validate:
 
 ```bash
 node "$SKILL/scripts/flowviz-validate.mjs" /path/to/flowviz public/flows/custom/<slug>.json
@@ -160,6 +162,22 @@ It validates against the repo's own zod schema and builds the graph, so it
 catches everything the app would hit at load: unknown ids, cross-scene
 references, bad enum values, duplicate ids. Fix and re-run until clean. Do not
 hand over a flow you have not validated.
+
+On a checkout with the linter, also check the geometry — it catches the layout
+mistakes the schema cannot see, and it is the difference between a flow that
+loads and one that reads:
+
+```bash
+node /path/to/flowviz/scripts/validate-flow.mjs --lint public/flows/custom/<slug>.json
+```
+
+Findings are advisory and exit 0. Fix the ones you caused; leave the ones that
+are deliberate (a dense diagram may trade away zone padding on purpose).
+
+If your first draft's layout is rough, `--tidy` will re-lay it for you — layered
+left to right, rows banded by zone. Use it on a flow you just generated, never
+on one someone has tuned by hand, and re-read the result before handing it over:
+it optimises for the rules, not for looking good.
 
 ## Step 6 — Hand back
 

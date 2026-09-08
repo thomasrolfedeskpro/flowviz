@@ -42,7 +42,10 @@ interface Props {
   onPatchComponent: (id: string, scene: SceneId, patch: ComponentPatch) => void
   onPatchZone: (id: string, scene: SceneId, patch: ZonePatch) => void
   onPatchConnection: (id: string, scene: SceneId, patch: ConnectionPatch, clearRoute: boolean) => void
-  onPatchFlow: (meta: { title: string; description?: string }, grid: { cols: number; rows: number }) => void
+  onPatchFlow: (
+    meta: { title: string; description?: string; waterfallLabel?: string },
+    grid: { cols: number; rows: number },
+  ) => void
   /** Applies a component's visual fields to the scene only, for live preview. */
   onPreviewComponent: (id: string, patch: ComponentPatch) => void
   /** Called when a form is abandoned, so any preview can be thrown away. */

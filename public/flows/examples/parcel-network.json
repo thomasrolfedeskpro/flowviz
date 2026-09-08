@@ -2,6 +2,7 @@
   "meta": {
     "title": "A parcel, doorstep to doorstep",
     "description": "One 2.4 kg parcel followed from a front door in Bristol to a front door in Osaka: forty-two hours, nine handovers, two nested facilities and one scuffed label. The top level is the journey; the regional hub, its tilt-tray sorter and the border post each open into a scene of their own.",
+    "waterfallLabel": "Transit time",
     "timing": {
       "step": 2600,
       "packet": 1500,

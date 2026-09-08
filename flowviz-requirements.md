@@ -82,12 +82,6 @@ enough context at each step to understand what is happening in the code.
     function transforms the data at that point.
 - Appear for the duration of the step they belong to.
 
-### Popout panels
-- Per-step floating cards anchored to a component showing structured key-value
-  data (e.g. the shape of a payload at that point in the flow).
-- Distinct from annotations: popouts show data structure, annotations show
-  explanatory text.
-
 ---
 
 ## Navigation and animation
@@ -136,7 +130,6 @@ enough context at each step to understand what is happening in the code.
   - active_connections (connection ids)
   - camera focus and zoom
   - annotations (callout or transform)
-  - popouts (structured data cards)
   - packet (shape, connection, payload)
 
 ---

@@ -2,14 +2,17 @@
 /**
  * Validate a flow file against the FlowViz checkout's *own* schema.
  *
- * Why go through the repo rather than reimplementing the checks here: the schema
- * is TypeScript inside the repo and it changes. A copy living in this skill
- * would drift and start rejecting valid flows (or passing invalid ones) the
- * moment someone's checkout moves. So this writes a throwaway vitest file into
- * the repo, runs it with the repo's own vitest, and deletes it — the errors you
- * get back are the app's errors, whatever version is on disk.
- *
  *   node flowviz-validate.mjs /path/to/flowviz public/flows/my-flow.json
+ *
+ * Modern checkouts ship `scripts/validate-flow.mjs`, which loads the app's
+ * schema and graph builder straight out of `src/` through Vite. This delegates
+ * to it — one implementation of the checks, in the repo where they belong.
+ *
+ * Older checkouts don't have it, and this skill has to keep working against
+ * whatever is on disk. So there is a fallback: write a throwaway vitest file
+ * into the repo, run it with the repo's own vitest, delete it. It is the slow,
+ * grubby path — it mutates the repo while it runs — and it exists only for
+ * checkouts that predate the script. Delete it once none are left.
  */
 
 import { existsSync, writeFileSync, unlinkSync, mkdirSync, rmdirSync } from 'node:fs'
@@ -35,6 +38,20 @@ if (!existsSync(join(repo, 'node_modules'))) {
   console.error('node_modules is missing — install dependencies first (pnpm install / npm install)')
   process.exit(2)
 }
+
+// ── Preferred path: the repo validates itself ────────────────────────────────
+
+const repoValidator = join(repo, 'scripts', 'validate-flow.mjs')
+if (existsSync(repoValidator)) {
+  const run = spawnSync('node', [repoValidator, flowPath], {
+    cwd: repo,
+    encoding: 'utf8',
+    stdio: 'inherit',
+  })
+  process.exit(run.status ?? 1)
+}
+
+// ── Fallback: older checkouts, via a temporary vitest file ───────────────────
 
 // Live under src/ so it is picked up whatever the vitest include pattern is, and
 // name it obviously in case a crash ever leaves it behind.

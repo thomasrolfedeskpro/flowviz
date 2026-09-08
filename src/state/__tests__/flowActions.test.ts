@@ -245,6 +245,15 @@ describe('flowReducer — inspector fields', () => {
     const out = flowReducer(def, { type: 'meta/patch', patch: { description: undefined } })
     expect('description' in out.meta).toBe(false)
   })
+
+  it('sets and clears the waterfall label', () => {
+    const def = { ...zonedFlow(), meta: { title: 'T' } }
+    const named = flowReducer(def, { type: 'meta/patch', patch: { waterfallLabel: 'Cost' } })
+    expect(named.meta.waterfallLabel).toBe('Cost')
+    // Blank means "no label", not an empty heading, so the key goes.
+    const cleared = flowReducer(named, { type: 'meta/patch', patch: { waterfallLabel: '' } })
+    expect('waterfallLabel' in cleared.meta).toBe(false)
+  })
 })
 
 describe('flowReducer — steps', () => {

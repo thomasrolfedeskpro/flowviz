@@ -1,6 +1,9 @@
 export interface FlowMeta {
   title: string
   description?: string
+  /** What the waterfall column measures — "Latency", "Cost", "Distance". Names
+   *  the column and its toggle; omitted, both just say "Waterfall". */
+  waterfallLabel?: string
   /** How fast this flow plays. Anything omitted uses the built-in default; the
    *  viewer's speed selector scales whatever ends up here. */
   timing?: {
@@ -110,12 +113,6 @@ export interface Annotation {
   style?: AnnotationStyle
 }
 
-export interface Popout {
-  title: string
-  anchor: string
-  data: Record<string, unknown>
-}
-
 export type PacketShape   = 'sphere' | 'document' | 'token' | 'blob' | 'envelope'
 export type ArrivalStyle  = 'error' | 'success' | 'warning'
 
@@ -177,7 +174,6 @@ export interface Step {
   annotations?: Annotation[]
   footer?: FooterNote[]
   waterfall?: WaterfallBar
-  popouts?: Popout[]
   packet?: Packet | null
   packets?: Packet[]
   stream?:  StreamDef | null

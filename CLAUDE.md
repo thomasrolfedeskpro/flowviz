@@ -78,7 +78,7 @@ Work through the Phase 1 checklist in `flowviz-design.md` § 3.13:
 - [x] Implement `src/scene/OverlayBridge.ts` — world → screen coordinate projection (§ 3.12)
 - [x] Implement `src/engine/stepEngine.ts` — pure TS step state machine (§ 3.7)
 - [x] Implement `src/hooks/useStepEngine.ts` — React hook wrapping StepEngine (§ 3.8)
-- [x] Implement `src/hooks/useAnimationFrame.ts` — rAF subscription hook (§ 4.14)
+- [x] Implement `src/hooks/useAnimationFrame.ts` — rAF subscription hook (§ 4.13)
 - [x] Implement `src/engine/parseFlow.ts` — JSON → validated FlowDefinition (§ 3.11)
 - [x] Implement `src/engine/layoutEngine.ts` — grid coords → world coords stubs (§ 4.1, just the constants and functions — no scene objects yet)
 - [x] Implement `src/components/CanvasContainer.tsx` — mounts SceneManager, ResizeObserver (§ 3.6)
@@ -143,7 +143,6 @@ flowviz/
       StepHUD.tsx
       AnnotationOverlay.tsx
       HoverTooltip.tsx
-      PopoutPanel.tsx
     hooks/
       useStepEngine.ts
       useAnimationFrame.ts
@@ -154,7 +153,6 @@ flowviz/
       StepHUD.module.css
       AnnotationOverlay.module.css
       HoverTooltip.module.css
-      PopoutPanel.module.css
 ```
 
 ## After Phase 2

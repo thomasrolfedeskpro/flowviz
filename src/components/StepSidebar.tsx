@@ -3,6 +3,7 @@ import type { Step } from '@/types/schema'
 import { waterfallLanes } from '@/utils/waterfall'
 import type { SceneInfo } from '@/utils/scenes'
 import type { Theme } from '@/scene/ThemeColors'
+import type { LintFinding } from '@/engine/geometryLint'
 import styles from '@/styles/StepSidebar.module.css'
 
 export interface FlowSummary {
@@ -16,6 +17,9 @@ export interface FlowSummary {
 interface Props {
   steps: Step[]
   currentIndex: number
+  /** What the waterfall measures, from `meta.waterfallLabel`. Bars are unitless,
+   *  so this is the only thing that says whether they are ms, miles or pounds. */
+  waterfallLabel?: string
   theme: Theme
   editMode: boolean
   flowId: string
@@ -25,6 +29,8 @@ interface Props {
   onGoTo: (index: number) => void
   onThemeToggle: () => void
   onEditModeToggle: () => void
+  /** Enter fullscreen, chrome-free playback. */
+  onPresent: () => void
   onSelectFlow: (id: string) => void
   /** Omitted when deleting isn't possible (no dev server to remove the file). */
   onDeleteFlow?: (flow: FlowSummary) => void
@@ -45,10 +51,15 @@ interface Props {
   /** What a press on the canvas currently means. */
   mode?: 'select' | 'place-component' | 'place-zone' | 'connect'
   onModeChange?: (mode: 'select' | 'place-component' | 'place-zone' | 'connect') => void
+  /** Re-lay the scene on screen. One action, so one undo. */
+  onTidyLayout?: () => void
   /** Unsaved edits exist. */
   dirty?: boolean
   /** Validation messages for the whole flow, as "path: what's wrong". */
   problems?: string[]
+  /** Layout findings. Advisory: they never stop a save, because a bad layout
+   *  still loads and every drag passes through one on its way somewhere. */
+  layoutWarnings?: LintFinding[]
   canUndo?: boolean
   canRedo?: boolean
   onUndo?: () => void
@@ -58,6 +69,7 @@ interface Props {
 export function StepSidebar({
   steps,
   currentIndex,
+  waterfallLabel,
   theme,
   editMode,
   flowId,
@@ -66,6 +78,7 @@ export function StepSidebar({
   onGoTo,
   onThemeToggle,
   onEditModeToggle,
+  onPresent,
   onSelectFlow,
   onDeleteFlow,
   onCopyJson,
@@ -80,8 +93,10 @@ export function StepSidebar({
   onEditJson,
   mode = 'select',
   onModeChange,
+  onTidyLayout,
   dirty = false,
   problems = [],
+  layoutWarnings = [],
   canUndo = false,
   canRedo = false,
   onUndo,
@@ -100,12 +115,14 @@ export function StepSidebar({
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [dropIndex, setDropIndex] = useState<number | null>(null)
   const [showProblems, setShowProblems] = useState(false)
+  const [showWarnings, setShowWarnings] = useState(false)
 
   const currentTitle = flows.find((f) => f.id === flowId)?.title ?? ''
 
   // Waterfall bars are opt-in per flow: no data, no toggle.
   const lanes = waterfallLanes(steps)
   const hasWaterfall = lanes.span > 0
+  const waterfallName = waterfallLabel?.trim() || 'Waterfall'
   const open = showWaterfall && hasWaterfall && tab === 'steps'
 
   // Keep the active step visible when it changes programmatically
@@ -171,8 +188,8 @@ export function StepSidebar({
                 className={`${styles.iconBtn}${showWaterfall ? ` ${styles.iconBtnActive}` : ''}`}
                 onClick={() => setShowWaterfall((v) => !v)}
                 aria-pressed={showWaterfall}
-                title={showWaterfall ? 'Hide waterfall' : 'Show waterfall'}
-                aria-label={showWaterfall ? 'Hide waterfall' : 'Show waterfall'}
+                title={`${showWaterfall ? 'Hide' : 'Show'} ${waterfallName}`}
+                aria-label={`${showWaterfall ? 'Hide' : 'Show'} ${waterfallName}`}
               >
                 <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
                   <path d="M1 2.5h9v2.2H1zM3 6.4h11v2.2H3zM2 10.3h6v2.2H2z" fill="currentColor" />
@@ -214,6 +231,22 @@ export function StepSidebar({
               onClick={onEditModeToggle}
             >
               {editMode ? 'Done' : 'Edit layout'}
+            </button>
+            {/* Present mode hides this whole panel, so the way in has to live
+                outside it too — hence the F shortcut in the tooltip. */}
+            <button
+              className={styles.iconBtn}
+              onClick={onPresent}
+              title="Present — fullscreen, no chrome (F)"
+              aria-label="Present"
+            >
+              <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+                <path
+                  d="M1.5 2.5h13v9h-13z"
+                  fill="none" stroke="currentColor" strokeWidth="1.4"
+                />
+                <path d="M6 14h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
             </button>
             <button className={styles.themeBtn} onClick={onThemeToggle}>
               {theme === 'dark' ? 'Light' : 'Dark'}
@@ -348,6 +381,18 @@ export function StepSidebar({
             </div>
           )}
 
+          {editMode && onTidyLayout && (
+            <div className={styles.toolbar}>
+              <button
+                className={styles.toolBtn}
+                onClick={onTidyLayout}
+                title="Re-lay this scene left to right, keeping zones around their members. One undo puts it back."
+              >
+                ⇥ Tidy layout
+              </button>
+            </div>
+          )}
+
           {editMode && (
             <div className={styles.editFooter}>
               {/* Problems first: the reason Save is disabled should be the thing
@@ -366,6 +411,32 @@ export function StepSidebar({
                   {showProblems && (
                     <ul className={styles.problemList}>
                       {problems.map((p, i) => <li key={i}>{p}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {/* Layout findings sit below the problems and above the history,
+                  deliberately not next to Save: they are things to look at, not
+                  things to fix before you can write the file. */}
+              {layoutWarnings.length > 0 && (
+                <div className={styles.warnings}>
+                  <button
+                    className={styles.warningsHead}
+                    onClick={() => setShowWarnings((v) => !v)}
+                    aria-expanded={showWarnings}
+                  >
+                    <span className={styles.warningsCount}>{layoutWarnings.length}</span>
+                    layout {layoutWarnings.length === 1 ? 'note' : 'notes'}
+                    <span className={styles.chevron}>{showWarnings ? '▾' : '▸'}</span>
+                  </button>
+                  {showWarnings && (
+                    <ul className={styles.warningList}>
+                      {layoutWarnings.map((w, i) => (
+                        <li key={i} className={w.severity === 'error' ? styles.warnSevere : undefined}>
+                          {w.message}
+                        </li>
+                      ))}
                     </ul>
                   )}
                 </div>
@@ -482,7 +553,7 @@ export function StepSidebar({
       >
         {/* Spacer sized to the step list's offset, so row one lines up with step one. */}
         <div className={styles.waterfallHeader} style={{ height: listTop }}>
-          <span className={styles.waterfallTitle}>Waterfall</span>
+          <span className={styles.waterfallTitle} title={waterfallName}>{waterfallName}</span>
         </div>
         <div
           className={styles.waterfallList}

@@ -14,6 +14,7 @@ import type { EditTarget } from '@/components/EditModal'
 import { ExportButton } from '@/components/ExportButton'
 import { buildGraph } from '@/engine/parseFlow'
 import { parseFlowSchema } from '@/engine/flowSchema'
+import { lintGeometry } from '@/engine/geometryLint'
 import { applyActions } from '@/state/flowActions'
 import { nextId } from '@/state/flowActions'
 import { planDelete } from '@/state/cascade'
@@ -31,6 +32,7 @@ import { resolveTiming } from '@/engine/timing'
 import type { Timing } from '@/engine/timing'
 import { useStepEngine } from '@/hooks/useStepEngine'
 import { useHover } from '@/hooks/useHover'
+import { usePresentMode } from '@/hooks/usePresentMode'
 import type { FlowScene } from '@/scene/FlowScene'
 import type { OverlayBridge } from '@/scene/OverlayBridge'
 import type { Theme } from '@/scene/ThemeColors'
@@ -94,6 +96,18 @@ function flowIdFromUrl(): string {
   return new URLSearchParams(window.location.search).get('flow') ?? DEFAULT_FLOW
 }
 
+/** `?step=` is 1-based in the URL, because it is a thing people read and type.
+ *  Returns a zero-based index, or null when the parameter is absent or junk. */
+function stepIndexFromUrl(): number | null {
+  const raw = new URLSearchParams(window.location.search).get('step')
+  if (raw === null) return null
+  const n = Number(raw)
+  return Number.isInteger(n) && n >= 1 ? n - 1 : null
+}
+
+/** How long the playback bar waits before fading out while presenting. */
+const PRESENT_IDLE_MS = 3500
+
 function App() {
   const [flowId, setFlowId] = useState<string>(flowIdFromUrl)
   const [loaded, setLoaded] = useState<LoadedFlow | null>(null)
@@ -137,6 +151,10 @@ function App() {
   const [savedDef, setSavedDef] = useState<FlowDefinition | null>(null)
   /** Mirrors the scene's pointer mode, so the toolbar can show what's armed. */
   const [mode, setModeState] = useState<SceneMode>({ kind: 'select' })
+  /** Fullscreen, chrome-free playback. */
+  const { presenting, enter: enterPresentMode, exit: exitPresent, toggle: togglePresent } = usePresentMode()
+  /** Pointer has been still for a while — the playback bar gets out of the way. */
+  const [presentIdle, setPresentIdle] = useState(false)
   /** A delete waiting on the prompt that says what else it would change. */
   const [deletePlan, setDeletePlan] = useState<
     { kind: 'component' | 'zone' | 'connection'; id: string; scene: SceneId; plan: DeletePlan } | null
@@ -163,6 +181,17 @@ function App() {
     const result = parseFlowSchema(flowDef)
     return result.success ? [] : result.errors
   }, [flowDef])
+
+  /**
+   * Layout findings, kept apart from `problems` because they mean something
+   * different. A schema error makes the file unloadable, so it blocks Save; a
+   * geometry finding just means the diagram reads worse than intended, and
+   * blocking on those would disable Save halfway through every drag.
+   */
+  const layoutWarnings = useMemo(
+    () => (flowDef && editMode ? lintGeometry(flowDef, graph ?? undefined) : []),
+    [flowDef, graph, editMode],
+  )
 
   // Overlays (annotations, tooltips, pipe labels) must read the scene on screen,
   // not the top-level one — a sub-scene's components live in its own graph.
@@ -210,6 +239,13 @@ function App() {
       .then((def) => {
         if (cancelled) return
         const eng = new StepEngine(def.steps)
+        // A shared link can name the step it was about. Clamped rather than
+        // rejected: a flow that lost steps since the link was made should still
+        // open, at the nearest step that exists.
+        const wanted = stepIndexFromUrl()
+        if (wanted !== null && def.steps.length > 0) {
+          eng.goTo(Math.min(wanted, def.steps.length - 1))
+        }
         engineRef.current = eng
         setError(null)
         loadedRef.current = { id: flowId, graph: buildGraph(def), def, engine: eng }
@@ -238,11 +274,28 @@ function App() {
       if (id === flowId) return
       // Switching flow throws the in-memory definition away.
       if (dirtyRef.current && !window.confirm('Discard unsaved edits to this visualization?')) return
-      window.history.pushState({}, '', `?flow=${id}`)
+      // A new flow starts at its own step one, so `step` goes; `present` stays,
+      // because switching flow is not a reason to drop out of a presentation.
+      const url = new URL(window.location.href)
+      url.searchParams.set('flow', id)
+      url.searchParams.delete('step')
+      window.history.pushState({}, '', `${url.pathname}${url.search}`)
       setFlowId(id)
     },
     [flowId],
   )
+
+  // The step in the URL, so a walkthrough is linkable at the point it was about
+  // and survives a reload. replaceState, not push: stepping through a 40-step
+  // flow must not bury the page you arrived from under 40 history entries.
+  const urlStep = stepState?.currentIndex
+  useEffect(() => {
+    if (urlStep === undefined) return
+    const url = new URL(window.location.href)
+    if (urlStep > 0) url.searchParams.set('step', String(urlStep + 1))
+    else             url.searchParams.delete('step')
+    window.history.replaceState({}, '', `${url.pathname}${url.search}`)
+  }, [urlStep])
 
   // Wire step engine to scene on each step change. The scene only re-applies when
   // the step index actually changes — play/pause notifications must not restart
@@ -273,6 +326,44 @@ function App() {
   }, [engine])
 
   useEffect(() => { dirtyRef.current = dirty }, [dirty])
+
+  // The sidebar publishes the width it occupies, and it is unmounted while
+  // presenting — so nothing would reset it and the playback bar would stay
+  // shifted left, centred against a panel that is no longer there. On exit the
+  // sidebar remounts and re-asserts its own value.
+  useEffect(() => {
+    if (!presenting) return
+    document.documentElement.dataset.sidebar = 'hidden'
+    return () => { document.documentElement.dataset.sidebar = 'normal' }
+  }, [presenting])
+
+  // Idle pointer fades the playback bar out, so a still frame is just the
+  // diagram. Any movement or keypress brings it back.
+  //
+  // The flag is never reset on the way out: it is only ever read while
+  // presenting, so a stale `true` cannot show anything, and clearing it would
+  // mean setting state from an effect for no visible gain.
+  useEffect(() => {
+    if (!presenting) return
+    let timer: ReturnType<typeof setTimeout>
+    const arm  = () => { timer = setTimeout(() => setPresentIdle(true), PRESENT_IDLE_MS) }
+    const bump = () => { setPresentIdle(false); clearTimeout(timer); arm() }
+    arm()
+    window.addEventListener('pointermove', bump)
+    window.addEventListener('keydown', bump)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('pointermove', bump)
+      window.removeEventListener('keydown', bump)
+    }
+  }, [presenting])
+
+  // Recompose for the width that is actually visible. Without this the diagram
+  // stays shifted left in present mode, composed around a sidebar that has gone,
+  // and a presentation is exactly where that empty margin shows most.
+  useEffect(() => {
+    sceneRef.current?.setViewportInset(presenting ? 0 : SIDEBAR_WIDTH)
+  }, [presenting])
 
   useEffect(() => {
     sceneRef.current?.setCameraFollow(cameraFollow)
@@ -318,6 +409,33 @@ function App() {
     setSaveState({ status: 'idle', message: '' })
     sceneRef.current?.setEditMode(next)
   }, [editMode])
+
+  /**
+   * Editing and presenting are mutually exclusive: present mode hides the whole
+   * editing apparatus, and a dashed edit border around a presentation is noise.
+   * Handled at the two ways in rather than by an effect watching both flags —
+   * there is no way to start editing while presenting, since the only toggle
+   * lives in the sidebar that present mode unmounts.
+   *
+   * Leaving edit mode keeps the edits. Only Discard throws them away.
+   */
+  const leaveEditMode = useCallback(() => {
+    if (!editMode) return
+    setEditMode(false)
+    setEditTarget(null)
+    sceneRef.current?.setEditMode(false)
+  }, [editMode])
+
+  const handlePresent = useCallback(() => {
+    leaveEditMode()
+    enterPresentMode()
+  }, [leaveEditMode, enterPresentMode])
+
+  /** The F key: into present mode from anywhere, and back out again. */
+  const handleTogglePresent = useCallback(() => {
+    if (!presenting) leaveEditMode()
+    togglePresent()
+  }, [presenting, leaveEditMode, togglePresent])
 
   const handleDeleteFlow = useCallback((flow: FlowSummary) => {
     setDeleteError(null)
@@ -401,6 +519,15 @@ function App() {
     if (rebuild) renderDef(def)
   }, [renderDef])
 
+
+  /** Re-lay whichever scene is on screen. Deliberately a button, never
+   *  automatic: several flows here are hand-placed on purpose. */
+  const handleTidyLayout = useCallback(() => {
+    // Rebuild, unlike most edits: a drag has already moved its mesh by the time
+    // it commits, but this moves everything at once with nothing on screen
+    // having changed, so the scene has to be rebuilt from the new definition.
+    dispatch([{ type: 'layout/tidy', scene: sceneRef.current?.activeSceneId ?? null }], true)
+  }, [dispatch])
   /**
    * Show a definition that didn't come from a gesture — an undo or a redo.
    *
@@ -449,8 +576,9 @@ function App() {
     s.setTiming(timingRef.current)
     // The sidebar is fixed over the canvas, not beside it, so tell the scene how
     // much of its width is hidden and it will compose into what is visible.
-    s.setViewportInset(SIDEBAR_WIDTH)
-  }, [theme, speed, editMode, cameraFollow])
+    // Presenting takes the sidebar away, so the whole canvas is visible again.
+    s.setViewportInset(presenting ? 0 : SIDEBAR_WIDTH)
+  }, [theme, speed, editMode, cameraFollow, presenting])
 
   const setMode = useCallback((next: SceneMode) => {
     sceneRef.current?.setMode(next)
@@ -482,6 +610,71 @@ function App() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [undo, redo, setMode])
+
+  /**
+   * Step navigation from the keyboard, bound whether or not you are presenting.
+   * This is a stepper: the arrows are the first thing anyone reaches for, and
+   * having them work only in fullscreen would leave them undiscovered.
+   *
+   * What it deliberately does not touch: any key aimed at a text field, a
+   * shortcut with a modifier, and anything at all while an edit modal is open —
+   * the modal owns the keyboard until it closes.
+   */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+
+      const el = document.activeElement
+      if (
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement ||
+        el instanceof HTMLSelectElement ||
+        (el instanceof HTMLElement && el.isContentEditable)
+      ) return
+
+      if (editTarget) return
+
+      const eng = engineRef.current
+      switch (e.key) {
+        case 'ArrowRight':
+          eng?.next()
+          break
+        case 'ArrowLeft':
+          eng?.prev()
+          break
+        case 'Home':
+          eng?.goTo(0)
+          break
+        case 'End': {
+          const total = eng?.getState().totalSteps ?? 0
+          if (total > 0) eng?.goTo(total - 1)
+          break
+        }
+        case ' ':
+          // Space is how a focused button is pressed — leave it to the button.
+          if (el instanceof HTMLButtonElement) return
+          // Playback stays off while editing, matching the disabled Play control.
+          if (editMode) return
+          eng?.toggle()
+          break
+        case 'f':
+        case 'F':
+          handleTogglePresent()
+          break
+        case 'Escape':
+          // Only meaningful here while presenting; otherwise the edit-mode
+          // handler above wants it for disarming a tool.
+          if (!presenting) return
+          exitPresent()
+          break
+        default:
+          return
+      }
+      e.preventDefault()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [editMode, editTarget, presenting, handleTogglePresent, exitPresent])
 
   // Unsaved edits live only in this tab.
   useEffect(() => {
@@ -550,7 +743,12 @@ function App() {
 
   const handlePatchFlow = useCallback(
     (
-      meta: { title: string; description?: string; timing?: Partial<Timing> },
+      meta: {
+        title: string
+        description?: string
+        waterfallLabel?: string
+        timing?: Partial<Timing>
+      },
       grid: { cols: number; rows: number },
     ) => {
       dispatch([
@@ -779,10 +977,11 @@ function App() {
         style={{ opacity: sceneFade.opacity, transitionDuration: `${sceneFade.ms}ms` }}
       />
 
-      {steps.length > 0 && stepState && (
+      {steps.length > 0 && stepState && !presenting && (
         <StepSidebar
           steps={steps}
           currentIndex={stepState.currentIndex}
+          waterfallLabel={flowDef?.meta.waterfallLabel}
           theme={theme}
           editMode={editMode}
           flowId={flowId}
@@ -793,11 +992,13 @@ function App() {
           onGoTo={handleGoTo}
           onThemeToggle={handleThemeToggle}
           onEditModeToggle={handleEditModeToggle}
+          onPresent={handlePresent}
           onCopyJson={handleCopyJson}
           onSave={handleSave}
           saveState={saveState}
           dirty={dirty}
           problems={problems}
+          layoutWarnings={layoutWarnings}
           canUndo={history.past.length > 0}
           canRedo={history.future.length > 0}
           onUndo={undo}
@@ -815,6 +1016,7 @@ function App() {
             : mode.kind === 'connect' ? 'connect'
             : 'select'
           }
+          onTidyLayout={import.meta.env.DEV ? handleTidyLayout : undefined}
           onModeChange={import.meta.env.DEV ? (m) => setMode(
             m === 'place-component' ? { kind: 'place', what: 'component' }
             : m === 'place-zone'    ? { kind: 'place', what: 'zone' }
@@ -903,18 +1105,46 @@ function App() {
       {engine && stepState && (
         <>
           <StepHUD engine={engine} scenePath={scenePath} />
-          <StepControls
-            engine={engine}
-            speed={speed}
-            onSpeedChange={setSpeed}
-            cameraFollow={cameraFollow}
-            onCameraFollowChange={setCameraFollow}
-            editMode={editMode}
-          />
+          {/* While presenting, the bar fades out once the pointer settles: a
+              held frame should be the diagram and nothing else. It stops taking
+              clicks when hidden, so it can't swallow a drag on the canvas. */}
+          <div
+            className={
+              presenting
+                ? `${styles.autoHide}${presentIdle ? ` ${styles.autoHidden}` : ''}`
+                : undefined
+            }
+          >
+            <StepControls
+              engine={engine}
+              speed={speed}
+              onSpeedChange={setSpeed}
+              cameraFollow={cameraFollow}
+              onCameraFollowChange={setCameraFollow}
+              editMode={editMode}
+            />
+          </div>
         </>
       )}
 
-      <ExportButton scene={scene} engine={engine} />
+      {/* Present mode has no visible exit, so it says how to leave. It fades
+          itself out in CSS rather than being timed out from React. */}
+      {presenting && (
+        <div className={styles.presentHint} role="status">
+          <kbd>←</kbd> <kbd>→</kbd> step · <kbd>space</kbd> play · <kbd>Esc</kbd> exit
+        </div>
+      )}
+
+      {/* Recordings hold each step for as long as playback does at the current
+          speed, so an export matches what the viewer just watched. */}
+      {!presenting && (
+        <ExportButton
+          scene={scene}
+          engine={engine}
+          flowId={flowId}
+          msPerStep={timing.step / speed}
+        />
+      )}
     </div>
   )
 }

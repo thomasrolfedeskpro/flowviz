@@ -85,5 +85,10 @@ export class SceneManager {
     return this.renderer.domElement.toDataURL('image/png')
   }
 
+  /** The drawing surface, for exporters that stream it rather than sample it. */
+  get canvas(): HTMLCanvasElement {
+    return this.renderer.domElement
+  }
+
   protected onFrame(_deltaMs: number): void {}
 }

@@ -1,7 +1,8 @@
 {
   "meta": {
     "title": "Airport Departure \u2014 kerb to wheels-up",
-    "description": "One passenger and one suitcase leave the kerb together, split at bag drop, and meet again on the aircraft. The baggage hall and the security checkpoint each open up into a scene of their own."
+    "description": "One passenger and one suitcase leave the kerb together, split at bag drop, and meet again on the aircraft. The baggage hall and the security checkpoint each open up into a scene of their own.",
+    "waterfallLabel": "Elapsed time"
   },
   "layout": {
     "grid": {

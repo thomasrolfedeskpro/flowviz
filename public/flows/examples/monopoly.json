@@ -2,6 +2,7 @@
   "meta": {
     "title": "Monopoly \u2014 one game, forty spaces",
     "description": "The London board as it is: forty spaces round the edge, nine between each corner. Follow two players round it \u2014 a purchase, an auction, a set completed, three turns in a cell, a hotel on Mayfair and the landing that ends the game. Pipe colour is the money: green to and from the bank, amber between players, red for the one shortcut nobody wants. Two squares open into scenes of their own.",
+    "waterfallLabel": "Money spent",
     "timing": {
       "step": 3200,
       "packet": 1700,

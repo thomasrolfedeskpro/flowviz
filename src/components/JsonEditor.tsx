@@ -5,8 +5,8 @@ import styles from '@/styles/EditModal.module.css'
  * The escape hatch: edit the raw JSON of one object, or of the whole flow.
  *
  * Every form above this one is a convenience. This is what makes the editor
- * complete — `popouts`, a packet's `data` payload, and whatever the schema
- * grows next are all reachable here without waiting for a widget.
+ * complete — a packet's `data` payload, and whatever the schema grows next,
+ * are all reachable here without waiting for a widget.
  *
  * Nothing is applied until it parses *and* the resulting flow validates, so the
  * hatch can't be used to write a file the app then refuses to load.

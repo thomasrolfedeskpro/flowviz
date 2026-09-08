@@ -1,3 +1,4 @@
+import { tidyScene } from '@/engine/autoLayout'
 import type {
   Component,
   ComponentShape,
@@ -79,6 +80,8 @@ export type FlowAction =
   | { type: 'connection/setLabel';   scene: SceneId; id: string; label: string }
   | { type: 'connection/setRoute';   scene: SceneId; id: string; route: Connection['route'] }
   | { type: 'layout/setGrid';        scene: SceneId; grid: { cols: number; rows: number } }
+  // Re-lay one scene. One action, so it is one undo.
+  | { type: 'layout/tidy';           scene: SceneId }
   // Steps live at the root whatever scene they play in, so they need no address.
   | { type: 'step/patch';   index: number; patch: StepPatch }
   | { type: 'step/insert';  index: number; step: Omit<Step, 'id'> }
@@ -238,6 +241,22 @@ export function nextId(def: FlowDefinition, prefix: string): string {
 
 export function flowReducer(def: FlowDefinition, action: FlowAction): FlowDefinition {
   switch (action.type) {
+    case 'layout/tidy':
+      return mapScene(def, action.scene, (s) => {
+        const tidied = tidyScene({
+          grid: s.grid,
+          zones: s.zones ?? [],
+          components: s.components,
+          connections: s.connections,
+        })
+        return {
+          ...s,
+          grid: tidied.grid,
+          zones: s.zones ? tidied.zones : s.zones,
+          components: tidied.components,
+        }
+      })
+
     case 'component/setPosition':
       return mapScene(def, action.scene, (s) => ({
         ...s,
@@ -375,6 +394,7 @@ export function flowReducer(def: FlowDefinition, action: FlowAction): FlowDefini
     case 'meta/patch': {
       const meta = { ...def.meta, ...action.patch }
       if (!meta.description) delete meta.description
+      if (!meta.waterfallLabel) delete meta.waterfallLabel
       // Timing left entirely at the defaults is not written out: a flow that
       // never expressed an opinion about pace shouldn't gain one on save.
       if (meta.timing && !Object.values(meta.timing).some((v) => v !== undefined)) delete meta.timing

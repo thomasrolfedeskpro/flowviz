@@ -15,9 +15,12 @@ An animated isometric 3D data-flow diagram tool. Describe a system architecture 
 - Supports zone groupings (with optional nesting and dashed outlines) to visually bound logical boundaries like cloud regions or bounded contexts
 - Chevron stream animation for genuine continuous data flows (Kafka, video, WebSockets)
 - **Nested scenes:** a component can contain a scene of its own, to any depth. Steps inside it are rendered in that scene, with the camera diving in and pulling back out
-- **Waterfall column:** give steps a measured bar and the sidebar slides out a waterfall showing where the time, rows, retries or cost went — the unit is yours, the renderer assumes nothing
+- **Waterfall column:** give steps a measured bar and the sidebar slides out a waterfall showing where the time, rows, retries or cost went — the unit is yours, the renderer assumes nothing, and `meta.waterfallLabel` titles the column with whatever it is you measured
 - **Edit mode:** place components and zones on the grid, draw connections, add / duplicate / delete steps, drag components, resize and move zones, edit routing waypoints, change a component's size / shape / colour / icon, rename zone and pipe labels. Deletes show what they cascade to first, edits are undo/redo-able (⌘Z / ⇧⌘Z), and any object — or the whole flow — can be edited as raw JSON when no form covers what you need. **Save to file** writes it back to the flow's JSON (or Copy JSON to paste it elsewhere)
-- **GIF export:** records a play-through of the current flow and downloads it as `flowviz.gif`
+- **Export:** a PNG of the step on screen, or a play-through as WebM (records the live animation, so packets actually travel) or GIF (one frame per step)
+- **Present mode:** fullscreen, no chrome, keyboard-driven — `F` to enter, `Esc` to leave, arrows to step. Deep-link any step with `?step=<n>`
+- **Layout lint:** the geometry rules in [`docs/flow-rules.md`](./docs/flow-rules.md), checked in edit mode and from the CLI — including pipes that sweep through a bystander the renderer will fade mid-flight
+- **Tidy layout:** re-lays a scene left to right — layered by connection, rows banded by zone, zone bounds re-flowed around their members. Opt-in and one undo; best on a rough draft, since a hand-tuned layout will come back larger
 - Light and dark themes
 
 ## Authoring flows with an LLM
@@ -62,12 +65,65 @@ thing the tool can draw.
 
 *Size is components / steps, counting every nested scene.*
 
+## Checking a flow without opening it
+
+```bash
+pnpm validate                              # every flow under public/flows
+pnpm validate public/flows/custom/x.json   # just this one
+pnpm validate --lint                       # …and check the layout too
+pnpm validate --tidy public/flows/custom/x.json   # re-lay it and write it back
+```
+
+Runs the app's own schema and graph build against the file, so the errors are
+the ones the browser would give you — every one at once, rather than the first.
+Exits non-zero when anything fails, so it drops straight into a pre-commit hook
+or CI.
+
+`--lint` adds the geometry rules in
+**[`docs/flow-rules.md`](./docs/flow-rules.md)** — overlapping components, pipes
+sweeping through bystanders that the renderer will fade mid-flight, zone spacing,
+wasted grid. Those findings are advisory and don't change the exit code unless
+you add `--strict`; in the app they show as *layout notes* while editing, and
+never block a save. The rules doc is generated from the linter (`pnpm rules`), so
+it can't drift from what is actually checked.
+
 ## The Claude Code skill
 
 `skills/flowviz/` is a Claude Code skill that authors flows **from any repo** —
 it finds this checkout, reads its guide and schema, interviews you about intent
 and depth, then writes and validates a flow into `public/flows/custom/`. Install
 and packaging instructions are in [`skills/README.md`](./skills/README.md).
+
+### Set up, once
+
+```bash
+pnpm install                                              # in this repo
+unzip -o skills/dist/flowviz.skill -d ~/.claude/skills    # install the skill globally
+echo 'export FLOWVIZ_DIR=$(pwd)' >> ~/.zshrc              # optional; only needed for >1 checkout
+```
+
+Restart Claude Code afterwards. The checkout path is also cached in
+`~/.cache/flowviz/repo-path` — set it directly with
+`bash ~/.claude/skills/flowviz/scripts/flowviz-locate.sh --set <path>`.
+
+### Generating a flow from another repo
+
+1. Start the dev server here: `pnpm run dev`.
+2. In the other repo's Claude session, ask in plain words — *"make a flowviz of the webhook path in this repo"*.
+3. Answer the four intake questions: audience and conclusion, start and end boundary, depth tier (sketch / walkthrough / forensic), and whether anything is measured.
+4. It reads the real source there, writes `public/flows/custom/<slug>.json` here, and validates it against this checkout's schema.
+5. Open `http://localhost:5175/?flow=<slug>`.
+
+| Symptom | Cause |
+|---|---|
+| Flow missing from the Visualizations tab | The flow list is read at startup — restart the dev server |
+| Nothing in `git status` | `custom/` is git-ignored by design |
+| Skill doesn't trigger | It's scoped to flow diagrams; charts and dashboards belong to the built-in `dataviz` skill |
+| Wrong checkout picked | Set `FLOWVIZ_DIR`, or cache the path with `flowviz-locate.sh --set` |
+
+Aesthetic fixes are faster in the browser — **Edit layout**, drag, **Save to
+file**. Ask Claude for structural changes instead, and save any browser edits
+first so the two writes don't fight.
 
 ## Screenshots
 

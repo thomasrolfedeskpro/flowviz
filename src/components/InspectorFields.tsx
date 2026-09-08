@@ -1,7 +1,8 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { TYPE_COLOR } from '@/scene/ComponentMesh'
 import { COMPONENT_SHAPES } from '@/scene/componentShapes'
 import { SOLID_ICON_NAMES } from '@/scene/IconMesh'
+import { IconCombobox } from '@/components/IconCombobox'
 import type {
   Component,
   ComponentShape,
@@ -66,7 +67,6 @@ export function ComponentFields({
     elevation: component.position.elevation ?? 0,
     meta:      component.meta ?? {},
   })
-  const iconListId = useId()
 
   /** Visual fields go to the scene as well as the draft. */
   const preview = (patch: ComponentPatch) => {
@@ -167,17 +167,13 @@ export function ComponentFields({
         <div className={styles.field}>
           <label className={styles.label} htmlFor="insp-icon">Icon</label>
           {/* A combobox, not a 2000-row select: type to filter, or open the list. */}
-          <input
+          <IconCombobox
             id="insp-icon"
-            className={styles.input}
-            list={iconListId}
             value={draft.icon ?? ''}
+            names={SOLID_ICON_NAMES}
             placeholder="type default"
-            onChange={(e) => preview({ icon: e.target.value })}
+            onChange={(icon) => preview({ icon })}
           />
-          <datalist id={iconListId}>
-            {SOLID_ICON_NAMES.map((name) => <option key={name} value={name} />)}
-          </datalist>
           <p className={styles.hint}>
             {draft.logo
               ? `Brand logo “${draft.logo}” is drawn instead of this icon.`
@@ -484,13 +480,19 @@ export function FlowFields({
 }: {
   def: FlowDefinition
   onApply: (
-    meta: { title: string; description?: string; timing?: Partial<Timing> },
+    meta: {
+      title: string
+      description?: string
+      waterfallLabel?: string
+      timing?: Partial<Timing>
+    },
     grid: { cols: number; rows: number },
   ) => void
   onCancel: () => void
 }) {
   const [title, setTitle] = useState(def.meta.title)
   const [description, setDescription] = useState(def.meta.description ?? '')
+  const [waterfallLabel, setWaterfallLabel] = useState(def.meta.waterfallLabel ?? '')
   const [grid, setGrid] = useState(def.layout.grid)
   const [timing, setTiming] = useState<Partial<Timing>>(def.meta.timing ?? {})
 
@@ -509,9 +511,10 @@ export function FlowFields({
         e.preventDefault()
         onApply(
           {
-            title:       title.trim() || 'Untitled',
-            description: description.trim() || undefined,
-            timing:      Object.keys(timing).length ? timing : undefined,
+            title:          title.trim() || 'Untitled',
+            description:    description.trim() || undefined,
+            waterfallLabel: waterfallLabel.trim() || undefined,
+            timing:         Object.keys(timing).length ? timing : undefined,
           },
           grid,
         )
@@ -559,6 +562,21 @@ export function FlowFields({
           </div>
           <p className={styles.hint}>
             Shrinking below what the layout uses can strand components off-grid.
+          </p>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="insp-waterfall">Waterfall</label>
+          <input
+            id="insp-waterfall"
+            className={styles.input}
+            value={waterfallLabel}
+            placeholder="Waterfall"
+            onChange={(e) => setWaterfallLabel(e.target.value)}
+          />
+          <p className={styles.hint}>
+            What the bars measure — “Latency”, “Cost”, “Distance”. Names the column
+            and its toggle; the bars themselves are unitless.
           </p>
         </div>
 

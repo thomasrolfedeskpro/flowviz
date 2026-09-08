@@ -30,8 +30,6 @@
   --transform-bg:      rgba(5, 5, 20, 0.92);
   --transform-fg:      #d0e8d0;
   --transform-border:  rgba(0, 255, 204, 0.18);
-  --popout-key:        rgba(255, 255, 255, 0.5);
-  --popout-obj:        rgba(255, 255, 255, 0.4);
   --callout-error-bg:      rgba(180, 30, 30, 0.22);
   --callout-error-border:  rgba(255, 80, 80, 0.25);
   --callout-error-accent:  rgba(255, 80, 80, 0.85);
@@ -91,8 +89,6 @@
   --transform-bg:      rgba(240, 248, 244, 0.96);
   --transform-fg:      #1a3a2a;
   --transform-border:  rgba(0, 140, 90, 0.20);
-  --popout-key:        rgba(0, 0, 0, 0.40);
-  --popout-obj:        rgba(0, 0, 0, 0.35);
   --callout-error-bg:       rgba(220, 40, 40, 0.10);
   --callout-error-border:   rgba(200, 60, 60, 0.25);
   --callout-error-accent:   rgba(200, 30, 30, 0.90);
@@ -120,6 +116,11 @@
 
 [data-sidebar="wide"] {
   --sidebar-w: 510px;   /* sidebar + waterfall column */
+}
+
+/* Present mode unmounts the sidebar, so overlays centre on the whole viewport. */
+[data-sidebar="hidden"] {
+  --sidebar-w: 0px;
 }
 
 html, body, #root {

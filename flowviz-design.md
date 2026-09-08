@@ -186,7 +186,6 @@ interface Step {
     zoom?:  number                      // multiplier on the default frustum size (default 1.0)
   }
   annotations?: Annotation[]
-  popouts?:     Popout[]
   packet?:      Packet | null
 }
 ```
@@ -266,20 +265,7 @@ via `useAnimationFrame` by re-projecting the target component's `topCenter` thro
 `OverlayBridge.worldToScreen`. Direct DOM style mutations (not React state) are used
 to avoid flooding the React render cycle.
 
-### 2.9 `Popout`
-
-```typescript
-interface Popout {
-  title:  string
-  anchor: string              // component id
-  data:   Record<string, unknown>
-}
-```
-
-A floating card showing structured key-value data, anchored near the component.
-Intended for displaying the payload shape at a given point in the flow.
-
-### 2.10 `Packet`
+### 2.9 `Packet`
 
 ```typescript
 type PacketShape = 'sphere' | 'document' | 'token' | 'blob' | 'envelope'
@@ -534,7 +520,7 @@ export function CanvasContainer(): JSX.Element {
 }
 ```
 
-The `#overlay-root` div is where all HTML overlays (tooltips, annotations, popouts)
+The `#overlay-root` div is where all HTML overlays (tooltips, annotations)
 are portal'd in Phase 2. `pointerEvents: none` by default; individual overlay
 components that need interaction override this locally.
 
@@ -730,7 +716,7 @@ overlays. Phase 2 calls this on every frame for any active overlay anchor.
 
 Phase 2 transforms the parsed `InternalGraph` into a live, animated Three.js scene.
 By the end of Phase 2 the application should render a complete flow, step through
-it with animation, support hover tooltips, camera focus, annotations, popouts,
+it with animation, support hover tooltips, camera focus, annotations,
 and packet travel along pipes.
 
 ### 4.1 Layout engine (`engine/layoutEngine.ts`)
@@ -1279,7 +1265,7 @@ applyStep(step: Step, prevStep: Step | null, durationMs: number): void {
   }
 
   // 6. Overlay updates are driven by React re-rendering on step state change
-  //    (annotations, popouts, hover tooltips are pure React state)
+  //    (annotations and hover tooltips are pure React state)
 }
 ```
 
@@ -1511,21 +1497,7 @@ left border. Visually signals "this is a code-level operation".
 Dashed so it reads as a reference indicator rather than a data connection (which uses
 solid TubeGeometry pipes).
 
-### 4.13 Popout panels (`components/PopoutPanel.tsx`)
-
-Popouts follow the same anchor-to-world-position pattern as annotations. They
-display structured data in a card format with simple key-value syntax highlighting:
-
-- Keys in a muted colour
-- String values in green
-- Number values in orange
-- Boolean values in blue
-- Nested objects rendered inline collapsed (expand on click — future enhancement)
-
-Each popout is offset from the annotation anchor by a fixed pixel amount to avoid
-overlap when both are active on the same component.
-
-### 4.14 `useAnimationFrame` hook
+### 4.13 `useAnimationFrame` hook
 
 Used by all overlay components to re-derive screen positions each frame:
 
@@ -1547,7 +1519,7 @@ function useAnimationFrame(callback: () => void, deps: unknown[]): void {
 }
 ```
 
-### 4.15 Wiring everything together (`App.tsx`)
+### 4.14 Wiring everything together (`App.tsx`)
 
 ```tsx
 function App(): JSX.Element {
@@ -1598,13 +1570,6 @@ function App(): JSX.Element {
           bridge={bridgeRef.current}
         />
       )}
-      {stepState.step.popouts && bridgeRef.current && (
-        <PopoutPanel
-          popouts={stepState.step.popouts}
-          graph={graph}
-          bridge={bridgeRef.current}
-        />
-      )}
       {hoveredId && bridgeRef.current && (
         <HoverTooltip
           hoveredId={hoveredId}
@@ -1621,7 +1586,7 @@ function App(): JSX.Element {
 }
 ```
 
-### 4.16 Phase 2 completion checklist
+### 4.15 Phase 2 completion checklist
 
 - [ ] All components render at correct grid positions with correct geometry by type
 - [ ] Component labels track their mesh positions on resize
@@ -1640,7 +1605,6 @@ function App(): JSX.Element {
 - [ ] Tooltip disappears when the cursor leaves the component
 - [ ] `callout` annotations render in the correct position for their target component
 - [ ] `transform` annotations render with distinct visual treatment
-- [ ] Popout panels appear and display structured data for the current step
 - [ ] Autoplay steps through all steps and stops at the end
 - [ ] Autoplay respects the step transition duration (next step not triggered until animation is complete)
 - [ ] Resize correctly repositions all overlay elements
@@ -1749,18 +1713,6 @@ all features.
           "text": "analytics.track('button_click', { componentId: 'cta' })"
         }
       ],
-      "popouts": [
-        {
-          "title": "Event payload",
-          "anchor": "browser",
-          "data": {
-            "event": "button_click",
-            "userId": "u_9f3a",
-            "timestamp": 1718000000000,
-            "properties": { "componentId": "cta" }
-          }
-        }
-      ],
       "packet": null
     },
     {
@@ -1771,7 +1723,6 @@ all features.
       "active_connections": ["c1"],
       "camera": { "focus": null },
       "annotations": [],
-      "popouts": [],
       "packet": {
         "connection": "c1",
         "shape": "document",
@@ -1796,20 +1747,6 @@ all features.
           "text": "EventValidator.validate() + MetadataEnricher.enrich() → KafkaProducer.send()"
         }
       ],
-      "popouts": [
-        {
-          "title": "Enriched event",
-          "anchor": "collector",
-          "data": {
-            "event": "button_click",
-            "userId": "u_9f3a",
-            "timestamp": 1718000000000,
-            "serverTimestamp": 1718000000041,
-            "ip": "203.0.113.4",
-            "sessionId": "sess_7c2d"
-          }
-        }
-      ],
       "packet": null
     },
     {
@@ -1820,7 +1757,6 @@ all features.
       "active_connections": ["c2"],
       "camera": { "focus": null },
       "annotations": [],
-      "popouts": [],
       "packet": {
         "connection": "c2",
         "shape": "envelope",
@@ -1839,7 +1775,6 @@ all features.
       "active_connections": ["c3"],
       "camera": { "focus": null },
       "annotations": [],
-      "popouts": [],
       "packet": {
         "connection": "c3",
         "shape": "document",
@@ -1863,7 +1798,6 @@ all features.
           "text": "SELECT count() FROM events WHERE event = 'button_click'"
         }
       ],
-      "popouts": [],
       "packet": null
     }
   ]
@@ -1924,8 +1858,6 @@ These rules must appear in the skill prompt to guide Claude's output:
   - `blob` for binary data or file content
 - Include an `annotation` of type `transform` on any step where a component
   meaningfully transforms the data (e.g. validation, enrichment, encryption).
-- Include a `popout` showing the payload shape at any step where the data structure
-  changes significantly.
 
 **Zones**
 - Group components that belong to the same service boundary, deployment unit, or

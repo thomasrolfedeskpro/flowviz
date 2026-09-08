@@ -407,3 +407,52 @@
   box-shadow: var(--ring);
   border-color: var(--accent-blue);
 }
+
+/* ── icon combobox ──────────────────────────────────────── */
+
+.combo {
+  position: relative;
+  min-width: 0;
+}
+
+.comboList {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.2rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.2rem;
+  list-style: none;
+  max-height: 12rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.comboOption {
+  padding: 0.25rem 0.45rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.comboActive {
+  background: var(--btn-hover);
+}
+
+.comboChosen {
+  color: var(--accent-blue);
+  font-weight: 500;
+}
+
+.comboEmpty {
+  padding: 0.35rem 0.45rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
