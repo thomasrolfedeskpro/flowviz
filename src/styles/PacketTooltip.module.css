@@ -3,7 +3,7 @@
   top: 0;
   left: 0;
   pointer-events: none;
-  max-width: 280px;
+  max-width: 300px;
   background: var(--panel-bg);
   border: 1px solid var(--packet-border);
   border-radius: 0.5rem;
@@ -42,4 +42,67 @@
   white-space: pre;
   overflow: auto;
   max-height: 180px;
+}
+
+/* ── labelled facts ──────────────────────────────────────────────────────────
+   A two-column grid rather than a pre block: the label reads as a label, the
+   value sits in its own column, and the unit is set apart from the number so
+   "2.1 mm" is a measurement rather than a string. */
+
+.facts {
+  margin: 0.35rem 0 0;
+  display: grid;
+  gap: 0.12rem 0.6rem;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.factLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.factValue {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-primary);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.unit {
+  margin-left: 0.22rem;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+/* A nested object keeps its braces; it is code, so it is set as code. */
+.factNested {
+  margin: 0;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.68rem;
+  color: var(--packet-payload-fg);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* A sentence the author wrote: body font, not a payload. */
+.prose {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.none {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
 }

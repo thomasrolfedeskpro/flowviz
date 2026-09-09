@@ -292,6 +292,7 @@ export class SceneLayer {
           packetLabel: conn?.label ?? def.connection,
           packetShape: def.shape,
           packetData:  def.data,
+          packetFormat: def.format,
           packetCount: requested > 1 ? requested : undefined,
         }
         Object.assign(packet.mesh.userData, ud)

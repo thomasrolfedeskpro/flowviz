@@ -10,6 +10,7 @@ const ANNOTATION_TYPES = ['callout', 'transform'] as const
 const ANNOTATION_STYLES= ['info', 'success', 'warning', 'error'] as const
 const ARRIVAL_STYLES   = ['error', 'success', 'warning'] as const
 const DIRECTIONS       = ['forward', 'reverse'] as const
+const PACKET_FORMATS   = ['raw'] as const
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
@@ -98,11 +99,16 @@ const AnnotationSchema = z.object({
 // Two packet schemas so arrival-style errors carry the correct label.
 // step.packet  → "Invalid packet arrivalStyle"
 // step.packets → "Invalid packets[].arrivalStyle"
+// A payload is either fields or a sentence; both are rendered, neither is
+// coerced into the other.
+const PacketDataSchema = z.union([z.record(z.string(), z.unknown()), z.string()])
+
 const PacketSchema = z.object({
   connection:   z.string(),
   shape:        enumStr(PACKET_SHAPES,  'Invalid packet shape'),
   direction:    enumStr(DIRECTIONS,     'Invalid packet direction').optional(),
-  data:         z.record(z.string(), z.unknown()).optional(),
+  data:         PacketDataSchema.optional(),
+  format:       enumStr(PACKET_FORMATS, 'Invalid packet format').optional(),
   arrivalStyle: enumStr(ARRIVAL_STYLES, 'Invalid packet arrivalStyle').optional(),
   count:        z.number().int().positive().optional(),
 })
@@ -111,7 +117,8 @@ const MultiPacketSchema = z.object({
   connection:   z.string(),
   shape:        enumStr(PACKET_SHAPES,  'Invalid packet shape'),
   direction:    enumStr(DIRECTIONS,     'Invalid packet direction').optional(),
-  data:         z.record(z.string(), z.unknown()).optional(),
+  data:         PacketDataSchema.optional(),
+  format:       enumStr(PACKET_FORMATS, 'Invalid packet format').optional(),
   arrivalStyle: enumStr(ARRIVAL_STYLES, 'Invalid packets[].arrivalStyle').optional(),
   count:        z.number().int().positive().optional(),
 })

@@ -10,7 +10,9 @@ export interface PacketMeshUserData {
   componentId: string  // format: __packet__N
   packetLabel: string
   packetShape: string
-  packetData:  Record<string, unknown> | undefined
+  /** Unknown on purpose: an object of fields, or a sentence. */
+  packetData:  unknown
+  packetFormat?: 'raw' | undefined
   /** How many repeats the author declared, when more than one. */
   packetCount?: number | undefined
 }

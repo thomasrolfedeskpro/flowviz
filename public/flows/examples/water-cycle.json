@@ -359,7 +359,6 @@
         "count": 12,
         "arrivalStyle": "success",
         "data": {
-          "form": "rain",
           "drop_diameter_mm": 2.1,
           "fall_speed_m_s": 6.5,
           "event_total_mm": 18
@@ -392,22 +391,14 @@
           "shape": "blob",
           "count": 6,
           "arrivalStyle": "success",
-          "data": {
-            "path": "surface runoff",
-            "share": "~35% of rainfall",
-            "lag": "hours"
-          }
+          "data": "About 35% of the rain runs straight off the surface, reaching the river within hours."
         },
         {
           "connection": "c_highland_ground",
           "shape": "sphere",
           "count": 4,
           "arrivalStyle": "success",
-          "data": {
-            "path": "infiltration",
-            "share": "~15% of rainfall",
-            "lag": "years to centuries"
-          }
+          "data": "Another 15% soaks in. Groundwater moves at a wholly different pace — years to centuries before it resurfaces."
         }
       ],
       "annotations": [

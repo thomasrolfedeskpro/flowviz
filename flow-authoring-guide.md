@@ -691,6 +691,57 @@ after arrival until the next step. The user can hover it to inspect the payload.
 
 Use `null` (or omit the field) for steps with no data-in-flight.
 
+**`data` (optional) — fields, or a sentence:**
+
+The payload is *read*, not dumped. An object becomes labelled facts: keys are
+humanised and a trailing unit is lifted out of the name, so
+`"drop_diameter_mm": 2.1` reads **Drop diameter — 2.1 mm**. Write the unit as
+the last segment of the key and it will be set apart from the number:
+
+| Write | Reads as |
+|---|---|
+| `"duration_ms": 180` | Duration — 180 ms |
+| `"weight_kg": 23.4` | Weight — 23.4 kg |
+| `"fall_speed_m_s": 6.5` | Fall speed — 6.5 m/s |
+| `"pO2_mmHg": 100` | pO2 — 100 mmHg |
+
+Recognised units: time (`ms`, `s`, `min`, `h`), length (`mm`, `cm`, `m`, `km`),
+mass (`mg`, `g`, `kg`, `t`), volume (`ml`, `l`), power and energy (`w`, `kw`,
+`wh`, `kwh`), electrical (`a`, `ma`, `v`, `kv`), data (`b`, `kb`, `mb`, `gb`,
+`kib`, `mib`, `gib`), pressure (`mmhg`, `kpa`, `bar`, `psi`), temperature
+(`c`, `f`, `k`), rate (`hz`, `rpm`, `pph`, `pct`), and the compounds `m_s`,
+`km_h`, `l_min`, `kg_m3`. Anything else stays part of the label, so `cart_id`
+and `auth_code` are safe.
+
+**Not everything is a field.** If what you want to say is a sentence, write a
+sentence — `data` takes a string:
+
+```json
+{
+  "connection": "c_highland_river",
+  "shape": "blob",
+  "count": 6,
+  "data": "About 35% of the rain runs straight off the surface, reaching the river within hours."
+}
+```
+
+That is the right form whenever the flow is not about messages. `{"lag":
+"hours", "share": "~35% of rainfall"}` is a caption wearing a field name;
+say it in prose instead. Reserve the object form for things that genuinely have
+fields — a request, a record, a set of measurements.
+
+**Don't restate what is already on screen.** The tooltip already shows the
+connection's label and the packet's shape, so `{"form": "rain"}` on a sphere
+travelling a pipe called "rain falls" says nothing three times.
+
+**`format` (optional):** `"raw"` shows the payload as verbatim JSON in a
+monospace block. Use it only when the payload really is a message and its
+punctuation is part of the point — an ISO 8583 authorisation, a DynamoDB
+`UpdateExpression`. Everything else reads better as facts.
+
+Nested objects and arrays keep their braces inside a fact row, since there is no
+honest flat rendering of one.
+
 **`direction` (optional, default `"forward"`):**
 
 Controls which end of the pipe the packet departs from.
@@ -1495,7 +1546,8 @@ the right colours every time, and a person does not.
 | Flow pace (`meta.timing`) | ✅ Rendered |
 | Scroll-wheel zoom | ✅ Interactive |
 | Component hover tooltip | ✅ Interactive |
-| Packet hover payload | ✅ Interactive |
+| Packet hover payload — labelled facts, units lifted from the key, or prose | ✅ Interactive |
+| Packet `data` as a sentence, and `format: "raw"` for verbatim JSON | ✅ Interactive |
 | Step sidebar with jump-to navigation | ✅ Interactive |
 | Nested scenes (`component.detail` + `step.scene`), any depth | ✅ Rendered |
 | Scene breadcrumb + indented steps for nested scenes | ✅ Rendered |

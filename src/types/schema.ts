@@ -125,7 +125,16 @@ export interface Packet {
   connection:    string
   shape:         PacketShape
   direction?:    'forward' | 'reverse'
-  data?:         Record<string, unknown>
+  /** What the packet is carrying, shown when you hover it.
+   *
+   *  An object is read as labelled facts: keys are humanised and a trailing
+   *  unit is lifted out of the name, so `drop_diameter_mm: 2.1` reads
+   *  "Drop diameter — 2.1 mm". A string is shown as a sentence, which is the
+   *  better form when the flow is not about messages at all. */
+  data?:         Record<string, unknown> | string
+  /** Force the payload to be shown as verbatim JSON. For flows where the
+   *  payload really is a message and its punctuation is part of the point. */
+  format?:       'raw'
   arrivalStyle?: ArrivalStyle
   /** Send this many packets down the pipe instead of one, staggered — for work
    *  that repeats (a query in a loop, a retry storm, a batch of messages). */

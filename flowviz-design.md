@@ -273,7 +273,10 @@ type PacketShape = 'sphere' | 'document' | 'token' | 'blob' | 'envelope'
 interface Packet {
   connection: string              // connection id to travel along
   shape:      PacketShape
-  data?:      Record<string, unknown>   // shown in a small label on hover
+  // Fields, or a sentence. Fields are shown as labelled facts with any trailing
+  // unit lifted out of the key; a string is shown as prose.
+  data?:      Record<string, unknown> | string
+  format?:    'raw'               // show verbatim JSON instead
 }
 ```
 
