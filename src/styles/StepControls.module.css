@@ -181,3 +181,32 @@
 }
 
 
+
+/* The zoom readout, sat between − and +. A button, because pressing it is how
+   you get back to the framing the flow opened at — sized to a fixed width so
+   the two zoom buttons don't shuffle sideways as the number changes. */
+.zoomLevel {
+  height: 2.15rem;
+  min-width: 3.1rem;
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 0.2rem;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.14s, color 0.14s;
+}
+
+.zoomLevel:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+/* Output controls sit at the far end of their row, the way the step counter
+   does on the transport row. */
+.pushRight {
+  margin-left: auto;
+}

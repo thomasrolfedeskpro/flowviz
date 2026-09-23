@@ -88,6 +88,29 @@ describe('validateFlow()', () => {
     expect(() => validateFlow(flow)).toThrow(/Invalid component shape/)
   })
 
+  it('accepts every pinned label anchor, and an empty pinned label', () => {
+    const anchors = [
+      'top-left',    'top-center',    'top-right',
+      'middle-left', 'center',        'middle-right',
+      'bottom-left', 'bottom-center', 'bottom-right',
+    ]
+    for (const anchor of anchors) {
+      const flow = clone(minimalFlow()) as Record<string, unknown>
+      ;(flow['components'] as Record<string, unknown>[])[0]['pinnedLabel'] = { anchor }
+      expect(() => validateFlow(flow), `anchor: ${anchor}`).not.toThrow()
+    }
+    // `{}` is the common case: pin the component's own name, top-centre.
+    const bare = clone(minimalFlow()) as Record<string, unknown>
+    ;(bare['components'] as Record<string, unknown>[])[0]['pinnedLabel'] = {}
+    expect(() => validateFlow(bare)).not.toThrow()
+  })
+
+  it('throws on an invalid pinned label anchor', () => {
+    const flow = clone(minimalFlow()) as Record<string, unknown>
+    ;(flow['components'] as Record<string, unknown>[])[0]['pinnedLabel'] = { anchor: 'above' }
+    expect(() => validateFlow(flow)).toThrow(/Invalid pinned label anchor/)
+  })
+
   it('accepts a waterfall bar with non-negative weight and start', () => {
     const flow = clone(minimalFlow()) as Record<string, unknown>
     ;(flow['steps'] as Record<string, unknown>[])[0]['waterfall'] =
@@ -290,6 +313,18 @@ describe('buildGraph()', () => {
     expect(graph.components.has('a')).toBe(true)
     expect(graph.components.has('b')).toBe(true)
     expect(graph.components.size).toBe(2)
+  })
+
+  it('carries a pinned label through to the graph', () => {
+    const flow = minimalFlow()
+    flow.components[0] = {
+      ...flow.components[0],
+      pinnedLabel: { text: 'Browser', anchor: 'bottom-right' },
+    }
+    const graph = buildGraph(flow)
+    expect(graph.components.get('a')!.pinnedLabel)
+      .toEqual({ text: 'Browser', anchor: 'bottom-right' })
+    expect(graph.components.get('b')!.pinnedLabel).toBeUndefined()
   })
 
   it('produces a connections Map keyed by connection id', () => {

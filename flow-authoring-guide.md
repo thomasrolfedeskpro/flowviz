@@ -14,7 +14,7 @@ strict — invalid field names or values will silently break the visualisation.
 | 1b | Where a flow file lives |
 | 2–4 | Top-level structure, `meta` (incl. `timing`), `layout` |
 | 5 | `zones` |
-| 6 | `components` — types, shapes, icons, logos, `detail` sub-scenes |
+| 6 | `components` — types, shapes, icons, logos, pinned labels, `detail` sub-scenes |
 | 7 | `connections` — routing and `color` |
 | 8 | `steps` — highlights, camera, annotations, packets, streams, footers, waterfall, scene |
 | 9 | Layout heuristics (the enforceable ones live in `docs/flow-rules.md`) |
@@ -392,7 +392,64 @@ All fields optional. Shown in the hover tooltip when the user hovers the compone
 
 ---
 
-### 6.8 `detail` — a scene inside a component (optional)
+### 6.8 `pinnedLabel` — a pinned name (optional)
+
+`meta.description` and the component's `label` only appear on hover, which is no
+use in a screenshot or a slide. `pinnedLabel` pins the name on instead.
+
+The chips are off until the viewer turns them on. Setting `pinnedLabel` says a
+component *can* be named when a still is needed, not that every reader sees a
+chip over it — so it costs nothing to set, and nothing happens on screen by
+default.
+
+```json
+{
+  "id":       "auth_server",
+  "label":    "Auth Server",
+  "type":     "service",
+  "position": { "col": 5, "row": 2 },
+  "pinnedLabel": { "anchor": "top-center" }
+}
+```
+
+| Field | Default | |
+|---|---|---|
+| `text` | the component's `label` | Say something else — a hostname, a version, a queue name |
+| `anchor` | `top-center` | Where the chip sits against the component |
+
+`"pinnedLabel": {}` is the common case: the component's own name, above it.
+
+**Anchors.** Nine positions, read off the component's *projected* bounding box —
+so a chip holds its position through a zoom, a pan, a drag and a switch to plan
+view.
+
+| | left | centre | right |
+|---|---|---|---|
+| **top** | `top-left` | `top-center` | `top-right` |
+| **middle** | `middle-left` | `center` | `middle-right` |
+| **bottom** | `bottom-left` | `bottom-center` | `bottom-right` |
+
+Every anchor but `center` sits *outside* the component, leaving the mesh, its
+icon and its colour unobscured. `center` lays the chip over the component, which
+is worth it only when the component is large and plain.
+
+**Write it for capitals.** The chip is set in monospace caps, so it carries no
+case of its own and gets wider than the text you wrote. `authServer` and
+`auth_server` both come out as one flat run of letters. Prefer short, spaced
+words: `"Auth server"`, not `"authServer"`.
+
+**Use it sparingly.** Pinning every component turns the diagram into a wall of
+chips and defeats the purpose. Pin the ones a reader cannot identify from shape
+and colour alone — repeated stacks with the same geometry, or anything whose
+icon is ambiguous.
+
+The chips do not dodge each other. Two components close together with the same
+anchor will overlap; give them opposing anchors (`middle-left` and
+`middle-right`) or move one.
+
+---
+
+### 6.9 `detail` — a scene inside a component (optional)
 
 A component can contain a whole scene of its own. Give it `detail` and any step
 tagged with that component's id is rendered *inside* it: the camera dives into
@@ -1422,7 +1479,7 @@ there could not be dragged back.
 
 | Action | How |
 |---|---|
-| Edit a component, zone or pipe | Click it — every field it has, including colour, icon, shape, size, elevation and hover notes |
+| Edit a component, zone or pipe | Click it — every field it has, including colour, icon, shape, size, elevation, hover notes and the pinned label (tick it on, then pick one of the nine anchors on the 3×3 grid) |
 | Edit a step | Hover it in the sidebar, press the pencil — text, scene, highlights, active connections, packets, streams, annotations, footer notes, waterfall bar and camera |
 | Add, duplicate, delete or reorder steps | Row buttons in the sidebar; drag a row to reorder |
 | Flow title, description, grid, timing | The gear beside **Done** |
@@ -1447,6 +1504,12 @@ there could not be dragged back.
 Two things the editor deliberately won't do: create a flow from nothing, and
 add or remove a nested `detail` scene. Both stay JSON jobs — for the second,
 deleting a component that owns a scene is refused, with an explanation.
+
+**What a recording cannot show.** Zone labels, pipe labels, annotations and
+pinned labels are HTML drawn over the 3D view, so the WebM and GIF exports —
+which record the canvas — do not contain them. A PNG does. If a flow is going
+to be watched rather than read a step at a time, keep the meaning in the scene
+and the step text, not only in an annotation.
 
 ## 14. Validation checklist
 
@@ -1478,6 +1541,7 @@ have to:
 - [ ] `streams` appear only on long-lived open connections (streamed media, WebSockets, telemetry feeds) — never to show data merely moving
 - [ ] Multiple `packets` in a step are things happening *at the same time* — one thing crossing several hops is one packet on one waypointed connection
 - [ ] `camera` is only ever `{ "fit": true }` or a named `focus`; no `focus: null`
+- [ ] `pinnedLabel` is on the components a reader could not name from shape and colour alone, not on all of them
 - [ ] `connection.color` is used where it carries meaning, not on every pipe
 - [ ] Large background zones use a colour chosen for how it looks at 12% opacity
 
@@ -1527,6 +1591,7 @@ the right colours every time, and a person does not.
 | Component `color` override | ✅ Rendered |
 | Connection pipes | ✅ Rendered |
 | Connection `label` overlay at midpoint | ✅ Rendered |
+| Component `pinnedLabel` — pinned name, nine anchors | ✅ Rendered — off until the playbar toggle is pressed |
 | Connection `color` override, keeping the glass opacity ladder | ✅ Rendered |
 | Zone fills + 3D ground-plane labels | ✅ Rendered |
 | Zone `parentId` nesting | ✅ Rendered |
@@ -1564,6 +1629,10 @@ the right colours every time, and a person does not.
 | Geometry lint (`pnpm validate --lint`, layout notes in edit mode) | ✅ Interactive — advisory, never blocks a save |
 | Present mode — fullscreen, no chrome, `F` / `?present=1` | ✅ Interactive |
 | Plan view (`?view=plan`) — straight down, shadows off, labels square-on | ✅ Interactive |
-| Keyboard stepping — ← → space Home End | ✅ Interactive |
+| Keyboard stepping — ← → space Home End, and `+` / `-` to zoom | ✅ Interactive |
+| Zoom buttons, and a readout that fits the scene when pressed | ✅ Interactive |
+| Pipes toggle — hide the tubes and their labels for a still | ✅ Interactive |
 | Deep link to a step (`?step=<n>`, 1-based) | ✅ Interactive |
-| Export PNG (this step), WebM and GIF (whole play-through) | ✅ Interactive |
+| Export PNG of this step, with or without the panels | ✅ Interactive |
+| Export WebM and GIF of the whole play-through | ✅ Interactive — the 3D view only; overlays are HTML |
+| Export the flow definition as JSON, including unsaved edits | ✅ Interactive |

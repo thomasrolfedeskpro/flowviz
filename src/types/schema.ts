@@ -55,6 +55,27 @@ export type ComponentShape =
   | 'octagon'
   | 'triangle'
 
+/**
+ * Where a pinned label sits against its component, read off the component's
+ * projected bounding box. Everything but `center` sits *outside* the box, so
+ * the mesh, its icon and its colour stay unobscured.
+ */
+export type LabelAnchor =
+  | 'top-left'    | 'top-center'    | 'top-right'
+  | 'middle-left' | 'center'        | 'middle-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right'
+
+/**
+ * An always-visible label on a component, for when the diagram has to be read
+ * as a still — a screenshot in a doc, a slide — and nobody can hover it.
+ */
+export interface PinnedLabel {
+  /** Defaults to the component's own `label`. Set it to say something else. */
+  text?:   string
+  /** Defaults to `top-center`. */
+  anchor?: LabelAnchor
+}
+
 export interface Component {
   id: string
   label: string
@@ -71,6 +92,9 @@ export interface Component {
     line?: number
     notes?: string
   }
+  /** An always-visible label, for diagrams that get screenshotted. Omitted,
+   *  the component's name only appears on hover. */
+  pinnedLabel?: PinnedLabel
   /** What is inside this component — a scene of its own, entered by any step
    *  tagged with this component's id. Nests to any depth. */
   detail?: SceneDetail

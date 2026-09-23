@@ -456,3 +456,52 @@
   font-size: 0.72rem;
   color: var(--text-muted);
 }
+
+/* ── pinned-label anchor picker ──────────────────────────── */
+
+/* A 3×3 map of the component, not a list of names: the cell you press is where
+   the label ends up, so the control shows the answer before you commit it. */
+.anchorGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1.6rem);
+  gap: 2px;
+  padding: 2px;
+  margin-top: 0.4rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+
+.anchorCell {
+  width: 1.6rem;
+  height: 1.3rem;
+  background: none;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.anchorCell::after {
+  content: '';
+  display: block;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin: auto;
+  border-radius: 1px;
+  background: var(--text-muted);
+}
+
+.anchorCell:hover {
+  background: var(--btn-hover);
+}
+
+.anchorCellOn,
+.anchorCellOn:hover {
+  background: var(--accent-blue);
+}
+
+.anchorCellOn::after {
+  background: var(--accent-fg);
+}

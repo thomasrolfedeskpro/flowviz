@@ -123,6 +123,27 @@ describe('flowReducer — components and connections', () => {
     expect('color' in out.components[0]).toBe(false)
   })
 
+  it('writes a pinned label and drops an empty text override', () => {
+    const def = zonedFlow()
+    const out = flowReducer(def, {
+      type: 'component/patch', scene: null, id: 'a',
+      patch: { pinnedLabel: { anchor: 'bottom-left', text: '' } },
+    })
+    // An empty text means "use the component's own name", which is what an
+    // absent `text` already says — so it is never written.
+    expect(out.components[0].pinnedLabel).toEqual({ anchor: 'bottom-left' })
+  })
+
+  it('removes a pinned label rather than writing undefined', () => {
+    const def = zonedFlow()
+    def.components[0].pinnedLabel = { anchor: 'center' }
+
+    const out = flowReducer(def, {
+      type: 'component/patch', scene: null, id: 'a', patch: { pinnedLabel: undefined },
+    })
+    expect('pinnedLabel' in out.components[0]).toBe(false)
+  })
+
   it('does not stamp defaults onto a component it patches', () => {
     const def = zonedFlow()
     const out = flowReducer(def, {

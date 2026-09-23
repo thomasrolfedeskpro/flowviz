@@ -4,8 +4,8 @@ import type { StepEngine } from '@/engine/stepEngine'
 import type { ViewMode } from '@/scene/viewMode'
 import type { Theme } from '@/scene/ThemeColors'
 import {
-  StepBackIcon, StepForwardIcon, PlayIcon, PauseIcon, FollowIcon,
-  IsometricIcon, PlanIcon, SunIcon, MoonIcon,
+  StepBackIcon, StepForwardIcon, PlayIcon, PauseIcon, FollowIcon, PipesIcon, LabelIcon,
+  IsometricIcon, PlanIcon, ZoomInIcon, ZoomOutIcon, SunIcon, MoonIcon,
   EnterFullScreenIcon, ExitFullScreenIcon,
 } from '@/components/ControlIcons'
 import { Tooltip } from '@/components/Tooltip'
@@ -41,8 +41,17 @@ export function StepControls({
   onSpeedChange,
   cameraFollow,
   onCameraFollowChange,
+  pipesVisible,
+  onPipesVisibleChange,
   viewMode,
   onViewModeChange,
+  onZoomIn,
+  onZoomOut,
+  componentLabelsVisible,
+  onComponentLabelsVisibleChange,
+  hasComponentLabels,
+  zoomLevel,
+  onZoomReset,
   theme,
   onThemeToggle,
   presenting,
@@ -57,9 +66,23 @@ export function StepControls({
   /** Whether steps are allowed to move the camera. */
   cameraFollow: boolean
   onCameraFollowChange: (follow: boolean) => void
+  /** Whether the pipes are drawn. Off is for a screenshot of a crowded diagram. */
+  pipesVisible: boolean
+  onPipesVisibleChange: (visible: boolean) => void
   /** Isometric, or looking straight down. */
   viewMode: ViewMode
   onViewModeChange: (mode: ViewMode) => void
+  /** One zoom step in, or out. The scene owns the step and the limits. */
+  onZoomIn: () => void
+  onZoomOut: () => void
+  componentLabelsVisible: boolean
+  onComponentLabelsVisibleChange: (visible: boolean) => void
+  /** Nothing to show or hide — no component in this flow asked for a label. */
+  hasComponentLabels: boolean
+  /** Current magnification, 1 being the framing the flow opened at. */
+  zoomLevel: number
+  /** Back to that framing. */
+  onZoomReset: () => void
   theme: Theme
   onThemeToggle: () => void
   /** Whether the app is in fullscreen, chrome-free playback. */
@@ -117,6 +140,21 @@ export function StepControls({
           </Tooltip>
         </div>
 
+          <Tooltip label="Playback speed">
+            <select
+              className={styles.select}
+              value={speed}
+              onChange={(e) => onSpeedChange(Number(e.target.value))}
+              aria-label="Playback speed"
+            >
+              {SPEED_OPTIONS.map((opt) => (
+                <option key={opt.multiplier} value={opt.multiplier}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </Tooltip>
+
         <span className={styles.counter}>
           <span className={styles.current}>{state.currentIndex + 1}</span>
           <span className={styles.total}>/ {state.totalSteps}</span>
@@ -151,9 +189,43 @@ export function StepControls({
           </Tooltip>
         </div>
 
+        {/* The wheel zooms too. These are for landing on a framing exactly,
+            which a notch of the wheel is a clumsy way to do. */}
         <div className={styles.group}>
-          {/* Steps that name a component pull the camera to it. Turning this
-              off hands the view back, so you can look around while it plays. */}
+          <Tooltip label="Zoom out  −">
+            <button
+              className={styles.iconBtn}
+              onClick={onZoomOut}
+              aria-label="Zoom out"
+            >
+              <ZoomOutIcon />
+            </button>
+          </Tooltip>
+          {/* The readout is the way back. Pressing a number to reset it is the
+              convention every map and design tool already taught. */}
+          <Tooltip label="Fit the scene again">
+            <button
+              className={styles.zoomLevel}
+              onClick={onZoomReset}
+              aria-label={`Zoom ${Math.round(zoomLevel * 100)}%, press to fit the scene`}
+            >
+              {Math.round(zoomLevel * 100)}%
+            </button>
+          </Tooltip>
+          <Tooltip label="Zoom in  +">
+            <button
+              className={styles.iconBtn}
+              onClick={onZoomIn}
+              aria-label="Zoom in"
+            >
+              <ZoomInIcon />
+            </button>
+          </Tooltip>
+        </div>
+
+        {/* Steps that name a component pull the camera to it. Turning this
+            off hands the view back, so you can look around while it plays. */}
+        <div className={styles.group}>
           <Tooltip label={cameraFollow ? 'Steps move the camera' : 'Camera stays put'}>
             <button
               className={`${styles.iconBtn}${cameraFollow ? ` ${styles.on}` : ''}`}
@@ -164,23 +236,47 @@ export function StepControls({
               <FollowIcon />
             </button>
           </Tooltip>
-          <Tooltip label="Playback speed">
-            <select
-              className={styles.select}
-              value={speed}
-              onChange={(e) => onSpeedChange(Number(e.target.value))}
-              aria-label="Playback speed"
+        </div>
+      </div>
+
+      {/* What the diagram draws, and where a copy of it goes. Its own row: the
+          view controls above had grown into a bar wider than the diagram. */}
+      <div className={styles.row}>
+        <div className={styles.group}>
+          {/* Packets and chevrons carry on without the tubes — the pipes are
+              what a screenshot of a busy diagram can do without. */}
+          <Tooltip label={pipesVisible ? 'Pipes shown' : 'Pipes hidden'}>
+            <button
+              className={`${styles.iconBtn}${pipesVisible ? ` ${styles.on}` : ''}`}
+              onClick={() => onPipesVisibleChange(!pipesVisible)}
+              aria-pressed={pipesVisible}
+              aria-label="Show pipes"
             >
-              {SPEED_OPTIONS.map((opt) => (
-                <option key={opt.multiplier} value={opt.multiplier}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              <PipesIcon />
+            </button>
+          </Tooltip>
+          {/* The pinned names a flow asked for. On for reading a still, off
+              when the chips get in the way of the diagram itself. */}
+          <Tooltip
+            label={
+              !hasComponentLabels ? 'No pinned labels in this flow'
+              : componentLabelsVisible ? 'Component labels shown'
+              : 'Component labels hidden'
+            }
+          >
+            <button
+              className={`${styles.iconBtn}${componentLabelsVisible && hasComponentLabels ? ` ${styles.on}` : ''}`}
+              onClick={() => onComponentLabelsVisibleChange(!componentLabelsVisible)}
+              disabled={!hasComponentLabels}
+              aria-pressed={componentLabelsVisible}
+              aria-label="Show component labels"
+            >
+              <LabelIcon />
+            </button>
           </Tooltip>
         </div>
 
-        <div className={styles.group}>
+        <div className={`${styles.group} ${styles.pushRight}`}>
           <Tooltip label={theme === 'dark' ? 'Light theme' : 'Dark theme'}>
             <button
               className={styles.iconBtn}

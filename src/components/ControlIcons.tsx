@@ -57,6 +57,35 @@ export function FollowIcon() {
   )
 }
 
+/** Pipes: a length of tube with two joints, seen side on. */
+/** A chip pinned above a box — the pinned component label, in miniature. */
+export function LabelIcon() {
+  return (
+    <svg {...box}>
+      <rect
+        x="3.2" y="1.8" width="9.6" height="4" rx="1.2"
+        fill="none" stroke="currentColor" strokeWidth="1.3"
+      />
+      <rect
+        x="4.6" y="8.6" width="6.8" height="5.6" rx="1"
+        fill="currentColor" opacity="0.5"
+      />
+    </svg>
+  )
+}
+
+export function PipesIcon() {
+  return (
+    <svg {...box}>
+      <rect
+        x="1.8" y="5.6" width="12.4" height="4.8" rx="2.4"
+        fill="none" stroke="currentColor" strokeWidth="1.3"
+      />
+      <path d="M5.4 5.6v4.8M10.6 5.6v4.8" stroke="currentColor" strokeWidth="1.1" />
+    </svg>
+  )
+}
+
 /** Isometric: a cube, drawn at the angle the scene is actually drawn at. */
 export function IsometricIcon() {
   return (
@@ -82,6 +111,28 @@ export function PlanIcon() {
         fill="none" stroke="currentColor" strokeWidth="1.3"
       />
       <path d="M8 2.2v11.6M2.2 8h11.6" stroke="currentColor" strokeWidth="1.1" />
+    </svg>
+  )
+}
+
+/** Zoom: a lens, with the sign for which way it goes. Drawn as one pair so the
+ *  two buttons differ by a single stroke and nothing else. */
+export function ZoomInIcon() {
+  return (
+    <svg {...box}>
+      <circle cx="7" cy="7" r="4.3" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M10.2 10.2 14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M7 4.9v4.2M4.9 7h4.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function ZoomOutIcon() {
+  return (
+    <svg {...box}>
+      <circle cx="7" cy="7" r="4.3" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M10.2 10.2 14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4.9 7h4.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   )
 }

@@ -11,6 +11,11 @@ const ANNOTATION_STYLES= ['info', 'success', 'warning', 'error'] as const
 const ARRIVAL_STYLES   = ['error', 'success', 'warning'] as const
 const DIRECTIONS       = ['forward', 'reverse'] as const
 const PACKET_FORMATS   = ['raw'] as const
+const LABEL_ANCHORS    = [
+  'top-left',    'top-center',    'top-right',
+  'middle-left', 'center',        'middle-right',
+  'bottom-left', 'bottom-center', 'bottom-right',
+] as const
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
@@ -69,6 +74,10 @@ const ComponentSchema: z.ZodType<ComponentInput> = z.lazy(() => z.object({
     file:        z.string().optional(),
     line:        z.number().optional(),
     notes:       z.string().optional(),
+  }).optional(),
+  pinnedLabel: z.object({
+    text:   z.string().optional(),
+    anchor: enumStr(LABEL_ANCHORS, 'Invalid pinned label anchor').optional(),
   }).optional(),
   detail: z.object({
     grid:        z.object({ cols: z.number(), rows: z.number() }),

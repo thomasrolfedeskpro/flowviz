@@ -255,6 +255,7 @@ function buildScene(
       center,
       meshSize,
       topCenter,
+      pinnedLabel: c.pinnedLabel,
       meta:      c.meta,
     }
     components.set(c.id, ic)

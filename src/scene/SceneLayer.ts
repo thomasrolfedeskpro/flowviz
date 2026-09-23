@@ -95,6 +95,9 @@ export class SceneLayer {
    *  The top level has the whole grid to itself and needs no such explanation. */
   private boundary: SceneBoundary | null = null
   private editMode = false
+  /** Pipes off hides the tubes for a screenshot; the pads under their labels go
+   *  with them. Held so edit mode can be turned on without bringing them back. */
+  private pipesVisible = true
   /** Playback multiplier: 4 means everything animates four times faster, so a
    *  4x walkthrough shows whole animations instead of clipped starts. */
   private speed = 1
@@ -218,11 +221,21 @@ export class SceneLayer {
     this.boundary?.setTheme(theme, this.anisotropy)
   }
 
+  /** Show or hide this layer's pipes. Owned by FlowScene, which re-applies it
+   *  to every layer after a rebuild. */
+  setPipesVisible(visible: boolean): void {
+    this.pipesVisible = visible
+    for (const pipe of this.pipes.values()) pipe.setVisible(visible)
+    // A label pad is the click target for a chip that has gone with the pipes,
+    // so it goes too rather than sitting on the ground under nothing.
+    for (const h of this.labelHandles) h.visible = this.editMode && visible
+  }
+
   setEditMode(enabled: boolean): void {
     this.editMode = enabled
     for (const z of this.zones) z.setHandlesVisible(enabled)
     for (const h of this.waypointHandles) h.visible = enabled
-    for (const h of this.labelHandles) h.visible = enabled
+    for (const h of this.labelHandles) h.visible = enabled && this.pipesVisible
     if (enabled) this.syncLabelHandles()
   }
 
@@ -435,7 +448,7 @@ export class SceneLayer {
         new THREE.MeshBasicMaterial({ color: 0x8892a0, transparent: true, opacity: 0.35, depthTest: false }),
       )
       mesh.userData = { connId }
-      mesh.visible = this.editMode
+      mesh.visible = this.editMode && this.pipesVisible
       mesh.renderOrder = 12
       attachHoverOutline(mesh)
       this.group.add(mesh)

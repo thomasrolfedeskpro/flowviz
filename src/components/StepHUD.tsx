@@ -17,7 +17,7 @@ export function StepHUD({
   const footer = state.step.footer ?? []
 
   return (
-    <div className={styles.hud} key={state.currentIndex}>
+    <div className={styles.hud} data-export-panel key={state.currentIndex}>
       {scenePath.length > 0 && (
         <p className={styles.breadcrumb}>
           {scenePath.map((label, i) => (

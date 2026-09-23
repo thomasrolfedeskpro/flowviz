@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { ComponentType, ComponentShape, Step, Connection } from './schema'
+import type { ComponentType, ComponentShape, PinnedLabel, Step, Connection } from './schema'
 
 export interface InternalComponent {
   id: string
@@ -12,6 +12,9 @@ export interface InternalComponent {
   center: THREE.Vector3
   meshSize: THREE.Vector3
   topCenter: THREE.Vector3
+  /** Always-visible label. Mutable so the inspector's preview can reach it
+   *  without a graph rebuild, like `icon` and `color`. */
+  pinnedLabel?: PinnedLabel
   meta: {
     description?: string
     file?: string

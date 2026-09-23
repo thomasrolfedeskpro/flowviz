@@ -144,7 +144,7 @@ export function StepSidebar({
 
   return (
     <>
-    <nav className={styles.sidebar}>
+    <nav className={styles.sidebar} data-export-panel>
       <div className={styles.tabs}>
         <button
           className={`${styles.tab}${tab === 'steps' ? ` ${styles.tabActive}` : ''}`}

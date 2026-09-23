@@ -16,8 +16,10 @@ An animated isometric 3D data-flow diagram tool. Describe a system architecture 
 - Chevron stream animation for genuine continuous data flows (Kafka, video, WebSockets)
 - **Nested scenes:** a component can contain a scene of its own, to any depth. Steps inside it are rendered in that scene, with the camera diving in and pulling back out
 - **Waterfall column:** give steps a measured bar and the sidebar slides out a waterfall showing where the time, rows, retries or cost went — the unit is yours, the renderer assumes nothing, and `meta.waterfallLabel` titles the column with whatever it is you measured
-- **Edit mode:** place components and zones on the grid, draw connections, add / duplicate / delete steps, drag components, resize and move zones, edit routing waypoints, change a component's size / shape / colour / icon, rename zone and pipe labels. Deletes show what they cascade to first, edits are undo/redo-able (⌘Z / ⇧⌘Z), and any object — or the whole flow — can be edited as raw JSON when no form covers what you need. **Save to file** writes it back to the flow's JSON (or Copy JSON to paste it elsewhere)
-- **Export:** a PNG of the step on screen, or a play-through as WebM (records the live animation, so packets actually travel) or GIF (one frame per step)
+- **Edit mode:** place components and zones on the grid, draw connections, add / duplicate / delete steps, drag components, resize and move zones, edit routing waypoints, change a component's size / shape / colour / icon, set its pinned label and anchor, rename zone and pipe labels. Deletes show what they cascade to first, edits are undo/redo-able (⌘Z / ⇧⌘Z), and any object — or the whole flow — can be edited as raw JSON when no form covers what you need. **Save to file** writes it back to the flow's JSON (or Copy JSON to paste it elsewhere)
+- **Pinned component labels:** a component can carry an always-visible name, anchored at any of nine points against it and tinted with its own colour, for when a diagram has to be read as a still rather than hovered. A playback-bar toggle turns them on
+- **Export:** a PNG of the step on screen — with the panels, or without the step list and description box — or a play-through as WebM (records the live animation, so packets actually travel) or GIF (one frame per step). The flow's own JSON downloads from the same menu, unsaved edits included
+- **Viewer controls:** zoom in and out a step at a time (buttons or `+` / `-`), with a readout that says how far in you are and returns you to the opening framing when pressed; hide the pipes when the tubes crowd a screenshot
 - **Two views:** the isometric default, or a plan view looking straight down — a flat flowchart with square-on labels and no occlusion, for diagrams dense enough that reading beats depth. Shadows are dropped in plan view, and `?view=plan` opens straight into it
 - **Present mode:** fullscreen, no chrome, keyboard-driven — `F` to enter, `Esc` to leave, arrows to step. Deep-link any step with `?step=<n>`
 - **Layout lint:** the geometry rules in [`docs/flow-rules.md`](./docs/flow-rules.md), checked in edit mode and from the CLI — including pipes that sweep through a bystander the renderer will fade mid-flight
@@ -200,6 +202,10 @@ pnpm run lint
 
 Both a `pnpm-lock.yaml` and a `package-lock.json` are committed; pnpm is the one
 to use.
+
+Notable changes are recorded in [`CHANGELOG.md`](./CHANGELOG.md), dated rather
+than versioned. It starts at 2026-09-23 with a summary of what already existed;
+everything earlier is in the commit history.
 
 The port is pinned to **5175** in `vite.config.ts`. `coffee-shop-order` loads by
 default; append `?flow=<name>` (any filename under `public/flows/`, without its extension)

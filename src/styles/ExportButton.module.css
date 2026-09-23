@@ -69,7 +69,7 @@
   border-radius: 0.75rem;
   backdrop-filter: blur(8px);
   padding: 0.35rem;
-  min-width: 15rem;
+  min-width: 18rem;
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -106,6 +106,39 @@
 .itemHint {
   color: var(--text-secondary);
   font-size: 0.78rem;
+}
+
+/* PNG comes in two forms of the same thing, so they share a row rather than
+   sitting as two entries that would read as two formats. Two separate chips,
+   not a segmented control: these are both actions, and a segment implies one
+   of them is the state you are currently in. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+}
+
+.choices {
+  display: flex;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+/* Beats `.menu button`, which lays items out as full-width rows. */
+.menu .choice {
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.menu .choice:hover:not(:disabled) {
+  background: var(--btn-hover);
+  color: var(--text-primary);
 }
 
 .caveat {

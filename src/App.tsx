@@ -6,7 +6,9 @@ import { AnnotationOverlay } from '@/components/AnnotationOverlay'
 import { HoverTooltip } from '@/components/HoverTooltip'
 import { ZoneTooltip } from '@/components/ZoneTooltip'
 import { PipeLabels } from '@/components/PipeLabels'
+import { ComponentLabels } from '@/components/ComponentLabels'
 import { PacketTooltip } from '@/components/PacketTooltip'
+import type { ComponentLabelDatum } from '@/components/ComponentLabels'
 import { StepSidebar } from '@/components/StepSidebar'
 import type { FlowSummary } from '@/components/StepSidebar'
 import { EditModal } from '@/components/EditModal'
@@ -19,6 +21,7 @@ import { applyActions } from '@/state/flowActions'
 import { nextId } from '@/state/flowActions'
 import { planDelete } from '@/state/cascade'
 import type { DeletePlan } from '@/state/cascade'
+import { ZOOM_STEP_IN, ZOOM_STEP_OUT } from '@/scene/FlowScene'
 import type { SceneMode } from '@/scene/FlowScene'
 import type {
   ComponentPatch,
@@ -31,6 +34,7 @@ import { StepEngine } from '@/engine/stepEngine'
 import { resolveTiming } from '@/engine/timing'
 import type { Timing } from '@/engine/timing'
 import { useStepEngine } from '@/hooks/useStepEngine'
+import { useAnimationFrame } from '@/hooks/useAnimationFrame'
 import { useHover } from '@/hooks/useHover'
 import { usePresentMode } from '@/hooks/usePresentMode'
 import type { ViewMode } from '@/scene/viewMode'
@@ -136,6 +140,16 @@ function App() {
   const [speed, setSpeed] = useState(1)
   /** Whether steps that name a component may pull the camera to it. */
   const [cameraFollow, setCameraFollow] = useState(true)
+  /** Whether the pipes are drawn. Off is for a screenshot of a diagram the tubes
+   *  crowd; it takes their labels with them. */
+  const [pipesVisible, setPipesVisible] = useState(true)
+  /** Whether the pinned component names are drawn. Off by default: a flow asks
+   *  for them so they are there when a still is needed, not so they cover the
+   *  diagram for everyone reading it on screen. Purely an overlay, so unlike
+   *  the pipes this never reaches the scene. */
+  const [componentLabelsVisible, setComponentLabelsVisible] = useState(false)
+  /** Magnification against the scene's overview framing, shown in the playbar. */
+  const [zoomLevel, setZoomLevel] = useState(1)
   /** Isometric, or straight down. Isometric is the point of the tool; plan view
    *  is for when a dense diagram needs to be read rather than admired. */
   const [viewMode, setViewMode] = useState<ViewMode>(viewModeFromUrl)
@@ -146,6 +160,9 @@ function App() {
   const [pipeLabelData, setPipeLabelData] = useState<
     Array<{ id: string; label: string; midpoint: Vector3 }>
   >([])
+  /** Components carrying an always-visible name, for reading the diagram as a
+   *  still. Refreshed on the same beats as the pipe labels. */
+  const [componentLabelData, setComponentLabelData] = useState<ComponentLabelDatum[]>([])
   /** Connection whose label pad is hovered in edit mode — the highlight has to
    *  be drawn on the HTML chip, which covers the pad in the scene. */
   const [hoveredPipeLabel, setHoveredPipeLabel] = useState<string | null>(null)
@@ -372,6 +389,29 @@ function App() {
     sceneRef.current?.setCameraFollow(cameraFollow)
   }, [cameraFollow])
 
+  useEffect(() => {
+    sceneRef.current?.setPipesVisible(pipesVisible)
+  }, [pipesVisible])
+
+  // The scene owns the zoom step and its limits, so a button press lands exactly
+  // where a wheel notch would.
+  const handleZoomIn    = useCallback(() => sceneRef.current?.zoomBy(ZOOM_STEP_IN), [])
+  const handleZoomOut   = useCallback(() => sceneRef.current?.zoomBy(ZOOM_STEP_OUT), [])
+  const handleZoomReset = useCallback(() => sceneRef.current?.fitView(), [])
+
+  /**
+   * The zoom readout.
+   *
+   * Polled rather than pushed, because the frustum also moves inside camera
+   * tweens and a callback per frame would re-render the app sixty times a
+   * second. Held to the number actually on screen, so a render happens only
+   * when the displayed percentage changes.
+   */
+  useAnimationFrame(() => {
+    const next = sceneRef.current?.zoomLevel ?? 1
+    setZoomLevel((prev) => (Math.round(prev * 100) === Math.round(next * 100) ? prev : next))
+  }, [])
+
   // Animated, because cutting between the two projections is disorienting —
   // everything on screen moves at once and nothing tells you it was the camera.
   useEffect(() => {
@@ -511,6 +551,7 @@ function App() {
     sceneRef.current?.reloadGraph(graph, engineRef.current?.getState().step ?? null)
     engineRef.current?.setSteps(def.steps)
     setPipeLabelData(sceneRef.current?.getConnectionLabelData() ?? [])
+    setComponentLabelData(sceneRef.current?.getComponentLabelData() ?? [])
   }, [])
 
   const dispatch = useCallback((actions: FlowAction[], rebuild = false) => {
@@ -581,6 +622,7 @@ function App() {
     s.setPlaybackSpeed(speed)
     s.setEditMode(editMode)
     s.setCameraFollow(cameraFollow)
+    s.setPipesVisible(pipesVisible)
     s.setTiming(timingRef.current)
     // The sidebar is fixed over the canvas, not beside it, so tell the scene how
     // much of its width is hidden and it will compose into what is visible.
@@ -589,7 +631,7 @@ function App() {
     // No animation here: the scene has only just been built, so there is no
     // previous view for it to have come from.
     s.setViewMode(viewMode, 0)
-  }, [theme, speed, editMode, cameraFollow, presenting, viewMode])
+  }, [theme, speed, editMode, cameraFollow, pipesVisible, presenting, viewMode])
 
   const setMode = useCallback((next: SceneMode) => {
     sceneRef.current?.setMode(next)
@@ -672,6 +714,16 @@ function App() {
         case 'F':
           handleTogglePresent()
           break
+        // The browser's own zoom is Cmd/Ctrl with these, and modifiers are
+        // already turned away above, so the bare keys are free.
+        case '+':
+        case '=':
+          handleZoomIn()
+          break
+        case '-':
+        case '_':
+          handleZoomOut()
+          break
         case 'Escape':
           // Only meaningful here while presenting; otherwise the edit-mode
           // handler above wants it for disarming a tool.
@@ -685,7 +737,7 @@ function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [editMode, editTarget, presenting, handleTogglePresent, exitPresent])
+  }, [editMode, editTarget, presenting, handleTogglePresent, exitPresent, handleZoomIn, handleZoomOut])
 
   // Unsaved edits live only in this tab.
   useEffect(() => {
@@ -967,7 +1019,10 @@ function App() {
           // Fires at the moment the layers swap, mid-transition — reading the
           // labels off the step's scene id would race the swap and show the
           // scene we just left.
-          s.setSceneChangeCallback(() => setPipeLabelData(s.getConnectionLabelData()))
+          s.setSceneChangeCallback(() => {
+            setPipeLabelData(s.getConnectionLabelData())
+            setComponentLabelData(s.getComponentLabelData())
+          })
           s.setTransitionCallback((phase, ms) =>
             setSceneFade({ opacity: phase === 'out' ? 1 : 0, ms }),
           )
@@ -975,6 +1030,7 @@ function App() {
             setArrivedTargets((prev) => new Set([...prev, targetId]))
           })
           setPipeLabelData(s.getConnectionLabelData())
+          setComponentLabelData(s.getComponentLabelData())
           const eng = engineRef.current
           if (eng) {
             s.applyStep(eng.getState().step, null, 0)
@@ -1034,14 +1090,20 @@ function App() {
         />
       )}
 
-      {/* Persistent pipe protocol labels */}
-      {bridge && pipeLabelData.length > 0 && (
+      {/* Persistent pipe protocol labels. They go with the pipes: a chip naming
+          a protocol, floating over nothing, is the clutter this removes. */}
+      {bridge && pipesVisible && pipeLabelData.length > 0 && (
         <PipeLabels
           pipes={pipeLabelData}
           bridge={bridge}
           counts={packetCounts}
           hoveredId={hoveredPipeLabel}
         />
+      )}
+
+      {/* Pinned component names — for when the diagram is read as a still */}
+      {bridge && componentLabelsVisible && componentLabelData.length > 0 && (
+        <ComponentLabels labels={componentLabelData} bridge={bridge} />
       )}
 
       {/* Delete confirmation is reachable outside edit mode; the rest is edit-only. */}
@@ -1129,8 +1191,17 @@ function App() {
               onSpeedChange={setSpeed}
               cameraFollow={cameraFollow}
               onCameraFollowChange={setCameraFollow}
+              pipesVisible={pipesVisible}
+              onPipesVisibleChange={setPipesVisible}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              componentLabelsVisible={componentLabelsVisible}
+              onComponentLabelsVisibleChange={setComponentLabelsVisible}
+              hasComponentLabels={componentLabelData.length > 0}
+              zoomLevel={zoomLevel}
+              onZoomReset={handleZoomReset}
               theme={theme}
               onThemeToggle={handleThemeToggle}
               presenting={presenting}
@@ -1143,6 +1214,7 @@ function App() {
                 scene={scene}
                 engine={engine}
                 flowId={flowId}
+                def={flowDef}
                 msPerStep={timing.step / speed}
               />
             </StepControls>

@@ -9,6 +9,7 @@ import type {
   ComponentType,
   Connection,
   FlowDefinition,
+  LabelAnchor,
   Zone,
 } from '@/types/schema'
 import type { ComponentPatch, ConnectionPatch, ZonePatch } from '@/state/flowActions'
@@ -40,6 +41,13 @@ const SHAPE_GLYPH: Record<ComponentShape, string> = {
 
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`
 
+/** The anchor picker, laid out the way it reads on screen. */
+const ANCHOR_GRID: LabelAnchor[] = [
+  'top-left',    'top-center',    'top-right',
+  'middle-left', 'center',        'middle-right',
+  'bottom-left', 'bottom-center', 'bottom-right',
+]
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function ComponentFields({
@@ -66,6 +74,9 @@ export function ComponentFields({
     color:     component.color ?? '',
     elevation: component.position.elevation ?? 0,
     meta:      component.meta ?? {},
+    // Held as undefined rather than `{}` when off: the key is always present in
+    // the patch, so committing an unticked box is what removes it from the file.
+    pinnedLabel: component.pinnedLabel,
   })
 
   /** Visual fields go to the scene as well as the draft. */
@@ -79,6 +90,7 @@ export function ComponentFields({
 
   const swatch = draft.color || hex(TYPE_COLOR[draft.type ?? component.type])
   const size = draft.size ?? { w: 1, h: 1 }
+  const pin  = draft.pinnedLabel
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onApply(draft) }}>
@@ -204,6 +216,53 @@ export function ComponentFields({
             />
             <span className={styles.suffix}>cells off the floor</span>
           </div>
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.label}>Pinned label</span>
+          <label className={styles.inline}>
+            <input
+              type="checkbox"
+              checked={pin !== undefined}
+              onChange={(e) => set({ pinnedLabel: e.target.checked ? {} : undefined })}
+            />
+            <span className={styles.hint}>
+              Always visible, so the diagram still reads as a screenshot.
+            </span>
+          </label>
+
+          {pin !== undefined && (
+            <>
+              <input
+                className={styles.input}
+                aria-label="Pinned label text"
+                placeholder={draft.label || component.label}
+                value={pin.text ?? ''}
+                onChange={(e) => set({ pinnedLabel: { ...pin, text: e.target.value } })}
+              />
+              {/* Nine cells laid out where they land, so the picker is its own
+                  preview — a dropdown of hyphenated names would not be. */}
+              <div className={styles.anchorGrid} role="group" aria-label="Label anchor">
+                {ANCHOR_GRID.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    title={a}
+                    aria-label={a}
+                    aria-pressed={a === (pin.anchor ?? 'top-center')}
+                    className={`${styles.anchorCell}${
+                      a === (pin.anchor ?? 'top-center') ? ` ${styles.anchorCellOn}` : ''
+                    }`}
+                  onClick={() => set({ pinnedLabel: { ...pin, anchor: a } })}
+                  />
+                ))}
+              </div>
+              <p className={styles.hint}>
+                Blank text uses the component's own name. Every anchor but the middle one
+                sits outside the component.
+              </p>
+            </>
+          )}
         </div>
 
         <MetaFields

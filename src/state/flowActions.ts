@@ -37,6 +37,8 @@ export interface ComponentPatch {
   color?:     string
   shape?:     ComponentShape
   meta?:      Component['meta']
+  /** Always-visible name. An explicit `undefined` takes it off again. */
+  pinnedLabel?: Component['pinnedLabel']
   /** Height off the ground, in cells. Lives inside `position` in the file. */
   elevation?: number
 }
@@ -211,6 +213,14 @@ function pruneDefaults(next: Component, original: Component): Component {
   if (!original.size && out.size && out.size.w === 1 && out.size.h === 1) delete out.size
   if (!out.logo) delete out.logo
   if (out.meta && !Object.values(out.meta).some((v) => v !== undefined && v !== '')) delete out.meta
+  // `{}` is a valid pinned label — it means "use the component's own name" —
+  // so only an absent one is dropped, and an empty text falls back to that.
+  if (!out.pinnedLabel) delete out.pinnedLabel
+  else if (!out.pinnedLabel.text) {
+    const pin = { ...out.pinnedLabel }
+    delete pin.text
+    out.pinnedLabel = pin
+  }
   return out
 }
 

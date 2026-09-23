@@ -133,6 +133,12 @@ export class ConnectionPipe {
                 :                         OPACITY_IDLE
   }
 
+  /** Hide the tube itself. Packets and chevrons are separate meshes, so they
+   *  keep running the route with the glass taken away. */
+  setVisible(visible: boolean): void {
+    this.mesh.visible = visible
+  }
+
   setActive(active: boolean, durationMs: number): Promise<void> {
     this.currentActive = active
     return this.tweenTo(durationMs)

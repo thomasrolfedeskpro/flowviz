@@ -5,6 +5,7 @@ import { GridFloor } from '@/scene/GridFloor'
 import { applyZoneCorner, clampZoneDelta, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
 import type { ZoneCorner, ZoneRenderer } from '@/scene/ZoneRenderer'
 import { SceneLayer } from '@/scene/SceneLayer'
+import { componentHex } from '@/scene/ComponentMesh'
 import { HoverSystem } from '@/scene/HoverSystem'
 import { setHoverOutline, setHoverOutlineScale, setHoverOutlineTheme } from '@/scene/hoverOutline'
 import { setupLighting, updateLighting, setShadowsEnabled } from '@/scene/LightingSetup'
@@ -12,7 +13,7 @@ import type { SceneLights } from '@/scene/LightingSetup'
 import { THEME_COLORS } from '@/scene/ThemeColors'
 import type { Theme } from '@/scene/ThemeColors'
 import type { InternalGraph } from '@/types/internal'
-import type { Step } from '@/types/schema'
+import type { LabelAnchor, Step } from '@/types/schema'
 import { CELL_SIZE, COMPONENT_GAP, gridToWorld, worldToGrid } from '@/engine/layoutEngine'
 import { PIPE_HEIGHT, removeWaypoint } from '@/engine/parseFlow'
 import type { ComponentPatch, FlowAction } from '@/state/flowActions'
@@ -28,8 +29,10 @@ import type { ViewMode } from '@/scene/viewMode'
  *  Orthographic projection ignores distance, so this only has to be far enough
  *  to keep the scene comfortably in front of the camera. */
 const CAMERA_DISTANCE      = 200
-const WHEEL_ZOOM_IN        = 0.89
-const WHEEL_ZOOM_OUT       = 1.12
+/** One zoom step. A wheel notch and a press of the zoom buttons are the same
+ *  move: the buttons exist to land one step exactly, not to move differently. */
+export const ZOOM_STEP_IN  = 0.89
+export const ZOOM_STEP_OUT = 1.12
 const FRUSTUM_MIN_RATIO    = 0.25
 const FRUSTUM_MAX_RATIO    = 2.5
 const DRAG_THRESHOLD_PX    = 4    // movement before a press becomes a drag
@@ -47,6 +50,21 @@ const SCENE_EXIT_MAX_WAIT_MS = 1600  // never stall the walkthrough longer than 
 // Waypoint handles float above the pipe: sitting at pipe height buried half the
 // handle inside the tube, which made them hard to see and to grab.
 const WAYPOINT_HANDLE_Y    = PIPE_HEIGHT + 0.6
+
+/**
+ * A frustum held inside the range the view may be zoomed to, as a multiple of
+ * the scene's own overview framing.
+ *
+ * A free function so the wheel, the zoom buttons and a test can all reach the
+ * same limits — a button that could reach a zoom the wheel cannot is a second
+ * set of limits waiting to disagree with the first.
+ */
+export function clampFrustum(frustum: number, overviewFrustum: number): number {
+  return Math.min(
+    Math.max(frustum, overviewFrustum * FRUSTUM_MIN_RATIO),
+    overviewFrustum * FRUSTUM_MAX_RATIO,
+  )
+}
 
 /** What a press on the canvas means. `connect` remembers the first end picked. */
 export type SceneMode =
@@ -112,6 +130,9 @@ export class FlowScene extends SceneManager {
   private playbackSpeed: number = 1
   /** Steps may move the camera. Off means the view is yours. */
   private cameraFollow: boolean = true
+  /** Whether the pipe tubes are drawn. Held here, not on the layers, so a
+   *  rebuilt or newly-entered scene comes back the way you left it. */
+  private pipesVisible: boolean = true
   private timing: Timing = DEFAULT_TIMING
   /** Which way the camera looks at the flow. */
   private viewMode: ViewMode = 'isometric'
@@ -198,20 +219,51 @@ export class FlowScene extends SceneManager {
 
   private onWheel = (e: WheelEvent): void => {
     e.preventDefault()
+    this.zoomBy(e.deltaY > 0 ? ZOOM_STEP_OUT : ZOOM_STEP_IN)
+  }
+
+  /**
+   * Zoom by a multiple of what is on screen: under one closes in, over one pulls
+   * back. The wheel and the zoom buttons both come through here.
+   *
+   * Projecting through applyCamera rather than writing the frustum into the
+   * camera directly — this used to be its own copy of the projection maths, and
+   * a copy drops the composition offset the same way the pan code once did: the
+   * offset is a pixel distance, so it has to be recomputed for the new zoom.
+   */
+  zoomBy(factor: number): void {
     // Whatever the step wanted, you are holding the controls now.
     this.cameraTween?.stop()
-    const factor = e.deltaY > 0 ? WHEEL_ZOOM_OUT : WHEEL_ZOOM_IN
-    const next = Math.min(
-      Math.max(this.currentFrustum * factor, this.overviewFrustum * FRUSTUM_MIN_RATIO),
-      this.overviewFrustum * FRUSTUM_MAX_RATIO
+    this.currentFrustum = clampFrustum(this.currentFrustum * factor, this.overviewFrustum)
+    this.applyCamera()
+  }
+
+  /**
+   * How far in the view is zoomed, as a multiple of the scene's own overview
+   * framing. The same unit `step.camera.zoom` uses, so 1 is what a flow opens
+   * at whether it is a big diagram or a small one.
+   */
+  get zoomLevel(): number {
+    // Measured live, not against the cached `overviewFrustum`. That field is
+    // computed before the canvas has its final size and is not recomputed on
+    // resize, so a flow could open reading 121%. This is also the exact value
+    // `fitView` zooms to, which is what makes pressing the readout land on 100.
+    return this.overviewFrustumOf(this.layer) / this.currentFrustum
+  }
+
+  /**
+   * Back to the framing the scene opened at — the one worth getting back to.
+   *
+   * Frustum and camera target together. Resetting only the zoom is the half-fit
+   * `setViewMode` was already fixed for: it leaves you at the right
+   * magnification, still looking at wherever you had panned to.
+   */
+  fitView(durationMs = 260): void {
+    this.tweenCamera(
+      this.layer.overviewTarget.clone(),
+      this.overviewFrustumOf(this.layer),
+      durationMs,
     )
-    this.currentFrustum = next
-    const aspect = this.renderer.domElement.clientWidth / this.renderer.domElement.clientHeight || 1
-    this.camera.left   = -next * aspect
-    this.camera.right  =  next * aspect
-    this.camera.top    =  next
-    this.camera.bottom = -next
-    this.camera.updateProjectionMatrix()
   }
 
   private onPointerDown = (e: PointerEvent): void => {
@@ -1029,6 +1081,18 @@ export class FlowScene extends SceneManager {
     if (!enabled) this.cameraTween?.stop()
   }
 
+  /**
+   * Show or hide the pipes, in every scene at once.
+   *
+   * For a screenshot where the tubes crowd the diagram. Packets and chevron
+   * streams keep running: with the glass taken away they are what shows the
+   * route, so hiding those too would leave a still diagram with no flow in it.
+   */
+  setPipesVisible(visible: boolean): void {
+    this.pipesVisible = visible
+    for (const l of this.layers.values()) l.setPipesVisible(visible)
+  }
+
   // ── Placing and connecting ────────────────────────────────────────────────
 
   /**
@@ -1196,7 +1260,14 @@ export class FlowScene extends SceneManager {
   setViewportInset(px: number): void {
     if (px === this.viewportInsetPx) return
     this.viewportInsetPx = px
+    const previous = this.overviewFrustum
     this.overviewFrustum = this.overviewFrustumOf(this.layer)
+    // The sidebar's width arrives after the scene is built, and a flow whose
+    // framing is decided by its width — rather than its height — is framed for
+    // the wrong aspect until it does. Carry the view onto the corrected framing
+    // only when nobody has zoomed yet: at rest the two are equal, so this is
+    // the opening view being put right, not a zoom being thrown away.
+    if (this.currentFrustum === previous) this.currentFrustum = this.overviewFrustum
     this.applyCamera()
   }
 
@@ -1258,6 +1329,9 @@ export class FlowScene extends SceneManager {
     this.layer.setEditMode(wasEditing)
     this.layer.setSpeed(this.playbackSpeed)
     this.layer.setTiming(this.timing)
+    // Fresh pipes are built visible, so a rebuild is where "pipes off" would be
+    // silently undone.
+    this.setPipesVisible(this.pipesVisible)
 
     // Straight to the layer: applyStep would try to transition into a scene we
     // are already standing in.
@@ -1447,6 +1521,44 @@ export class FlowScene extends SceneManager {
     for (const [id, pipe] of this.pipes) {
       const label = this.graph.connections.get(id)?.label
       if (label) result.push({ id, label, midpoint: pipe.midpoint })
+    }
+    return result
+  }
+
+  /**
+   * The components asking for an always-visible label.
+   *
+   * `center` and `size` are the graph's own vectors, handed over by reference:
+   * a drag and an inspector resize both mutate them in place, so the overlay
+   * follows without another round trip through React.
+   */
+  getComponentLabelData(): Array<{
+    id:     string
+    text:   string
+    anchor: LabelAnchor
+    color:  string
+    center: THREE.Vector3
+    size:   THREE.Vector3
+  }> {
+    const result: Array<{
+      id: string; text: string; anchor: LabelAnchor; color: string
+      center: THREE.Vector3; size: THREE.Vector3
+    }> = []
+    for (const comp of this.graph.components.values()) {
+      const pin = comp.pinnedLabel
+      if (!pin) continue
+      // Empty text is not "no label" — it means "use the component's name",
+      // which is what the author gets by writing `"pinnedLabel": {}`.
+      const text = pin.text?.trim() || comp.label
+      if (!text) continue
+      result.push({
+        id:     comp.id,
+        anchor: pin.anchor ?? 'top-center',
+        color:  componentHex(comp),
+        text,
+        center: comp.center,
+        size:   comp.meshSize,
+      })
     }
     return result
   }

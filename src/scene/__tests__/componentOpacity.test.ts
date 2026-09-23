@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as THREE from 'three'
-import { ComponentMesh, STATE_OPACITY, PENETRATED_OPACITY } from '@/scene/ComponentMesh'
+import { ComponentMesh, STATE_OPACITY, PENETRATED_OPACITY, TYPE_COLOR, componentHex } from '@/scene/ComponentMesh'
 import { tweenGroup } from '@/scene/tweenGroup'
 import type { InternalComponent } from '@/types/internal'
 
@@ -228,5 +228,33 @@ describe('ComponentMesh renderOrder', () => {
       .filter(c => c instanceof THREE.Mesh && c !== cm.hitMesh)
       .map(c => c.renderOrder)
     expect(orders.every(o => o <= 1)).toBe(true)
+  })
+})
+
+/**
+ * The pinned label wears its component's colour as a stripe, and it reads that
+ * colour from here rather than resolving the fallback a second time. A chip
+ * tinted differently from the mesh it names would be worse than an untinted one.
+ */
+describe('componentHex()', () => {
+  it('falls back to the colour the type is drawn in', () => {
+    expect(componentHex({ type: 'database', color: undefined })).toBe('#f57c00')
+    expect(componentHex({ type: 'client',   color: undefined })).toBe('#1e88e5')
+  })
+
+  it('pads a colour whose hex is short of six digits', () => {
+    // 0x546e7a is fine; the padding matters for any future value below 0x100000.
+    expect(componentHex({ type: 'external', color: undefined })).toHaveLength(7)
+  })
+
+  it('prefers an override the author set', () => {
+    expect(componentHex({ type: 'database', color: '#7c3a9d' })).toBe('#7c3a9d')
+  })
+
+  it('agrees with the value the mesh material is built from', () => {
+    for (const type of Object.keys(TYPE_COLOR) as Array<keyof typeof TYPE_COLOR>) {
+      const fromMesh = new THREE.Color(TYPE_COLOR[type]).getHexString()
+      expect(componentHex({ type, color: undefined }), type).toBe(`#${fromMesh}`)
+    }
   })
 })

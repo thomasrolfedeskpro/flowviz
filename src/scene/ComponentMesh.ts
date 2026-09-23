@@ -26,6 +26,18 @@ export const TYPE_COLOR: Record<ComponentType, number> = {
   external: 0x546e7a,
 }
 
+/**
+ * The colour a component is actually drawn in, as CSS.
+ *
+ * The mesh resolves the same fallback itself, in THREE's own types. This exists
+ * so an HTML overlay can reach the answer without duplicating the ladder — a
+ * pinned label tinted a different colour from its component is worse than one
+ * with no tint at all.
+ */
+export function componentHex(component: Pick<InternalComponent, 'color' | 'type'>): string {
+  return component.color ?? `#${TYPE_COLOR[component.type].toString(16).padStart(6, '0')}`
+}
+
 export const STATE_EMISSIVE: Record<MeshState, number> = {
   idle:        0x000000,
   highlighted: 0x1a2a3a,
