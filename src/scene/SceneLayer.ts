@@ -98,6 +98,8 @@ export class SceneLayer {
   /** Pipes off hides the tubes for a screenshot; the pads under their labels go
    *  with them. Held so edit mode can be turned on without bringing them back. */
   private pipesVisible = true
+  /** Components whose every connection is lit, overriding the step's own. */
+  private relationFocus = new Set<string>()
   /** Playback multiplier: 4 means everything animates four times faster, so a
    *  4x walkthrough shows whole animations instead of clipped starts. */
   private speed = 1
@@ -260,6 +262,54 @@ export class SceneLayer {
     this.activeStreams = []
   }
 
+  /**
+   * Show one or more components' whole set of connections at once, instead of
+   * the step's.
+   *
+   * A flow is read a step at a time, so a component that half the diagram talks
+   * to never looks busy — its connections light one pair at a time, pages
+   * apart. This lights all of them together, which is the only way that shape
+   * shows up at a glance.
+   *
+   * Empty hands the view back to the step that is actually playing.
+   */
+  setRelationFocus(ids: Set<string>, durationMs = 220): void {
+    this.relationFocus = new Set(ids)
+    if (this.hasRelationFocus()) {
+      this.applyRelationFocus(durationMs)
+      return
+    }
+    for (const pipe of this.pipes.values()) pipe.setTraced(false)
+    if (this.currentStep) this.applyStep(this.currentStep, durationMs)
+  }
+
+  /** Focus on a component this scene does not contain means nothing here —
+   *  a nested scene would otherwise dim itself into the dark. */
+  private hasRelationFocus(): boolean {
+    for (const id of this.relationFocus) if (this.components.has(id)) return true
+    return false
+  }
+
+  private applyRelationFocus(durationMs: number): void {
+    const touched = new Set<string>(this.relationFocus)
+    const lit     = new Set<string>()
+    for (const [id, conn] of this.graph.connections) {
+      if (!this.relationFocus.has(conn.from.id) && !this.relationFocus.has(conn.to.id)) continue
+      lit.add(id)
+      touched.add(conn.from.id)
+      touched.add(conn.to.id)
+    }
+    for (const [id, mesh] of this.components) {
+      mesh.transitionTo(touched.has(id) ? 'highlighted' : 'dimmed', durationMs)
+    }
+    // Traced, not lit. The step keeps its own say over which pipes are active,
+    // so a pipe can be both "this step uses it" and "this component connects
+    // through it" and still read as two separate facts.
+    for (const [id, pipe] of this.pipes) {
+      pipe.setTraced(lit.has(id))
+    }
+  }
+
   applyStep(step: Step, durationMs: number): void {
     this.currentStep = step
     const phaseMaterial = durationMs * PHASE_MATERIAL_RATIO
@@ -280,6 +330,11 @@ export class SceneLayer {
     for (const [id, pipe] of this.pipes) {
       pipe.setActive(step.active_connections.includes(id), phaseMaterial)
     }
+
+    // A relation focus outlives the step it was turned on during: stepping
+    // through the flow with it on is the point, so it is re-applied over the
+    // step's own highlighting. Packets still run, which is what shows the step.
+    if (this.hasRelationFocus()) this.applyRelationFocus(phaseMaterial)
 
     // Packets — each pipe flares to full brightness while one is on it
     const packetDefs = [

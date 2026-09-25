@@ -24,6 +24,8 @@ export class SceneManager {
   clock:    THREE.Clock
 
   private rafId: number | null = null
+  /** On-screen device pixels per CSS pixel, before any capture scaling. */
+  private basePixelRatio: number
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -32,7 +34,8 @@ export class SceneManager {
       alpha: false,
       preserveDrawingBuffer: true,
     })
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    this.basePixelRatio = Math.min(window.devicePixelRatio, 2)
+    this.renderer.setPixelRatio(this.basePixelRatio)
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -97,6 +100,47 @@ export class SceneManager {
 
   captureFrame(): string {
     return this.renderer.domElement.toDataURL('image/png')
+  }
+
+  /**
+   * Render at `scale` times the on-screen resolution; 1 puts it back.
+   *
+   * Only the drawing buffer changes — the canvas keeps its CSS size, so the
+   * layout and every HTML overlay positioned against it stay exactly where they
+   * were. That is what lets a still be captured at four or five times screen
+   * resolution without anything moving.
+   */
+  setRenderScale(scale: number): void {
+    this.renderer.setPixelRatio(this.basePixelRatio * scale)
+    const el = this.renderer.domElement
+    this.renderer.setSize(el.clientWidth, el.clientHeight, false)
+  }
+
+  /**
+   * Device pixels per CSS pixel as things stand — the screen's own ratio times
+   * whatever a capture has asked for on top. What an overlay has to divide by
+   * to work out how big it will actually come out.
+   */
+  get pixelScale(): number {
+    return this.renderer.getPixelRatio()
+  }
+
+  /**
+   * The largest scale worth asking for, given a target for the longest edge.
+   *
+   * Bounded by what the driver will actually allocate: asking for a buffer
+   * wider than MAX_RENDERBUFFER_SIZE does not fail loudly, it produces a
+   * black or truncated frame. Never below 1 — an export should not come out
+   * smaller than the screen.
+   */
+  maxRenderScale(targetLongEdge: number): number {
+    const el      = this.renderer.domElement
+    const cssLong = Math.max(el.clientWidth, el.clientHeight)
+    if (!cssLong) return 1
+    const gl     = this.renderer.getContext()
+    const glMax  = (gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number) || targetLongEdge
+    const capped = Math.min(targetLongEdge, glMax)
+    return Math.max(1, capped / (cssLong * this.basePixelRatio))
   }
 
   /** The drawing surface, for exporters that stream it rather than sample it. */

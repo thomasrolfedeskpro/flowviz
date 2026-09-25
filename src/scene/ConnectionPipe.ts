@@ -26,6 +26,18 @@ class TrimmedCurve extends THREE.Curve<THREE.Vector3> {
   }
 }
 
+/** The dashed line a connection wears when its component's relations are being
+ *  shown. Drawn like the stream chevrons — flat markers threaded down the
+ *  middle of the tube — rather than as anything applied to the glass itself, so
+ *  it never competes with the pipe's own lit/idle colour. Its colour comes from
+ *  the theme, in `pipeTrace`. */
+const DASH_LEN    = 0.34
+const DASH_GAP    = 0.26
+/** About a quarter of the tube's width. Thin enough to read as a line down the
+ *  middle rather than a fill, thick enough to survive a zoomed-out view, where
+ *  a whole flow is on screen and a tube is only a few pixels across. */
+const DASH_WIDTH  = 0.12
+
 const OPACITY_IDLE       = 0.12  // nearly invisible glass at rest
 const OPACITY_ACTIVE     = 0.28  // lit but still transparent
 const OPACITY_TRAVERSING = 0.50  // glowing glass — still see-through
@@ -47,8 +59,16 @@ export class ConnectionPipe {
   private authored:          THREE.Color | null
   private currentActive:     boolean = false
   private packetTraversing:  boolean = false
+  /** The scene this pipe lives in, so an outline can be added to it later. */
+  private parent:            THREE.Object3D
+  /** The dashes down the middle of the tube. Built on first use. */
+  private trace:             THREE.Group | null = null
+  private traced:            boolean = false
+  /** Kept because the trace is built lazily, long after the theme was set. */
+  private traceColor:        number = 0
 
   constructor(scene: THREE.Object3D, connection: InternalConnection) {
+    this.parent = scene
     this.conn  = connection
     this.id    = connection.id
     this.curve = connection.curve
@@ -99,6 +119,16 @@ export class ConnectionPipe {
     const oldGeo = this.mesh.geometry
     this.mesh.geometry = new THREE.TubeGeometry(renderCurve, TUBE_SEGMENTS, TUBE_RADIUS, TUBE_RADIUS_SEGS, false)
     oldGeo.dispose()
+
+    // The dashes are positioned along the route, so a moved pipe needs them
+    // laid out again rather than nudged.
+    if (this.trace) {
+      const wasVisible = this.trace.visible
+      this.disposeTrace()
+      this.trace = this.buildTrace()
+      this.trace.visible = wasVisible
+      this.parent.add(this.trace)
+    }
   }
 
   /**
@@ -111,6 +141,9 @@ export class ConnectionPipe {
    */
   private applyPalette(theme: Theme): void {
     const c = THEME_COLORS[theme]
+    // Not affected by an authored pipe colour: the trace has to stay legible
+    // against whatever hue the author chose, so it answers to the theme alone.
+    this.traceColor = c.pipeTrace
     if (!this.authored) {
       this.idleColor      = c.pipeIdle
       this.activeColor    = c.pipeActive
@@ -125,6 +158,9 @@ export class ConnectionPipe {
   setTheme(theme: Theme): void {
     this.applyPalette(theme)
 
+    const dash = this.trace?.children[0] as THREE.Mesh | undefined
+    if (dash) (dash.material as THREE.MeshBasicMaterial).color.setHex(this.traceColor)
+
     const mat = this.mesh.material as THREE.MeshStandardMaterial
     mat.color.setHex(this.packetTraversing || this.currentActive ? this.activeColor : this.idleColor)
     mat.emissive.setHex(this.packetTraversing ? this.activeEmissive : 0x000000)
@@ -137,6 +173,74 @@ export class ConnectionPipe {
    *  keep running the route with the glass taken away. */
   setVisible(visible: boolean): void {
     this.mesh.visible = visible
+    if (this.trace) this.trace.visible = visible && this.traced
+  }
+
+  /**
+   * Dashes threaded down the middle of the tube.
+   *
+   * Flat markers laid in the ground plane and turned to follow the route, which
+   * is exactly how the stream chevrons are drawn — so a traced pipe reads as
+   * something running through the glass rather than as the glass itself having
+   * changed colour. That distinction is the whole point: the step decides what
+   * the pipe's own colour says, and this has to be legible on top of it either
+   * way.
+   */
+  private buildTrace(): THREE.Group {
+    const { t0, t1 } = this.conn.renderTrim
+    const curve  = new TrimmedCurve(this.conn.curve, t0, t1)
+    const length = curve.getLength()
+    const count  = Math.max(1, Math.round(length / (DASH_LEN + DASH_GAP)))
+
+    // One flat dash, long side along +X, laid into the ground plane — the same
+    // two steps the chevron geometry takes, so the same tangent maths orients it.
+    const geo = new THREE.PlaneGeometry(DASH_LEN, DASH_WIDTH)
+    geo.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI / 2))
+    const mat = new THREE.MeshBasicMaterial({
+      color:      this.traceColor,
+      side:       THREE.DoubleSide,
+      depthWrite: false,
+    })
+
+    const group = new THREE.Group()
+    for (let i = 0; i < count; i++) {
+      const t   = (i + 0.5) / count
+      const pos = curve.getPointAt(t)
+      const tan = curve.getTangentAt(t)
+      const dash = new THREE.Mesh(geo, mat)
+      dash.position.copy(pos)
+      dash.rotation.set(0, Math.atan2(-tan.z, tan.x), 0)
+      // Above the tube's own glass, like a chevron in a stream.
+      dash.renderOrder = 2
+      group.add(dash)
+    }
+    return group
+  }
+
+  private disposeTrace(): void {
+    if (!this.trace) return
+    this.parent.remove(this.trace)
+    const first = this.trace.children[0] as THREE.Mesh | undefined
+    first?.geometry.dispose()
+    ;(first?.material as THREE.Material | undefined)?.dispose()
+    this.trace = null
+  }
+
+  /**
+   * Mark this pipe as one of a component's connections.
+   *
+   * Deliberately independent of `setActive`: a step lighting this pipe and you
+   * asking to see what a component connects to are different statements, and
+   * both can be true at once.
+   */
+  setTraced(on: boolean): void {
+    if (this.traced === on) return
+    this.traced = on
+    if (on && !this.trace) {
+      this.trace = this.buildTrace()
+      this.parent.add(this.trace)
+    }
+    if (this.trace) this.trace.visible = on && this.mesh.visible
   }
 
   setActive(active: boolean, durationMs: number): Promise<void> {
@@ -197,5 +301,6 @@ export class ConnectionPipe {
     scene.remove(this.mesh)
     this.mesh.geometry.dispose()
     ;(this.mesh.material as THREE.Material).dispose()
+    this.disposeTrace()
   }
 }

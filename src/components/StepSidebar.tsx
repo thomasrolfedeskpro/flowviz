@@ -3,6 +3,7 @@ import type { Step } from '@/types/schema'
 import { waterfallLanes } from '@/utils/waterfall'
 import type { SceneInfo } from '@/utils/scenes'
 import type { LintFinding } from '@/engine/geometryLint'
+import { AnglesLeftIcon, AnglesRightIcon } from '@/components/ControlIcons'
 import styles from '@/styles/StepSidebar.module.css'
 
 export interface FlowSummary {
@@ -29,6 +30,11 @@ interface Props {
   onSelectFlow: (id: string) => void
   /** Omitted when deleting isn't possible (no dev server to remove the file). */
   onDeleteFlow?: (flow: FlowSummary) => void
+  /** Bring in a flow a colleague sent. Dev server only, like delete. */
+  onImportFlow?: () => void
+  /** Slid off the right edge, leaving the diagram the whole window. */
+  hidden?: boolean
+  onToggleHidden?: () => void
   onCopyJson?: () => void
   /** Writes the edited flow back to its file. Omitted when there's no dev server. */
   onSave?: () => void
@@ -73,6 +79,9 @@ export function StepSidebar({
   onEditModeToggle,
   onSelectFlow,
   onDeleteFlow,
+  onImportFlow,
+  hidden = false,
+  onToggleHidden,
   onCopyJson,
   onSave,
   saveState,
@@ -144,7 +153,24 @@ export function StepSidebar({
 
   return (
     <>
-    <nav className={styles.sidebar} data-export-panel>
+    {/* Outside the panel, and outside the part of it that slides: the handle
+        has to stay reachable once the panel it belongs to has gone. */}
+    {onToggleHidden && (
+      <button
+        className={hidden ? `${styles.handle} ${styles.handleClosed}` : styles.handle}
+        onClick={onToggleHidden}
+        aria-expanded={!hidden}
+        aria-label={hidden ? 'Show the step list' : 'Hide the step list'}
+        title={hidden ? 'Show the step list' : 'Hide the step list'}
+      >
+        {hidden ? <AnglesRightIcon /> : <AnglesLeftIcon />}
+      </button>
+    )}
+    <nav
+      className={hidden ? `${styles.sidebar} ${styles.sidebarHidden}` : styles.sidebar}
+      data-export-panel
+      aria-hidden={hidden}
+    >
       <div className={styles.tabs}>
         <button
           className={`${styles.tab}${tab === 'steps' ? ` ${styles.tabActive}` : ''}`}
@@ -472,6 +498,12 @@ export function StepSidebar({
         </>
       ) : (
         <div className={styles.list}>
+          {/* The counterpart to the JSON download in the export menu. */}
+          {onImportFlow && (
+            <button className={styles.importBtn} onClick={onImportFlow}>
+              Import a flow…
+            </button>
+          )}
           {flows.map((f, i) => (
             <Fragment key={f.id}>
               {/* Bundled examples sit above the rule, personal flows below it.

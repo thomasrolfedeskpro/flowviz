@@ -1,3 +1,4 @@
+import * as solidIcons from '@fortawesome/free-solid-svg-icons'
 /**
  * The control panel's icon set.
  *
@@ -58,6 +59,47 @@ export function FollowIcon() {
 }
 
 /** Pipes: a length of tube with two joints, seen side on. */
+/**
+ * A Font Awesome free-solid icon, at the size of the hand-drawn ones above.
+ *
+ * The pack is already a dependency — the 3-D component icons come from it — so
+ * this costs nothing extra, and a name here is spelled the way a flow file
+ * spells `component.icon`.
+ */
+type FaEntry = { icon?: [number, number, unknown, unknown, string | string[]] }
+
+function FaIcon({ name, size = 14 }: { name: string; size?: number }) {
+  const key   = `fa${name.charAt(0).toUpperCase()}${name.slice(1)}`
+  const entry = (solidIcons as unknown as Record<string, FaEntry>)[key]
+  if (!entry?.icon) return null
+  const [w, h, , , data] = entry.icon
+  const paths = Array.isArray(data) ? data : [data]
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width={size} height={size} aria-hidden="true" focusable="false">
+      {paths.map((d, i) => <path key={i} d={d} fill="currentColor" />)}
+    </svg>
+  )
+}
+
+/** The sidebar handle, pointing whichever way it is going to move. */
+export function AnglesLeftIcon() {
+  return <FaIcon name="anglesLeft" size={12} />
+}
+
+export function AnglesRightIcon() {
+  return <FaIcon name="anglesRight" size={12} />
+}
+
+/** Keeps a card open. */
+export function PinIcon() {
+  return <FaIcon name="thumbtack" />
+}
+
+/** One node joined to several others — a component's connections. */
+export function RelationsIcon() {
+  return <FaIcon name="hexagonNodes" />
+}
+
 /** A chip pinned above a box — the pinned component label, in miniature. */
 export function LabelIcon() {
   return (

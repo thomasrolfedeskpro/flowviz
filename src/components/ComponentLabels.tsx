@@ -77,6 +77,7 @@ export function ComponentLabels({ labels, bridge }: ComponentLabelsProps) {
             else itemRefs.current.delete(label.id)
           }}
           className={styles.badge}
+          data-overlay-chip="component"
           style={{ borderLeftColor: label.color, transform: 'translate(-9999px, -9999px)' }}
         >
           {label.text}

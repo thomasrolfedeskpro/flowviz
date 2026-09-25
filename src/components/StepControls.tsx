@@ -103,7 +103,7 @@ export function StepControls({
   const atEnd   = state.currentIndex === state.totalSteps - 1
 
   return (
-    <div className={styles.panel}>
+    <div className={styles.panel} data-export-panel>
       <div className={styles.row}>
         <div className={styles.group}>
           <Tooltip label="Previous step  ←">

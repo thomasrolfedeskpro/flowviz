@@ -133,6 +133,8 @@ export class FlowScene extends SceneManager {
   /** Whether the pipe tubes are drawn. Held here, not on the layers, so a
    *  rebuilt or newly-entered scene comes back the way you left it. */
   private pipesVisible: boolean = true
+  /** Components whose whole set of connections is lit. */
+  private relationFocus = new Set<string>()
   private timing: Timing = DEFAULT_TIMING
   /** Which way the camera looks at the flow. */
   private viewMode: ViewMode = 'isometric'
@@ -258,6 +260,18 @@ export class FlowScene extends SceneManager {
    * `setViewMode` was already fixed for: it leaves you at the right
    * magnification, still looking at wherever you had panned to.
    */
+  /** The framing as it stands, so an export can reframe and put it back. */
+  captureViewState(): { frustum: number; target: THREE.Vector3 } {
+    return { frustum: this.currentFrustum, target: this.cameraTarget.clone() }
+  }
+
+  restoreViewState(state: { frustum: number; target: THREE.Vector3 }): void {
+    this.cameraTween?.stop()
+    this.currentFrustum = state.frustum
+    this.cameraTarget.copy(state.target)
+    this.applyCamera()
+  }
+
   fitView(durationMs = 260): void {
     this.tweenCamera(
       this.layer.overviewTarget.clone(),
@@ -990,6 +1004,7 @@ export class FlowScene extends SceneManager {
     this.hoverSystem.setOnHoverChange(fn)
   }
 
+
   setPacketArrivalCallback(fn: (targetId: string) => void): void {
     this.packetArrivalCallback = fn
   }
@@ -1091,6 +1106,17 @@ export class FlowScene extends SceneManager {
   setPipesVisible(visible: boolean): void {
     this.pipesVisible = visible
     for (const l of this.layers.values()) l.setPipesVisible(visible)
+  }
+
+  /**
+   * Light every connection these components make, across the whole flow.
+   *
+   * Held here as well as on the layers so a rebuild, or stepping into a nested
+   * scene and back, comes back showing what it was showing.
+   */
+  setRelationFocus(ids: Set<string>): void {
+    this.relationFocus = new Set(ids)
+    for (const l of this.layers.values()) l.setRelationFocus(this.relationFocus)
   }
 
   // ── Placing and connecting ────────────────────────────────────────────────
@@ -1330,8 +1356,9 @@ export class FlowScene extends SceneManager {
     this.layer.setSpeed(this.playbackSpeed)
     this.layer.setTiming(this.timing)
     // Fresh pipes are built visible, so a rebuild is where "pipes off" would be
-    // silently undone.
+    // silently undone. Same for a relation focus.
     this.setPipesVisible(this.pipesVisible)
+    this.setRelationFocus(this.relationFocus)
 
     // Straight to the layer: applyStep would try to transition into a scene we
     // are already standing in.

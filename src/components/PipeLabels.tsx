@@ -45,6 +45,7 @@ export function PipeLabels({ pipes, bridge, counts = {}, hoveredId = null }: Pip
             else itemRefs.current.delete(pipe.id)
           }}
           className={pipe.id === hoveredId ? `${styles.badge} ${styles.hovered}` : styles.badge}
+          data-overlay-chip="pipe"
           style={{ transform: 'translate(-9999px, -9999px)' }}
         >
           {pipe.label}

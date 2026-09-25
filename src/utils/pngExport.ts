@@ -15,18 +15,8 @@
 import { rasterizeViewport } from '@/utils/domRaster'
 
 export interface FullViewTarget {
-  captureFrame(): string
-  /** Where the 3D view sits on screen, so the page layer lands over it. */
+  /** The drawing surface: both the pixels and where they sit on screen. */
   canvas: HTMLCanvasElement
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('Could not read the captured frame'))
-    img.src = src
-  })
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -48,8 +38,13 @@ export async function captureFullViewPng(
   /** Elements to leave out — the panels, when the diagram is what matters. */
   omit: Iterable<Element> = [],
 ): Promise<Blob> {
-  const frame = await loadImage(target.captureFrame())
+  // The canvas is drawn from directly rather than through a data URL. At export
+  // resolution that string runs to tens of megabytes, and the renderer is
+  // built with preserveDrawingBuffer, so the pixels are still there to read.
+  const frame = target.canvas
   const rect  = target.canvas.getBoundingClientRect()
+  // Device pixels per CSS pixel. Rises with the render scale an export asks
+  // for, which is what carries the whole composite up to full resolution.
   const scale = frame.width / rect.width
 
   const out = document.createElement('canvas')

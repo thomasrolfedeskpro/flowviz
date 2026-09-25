@@ -12,6 +12,7 @@ import type { ComponentLabelDatum } from '@/components/ComponentLabels'
 import { StepSidebar } from '@/components/StepSidebar'
 import type { FlowSummary } from '@/components/StepSidebar'
 import { EditModal } from '@/components/EditModal'
+import { ImportFlowModal } from '@/components/ImportFlowModal'
 import type { EditTarget } from '@/components/EditModal'
 import { ExportButton } from '@/components/ExportButton'
 import { buildGraph } from '@/engine/parseFlow'
@@ -71,21 +72,45 @@ const DEFAULT_FLOW =
   allFlows.find((f) => f.id === PREFERRED_DEFAULT)?.id ?? allFlows[0]?.id ?? PREFERRED_DEFAULT
 
 async function loadFlow(id: string): Promise<FlowDefinition> {
-  // A flow added while the dev server was running is not in the manifest yet;
-  // guessing the old flat path lets a deep link still work until a restart.
-  const path = allFlows.find((f) => f.id === id)?.path ?? `${id}.json`
-  const res = await fetch(`/flows/${path}`)
-  if (!res.ok) throw new Error(`Failed to load flow "${id}": ${res.status}`)
+  // The manifest is read when the dev server boots, so a flow imported or added
+  // since then is not in it. Both fallbacks are for that case: anything new
+  // lands in custom/, and the flat path is where flows lived before the split.
+  const known = allFlows.find((f) => f.id === id)?.path
+  const candidates = known ? [known] : [`custom/${id}.json`, `${id}.json`]
 
-  // The dev server answers an unknown path with index.html and a 200, so a
-  // wrong id would otherwise surface as a JSON syntax error.
-  if (!res.headers.get('content-type')?.includes('json')) {
-    throw new Error(
-      `No flow named "${id}". Check the file exists under public/flows/examples/ ` +
-      `or public/flows/custom/ — and if you just added it, restart the dev server.`,
-    )
+  for (const path of candidates) {
+    const res = await fetch(`/flows/${path}`)
+    // The dev server answers an unknown path with index.html and a 200, so a
+    // wrong id would otherwise surface as a JSON syntax error.
+    if (res.ok && res.headers.get('content-type')?.includes('json')) {
+      return res.json() as Promise<FlowDefinition>
+    }
   }
-  return res.json() as Promise<FlowDefinition>
+
+  throw new Error(
+    `No flow named "${id}". Check the file exists under public/flows/examples/ ` +
+    `or public/flows/custom/ — and if you just added it, restart the dev server.`,
+  )
+}
+
+/**
+ * How long a card stays after the pointer leaves the component.
+ *
+ * Only long enough to cross the twelve pixels between the two. The card carries
+ * its own pin and connection controls, so it has to be reachable; any longer
+ * and cards linger over the diagram after you have moved on.
+ */
+const CARD_GRACE_MS = 220
+
+/** How many connections a component is an end of — the number its pinned card
+ *  offers to light up, and the one that says how much it carries. */
+function connectionCount(graph: InternalGraph | null, id: string): number {
+  if (!graph) return 0
+  let n = 0
+  for (const conn of graph.connections.values()) {
+    if (conn.from.id === id || conn.to.id === id) n++
+  }
+  return n
 }
 
 /** One flow's parsed state, tagged with the id it came from so a switch that is
@@ -133,6 +158,9 @@ function App() {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
   const [flowList, setFlowList] = useState<FlowSummary[]>(allFlows)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  /** The import dialog, which is its own thing rather than an edit target: it
+   *  creates a flow rather than changing the one on screen. */
+  const [importing, setImporting] = useState(false)
   // Scene transitions dip the view to the background colour and back.
   const [sceneFade, setSceneFade] = useState({ opacity: 0, ms: 0 })
   // Playback speed lives here: the step engine needs it for its interval and the
@@ -143,6 +171,8 @@ function App() {
   /** Whether the pipes are drawn. Off is for a screenshot of a diagram the tubes
    *  crowd; it takes their labels with them. */
   const [pipesVisible, setPipesVisible] = useState(true)
+  /** The step list. Closed, the diagram gets the whole window. */
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   /** Whether the pinned component names are drawn. Off by default: a flow asks
    *  for them so they are there when a still is needed, not so they cover the
    *  diagram for everyone reading it on screen. Purely an overlay, so unlike
@@ -250,6 +280,23 @@ function App() {
   )
 
   const { hoveredId, setHoveredId } = useHover()
+  /** Components double-clicked to keep their card up. Held here rather than in
+   *  the scene: the cards are HTML, and nothing about the meshes changes. */
+  const [pinnedComponents, setPinnedComponents] = useState<Set<string>>(new Set())
+  /** Pinned components showing every connection they make, not just this
+   *  step's. A subset of the pinned ones — the toggle lives on their card. */
+  const [relationFocus, setRelationFocus] = useState<Set<string>>(new Set())
+  /**
+   * The component whose card is up, held a moment after the pointer leaves it.
+   *
+   * The card carries its own controls now, and reaching them means crossing the
+   * gap between the component and the card — during which nothing is hovered.
+   * Without the grace the card would be pulled away as you reached for it.
+   */
+  const [lingerId, setLingerId] = useState<string | null>(null)
+  /** Refs, not state: the pointer crossing a card must not re-render the app. */
+  const overCardRef  = useRef(false)
+  const lingerTimer  = useRef<number | undefined>(undefined)
   // The step subscription is set up once per flow; a ref keeps it reading the
   // current speed without resubscribing on every change.
   const speedRef = useRef(speed)
@@ -282,6 +329,9 @@ function App() {
         setLoaded(loadedRef.current)
         setSavedDef(def)
         setHistory({ past: [], future: [] })
+        // A pinned card names a component in the flow just left behind.
+        setPinnedComponents(new Set())
+        setRelationFocus(new Set())
       })
       .catch((err) => !cancelled && setError(String(err)))
 
@@ -378,12 +428,20 @@ function App() {
     }
   }, [presenting])
 
-  // Recompose for the width that is actually visible. Without this the diagram
-  // stays shifted left in present mode, composed around a sidebar that has gone,
-  // and a presentation is exactly where that empty margin shows most.
+  /**
+   * How much of the canvas the sidebar covers, and so how much of it the
+   * diagram should compose into.
+   *
+   * Presenting takes the sidebar away, and so does closing it — either way the
+   * diagram would otherwise stay shifted left around a panel that is not there,
+   * which is exactly where that empty margin shows most.
+   */
+  const viewportInset = presenting || !sidebarOpen ? 0 : SIDEBAR_WIDTH
+
+  // Recompose for the width that is actually visible.
   useEffect(() => {
-    sceneRef.current?.setViewportInset(presenting ? 0 : SIDEBAR_WIDTH)
-  }, [presenting])
+    sceneRef.current?.setViewportInset(viewportInset)
+  }, [viewportInset])
 
   useEffect(() => {
     sceneRef.current?.setCameraFollow(cameraFollow)
@@ -393,8 +451,72 @@ function App() {
     sceneRef.current?.setPipesVisible(pipesVisible)
   }, [pipesVisible])
 
+  useEffect(() => {
+    sceneRef.current?.setRelationFocus(relationFocus)
+  }, [relationFocus])
+
   // The scene owns the zoom step and its limits, so a button press lands exactly
   // where a wheel notch would.
+  /** Pin or unpin a card. Unpinning takes its connection highlight with it —
+   *  the control that would turn it off goes away with the card. */
+  /** Let the card go, unless the pointer arrived on it in the meantime. */
+  const releaseCard = useCallback(() => {
+    window.clearTimeout(lingerTimer.current)
+    lingerTimer.current = window.setTimeout(() => {
+      if (!overCardRef.current) setLingerId(null)
+    }, CARD_GRACE_MS)
+  }, [])
+
+  /** Hover, plus the grace that keeps a card reachable. */
+  const handleHover = useCallback((id: string | null) => {
+    setHoveredId(id)
+    // Packets and zones have cards of their own; neither is held.
+    if (id && !id.startsWith('__')) {
+      window.clearTimeout(lingerTimer.current)
+      setLingerId(id)
+      return
+    }
+    releaseCard()
+  }, [setHoveredId, releaseCard])
+
+  const holdCard = useCallback(() => {
+    overCardRef.current = true
+    window.clearTimeout(lingerTimer.current)
+  }, [])
+
+  const dropCard = useCallback(() => {
+    overCardRef.current = false
+    releaseCard()
+  }, [releaseCard])
+
+  /**
+   * Pin or unpin a card.
+   *
+   * Independent of the connection highlight on purpose. Pinning decides whether
+   * the card stays; the highlight is about the diagram, and it outlives the
+   * card that switched it on — hovering the component again brings back the
+   * control that turns it off.
+   */
+  const togglePin = useCallback((id: string) => {
+    setPinnedComponents((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(id)) next.add(id)
+      return next
+    })
+  }, [])
+
+  // Takes the graph rather than reading the ref: this is called from the JSX,
+  // and a ref read during render is neither correct nor allowed.
+  const relationProps = useCallback((id: string, g: InternalGraph | null) => ({
+    count: connectionCount(g, id),
+    on:    relationFocus.has(id),
+    onToggle: () => setRelationFocus((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(id)) next.add(id)
+      return next
+    }),
+  }), [relationFocus])
+
   const handleZoomIn    = useCallback(() => sceneRef.current?.zoomBy(ZOOM_STEP_IN), [])
   const handleZoomOut   = useCallback(() => sceneRef.current?.zoomBy(ZOOM_STEP_OUT), [])
   const handleZoomReset = useCallback(() => sceneRef.current?.fitView(), [])
@@ -627,11 +749,11 @@ function App() {
     // The sidebar is fixed over the canvas, not beside it, so tell the scene how
     // much of its width is hidden and it will compose into what is visible.
     // Presenting takes the sidebar away, so the whole canvas is visible again.
-    s.setViewportInset(presenting ? 0 : SIDEBAR_WIDTH)
+    s.setViewportInset(viewportInset)
     // No animation here: the scene has only just been built, so there is no
     // previous view for it to have come from.
     s.setViewMode(viewMode, 0)
-  }, [theme, speed, editMode, cameraFollow, pipesVisible, presenting, viewMode])
+  }, [theme, speed, editMode, cameraFollow, pipesVisible, viewMode, viewportInset])
 
   const setMode = useCallback((next: SceneMode) => {
     sceneRef.current?.setMode(next)
@@ -1002,7 +1124,7 @@ function App() {
           setBridge(b)
           setArrivedTargets(new Set())
           initScene(s)
-          s.setHoverCallback(setHoveredId)
+          s.setHoverCallback(handleHover)
           // Objects are edited in whichever scene is on screen, so the target
           // records it: the same id has to be found again in the definition.
           s.setComponentSelectCallback((id) =>
@@ -1055,6 +1177,9 @@ function App() {
           scenes={scenes}
           onSelectFlow={handleSelectFlow}
           onDeleteFlow={import.meta.env.DEV ? handleDeleteFlow : undefined}
+          onImportFlow={import.meta.env.DEV ? () => setImporting(true) : undefined}
+          hidden={!sidebarOpen}
+          onToggleHidden={() => setSidebarOpen((v) => !v)}
           onGoTo={handleGoTo}
           onEditModeToggle={handleEditModeToggle}
           onCopyJson={handleCopyJson}
@@ -1104,6 +1229,21 @@ function App() {
       {/* Pinned component names — for when the diagram is read as a still */}
       {bridge && componentLabelsVisible && componentLabelData.length > 0 && (
         <ComponentLabels labels={componentLabelData} bridge={bridge} />
+      )}
+
+      {importing && (
+        <ImportFlowModal
+          taken={new Set(flowList.map((f) => f.id))}
+          onImported={(flow) => {
+            setFlowList((list) => [...list, flow].sort(
+              (a, b) => (a.group === 'examples' ? 0 : 1) - (b.group === 'examples' ? 0 : 1)
+                || a.title.localeCompare(b.title),
+            ))
+            setImporting(false)
+            handleSelectFlow(flow.id)
+          }}
+          onClose={() => setImporting(false)}
+        />
       )}
 
       {/* Delete confirmation is reachable outside edit mode; the rest is edit-only. */}
@@ -1157,12 +1297,30 @@ function App() {
           hoveredId={hoveredId}
         />
       )}
-      {hoveredId &&
-        !hoveredId.startsWith('__packet__') &&
-        !hoveredId.startsWith('__zone__') &&
-        bridge && (
-          <HoverTooltip hoveredId={hoveredId} graph={activeGraph ?? graph} bridge={bridge} />
-        )}
+      {/* Pinned cards first, then the one the pointer is on — unless it is
+          already pinned, which would stack two cards in the same place. */}
+      {bridge && [...pinnedComponents].map((id) => (
+        <HoverTooltip
+          key={id}
+          componentId={id}
+          graph={activeGraph ?? graph}
+          bridge={bridge}
+          pinned
+          onTogglePin={() => togglePin(id)}
+          relations={relationProps(id, activeGraph ?? graph)}
+        />
+      ))}
+      {bridge && lingerId && !pinnedComponents.has(lingerId) && (
+        <HoverTooltip
+          componentId={lingerId}
+          graph={activeGraph ?? graph}
+          bridge={bridge}
+          onTogglePin={() => togglePin(lingerId)}
+          relations={relationProps(lingerId, activeGraph ?? graph)}
+          onPointerEnter={holdCard}
+          onPointerLeave={dropCard}
+        />
+      )}
       {hoveredId?.startsWith('__zone__') && sceneRef.current && bridge && (
         <ZoneTooltip
           zoneId={hoveredId.slice('__zone__'.length)}

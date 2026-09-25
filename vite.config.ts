@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import type { ViteDevServer } from 'vite'
 // The app's own validator, so a save can never write a flow the app can't load.
 // Only a type import reaches for the `@` alias, and those are erased at build.
@@ -61,12 +61,12 @@ function flowManifest() {
       return `export const flows = ${JSON.stringify(flows)}`
     },
 
-    // DELETE and PUT /api/flows/<id> remove or overwrite a flow file. Dev server
-    // only — authoring happens locally, and a built static site has nobody to
-    // serve it.
+    // POST, PUT and DELETE /api/flows/<id> create, overwrite or remove a flow
+    // file. Dev server only — authoring happens locally, and a built static site
+    // has nobody to serve it.
     configureServer(server: ViteDevServer) {
       server.middlewares.use('/api/flows', (req, res, next) => {
-        if (req.method !== 'DELETE' && req.method !== 'PUT') return next()
+        if (req.method !== 'DELETE' && req.method !== 'PUT' && req.method !== 'POST') return next()
 
         const id = decodeURIComponent((req.url ?? '').replace(/^\//, '').split('?')[0])
         res.setHeader('Content-Type', 'application/json')
@@ -80,28 +80,62 @@ function flowManifest() {
         }
 
         const match = listFlowFiles().find((rel) => rel.split('/').pop() === `${id}.json`)
-        if (!match) {
-          res.statusCode = 404
-          return res.end(JSON.stringify({ error: `No such flow: ${id}` }))
-        }
 
         const invalidateManifest = () => {
           const mod = server.moduleGraph.getModuleById(resolvedId)
           if (mod) server.moduleGraph.invalidateModule(mod)
         }
 
-        if (req.method === 'PUT') {
+        const readBody = (done: (parsed: unknown) => void) => {
           const chunks: Buffer[] = []
           req.on('data', (c: Buffer) => chunks.push(c))
           req.on('end', () => {
-            let parsed: unknown
             try {
-              parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+              done(JSON.parse(Buffer.concat(chunks).toString('utf8')))
             } catch (err) {
               res.statusCode = 400
-              return res.end(JSON.stringify({ error: `Body is not JSON: ${String(err)}` }))
+              res.end(JSON.stringify({ error: `Body is not JSON: ${String(err)}` }))
             }
+          })
+        }
 
+        // An import lands here. Always into custom/: examples/ is committed
+        // reference material, and a file a colleague sent is neither.
+        if (req.method === 'POST') {
+          if (match) {
+            res.statusCode = 409
+            return res.end(JSON.stringify({
+              error: `A flow called "${id}" already exists. Choose another name.`,
+            }))
+          }
+          readBody((parsed) => {
+            const result = parseFlowSchema(parsed)
+            if (!result.success) {
+              res.statusCode = 422
+              return res.end(JSON.stringify({ error: 'Invalid flow', errors: result.errors }))
+            }
+            const rel = `custom/${id}.json`
+            try {
+              mkdirSync(`${FLOW_ROOT}/custom`, { recursive: true })
+              writeFileSync(`${FLOW_ROOT}/${rel}`, JSON.stringify(parsed, null, 2) + '\n')
+            } catch (err) {
+              res.statusCode = 500
+              return res.end(JSON.stringify({ error: String(err) }))
+            }
+            invalidateManifest()
+            res.statusCode = 201
+            res.end(JSON.stringify({ created: id, path: rel }))
+          })
+          return
+        }
+
+        if (!match) {
+          res.statusCode = 404
+          return res.end(JSON.stringify({ error: `No such flow: ${id}` }))
+        }
+
+        if (req.method === 'PUT') {
+          readBody((parsed) => {
             // Validate before writing. An edit-mode bug that produced a broken
             // flow would otherwise overwrite a good file with an unloadable one.
             const result = parseFlowSchema(parsed)

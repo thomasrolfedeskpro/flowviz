@@ -7,6 +7,10 @@ export interface ThemeConfig {
   pipeIdle:           number
   pipeActive:         number
   pipeActiveEmissive: number
+  /** The dashes threaded through a pipe when a component's connections are
+   *  being shown. Read against the glass rather than against the background,
+   *  so it inverts with the theme rather than staying one hue. */
+  pipeTrace:          number
   packetColor:        number
   ambientColor:       number
   ambientIntensity:   number
@@ -22,6 +26,7 @@ export const THEME_COLORS: Record<Theme, ThemeConfig> = {
     pipeIdle:           0x7799bb,  // light blue-grey glass at rest
     pipeActive:         0x66bbff,  // bright blue when a step lights the connection
     pipeActiveEmissive: 0x1a3a5c,
+    pipeTrace:          0xffffff,  // white on dark glass
     packetColor:        0x000000,
     ambientColor:       0xffeedd,
     ambientIntensity:   0.9,
@@ -35,6 +40,7 @@ export const THEME_COLORS: Record<Theme, ThemeConfig> = {
     pipeIdle:           0x99bbcc,  // pale blue-grey glass at rest
     pipeActive:         0x3388cc,  // medium blue when lit
     pipeActiveEmissive: 0x112233,  // subtle inner glow (was none)
+    pipeTrace:          0x111d3a,  // dark navy on pale glass
     packetColor:        0x000000,
     ambientColor:       0xffffff,
     ambientIntensity:   1.8,

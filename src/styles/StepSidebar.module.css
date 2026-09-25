@@ -11,6 +11,17 @@
   display: flex;
   flex-direction: column;
   z-index: 150;
+  transition: transform 0.22s ease;
+}
+
+/* Pushed off the right edge rather than unmounted: the step list keeps its
+   scroll position and its open tab, so bringing it back is where you left it.
+   `visibility` waits for the slide to finish, which keeps it out of the tab
+   order without cutting the animation short. */
+.sidebarHidden {
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform 0.22s ease, visibility 0s linear 0.22s;
 }
 
 /* ── tabs ───────────────────────────────────────────────── */
@@ -795,4 +806,70 @@
   margin: 0.45rem 0.3rem;
   border: none;
   border-top: 1px solid var(--panel-border);
+}
+
+/* Import sits at the head of the visualization list — the counterpart to the
+   JSON download in the export menu. Styled as the Edit layout button is, so the
+   two read as the same kind of affordance rather than as a list row. */
+.importBtn {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.4rem;
+  background: var(--btn-bg);
+  border: 1px dashed var(--btn-border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.4rem 0.6rem;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.importBtn:hover {
+  background: var(--btn-hover);
+  border-color: var(--accent-blue);
+  color: var(--text-primary);
+}
+
+/* The handle that puts the step list away, and fetches it back.
+   Fixed rather than a child of the panel: the panel slides off screen and this
+   has to stay behind. It tracks the panel's edge with the same easing, so the
+   two read as one movement. */
+.handle {
+  position: fixed;
+  top: 0.7rem;
+  right: 250px;
+  z-index: 151;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-right: 0.35rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: right 0.22s ease, background 0.12s, color 0.12s, box-shadow 0.12s;
+}
+
+.handle:hover {
+  /* White on purpose, in both themes: it sits over the diagram, not over a
+     panel, so it needs a ground of its own to be legible against whatever
+     happens to be behind it. */
+  background: #fff;
+  color: #1a1a2e;
+  box-shadow: 0 1px 5px rgb(0 0 0 / 0.2);
+}
+
+.handle:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* The panel has gone, so the handle comes to rest against the window edge. */
+.handleClosed {
+  right: 0;
 }

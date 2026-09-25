@@ -4,8 +4,9 @@
   left: 0;
   pointer-events: auto;
   max-width: 260px;
-  max-height: 260px;
-  overflow-y: auto;
+  /* Deliberately no overflow here. A clipping context on the card would hide
+     the header's tooltips, which sit outside its bounds by design. The body
+     below does the clipping instead. */
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 0.5rem;
@@ -17,11 +18,78 @@
   z-index: 200;
 }
 
+/* Everything but the header. Scrolls when a component has a lot to say, and
+   never sideways: a horizontal scrollbar in a card that follows the pointer
+   cannot be reached, because moving towards it moves the card. */
+.body {
+  max-height: 232px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* Title on the left, its controls on the right. The controls keep their place
+   whatever the name is, so reaching for the pin is the same move every time. */
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
 .tooltip strong {
   display: block;
+  flex: 1;
   font-size: 0.85rem;
   color: var(--text-strong);
-  margin-bottom: 0.3rem;
+}
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.1rem;
+  /* Pull them up against the title's cap height rather than its line box. */
+  margin-top: -0.15rem;
+}
+
+.action {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm, 0.25rem);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+}
+
+.action:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+.action:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.action:disabled:hover {
+  background: none;
+  color: var(--text-muted);
+}
+
+.action:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.actionOn,
+.actionOn:hover {
+  background: var(--accent-blue);
+  color: var(--accent-fg);
 }
 
 .tooltip p {
@@ -38,9 +106,23 @@
   background: var(--code-bg);
   border-radius: 0.25rem;
   padding: 0.15rem 0.3rem;
+  /* A file path is one long unbroken token, so `overflow-wrap` alone leaves it
+     sticking out: there is no break opportunity to take. `break-all` makes one
+     anywhere, which for a path is the right trade — a wrapped path is readable,
+     a clipped one is not. */
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .notes {
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* Pinned by a double-click, and staying until another one. The ring is the only
+   thing that separates it from a card the pointer happens to be holding up —
+   deliberately quiet, because several can be on screen at once. */
+.pinned {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 1px var(--accent-blue), 0 4px 14px rgb(0 0 0 / 0.18);
 }
