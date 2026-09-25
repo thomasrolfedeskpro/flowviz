@@ -71,6 +71,36 @@ export class SceneBoundary {
     parent.add(this.group)
   }
 
+  /**
+   * Re-fit to the scene's contents after something inside it has moved.
+   *
+   * The boundary is derived, not authored — it is whatever bounds the scene,
+   * plus a margin. Built once in the constructor it went stale the moment a
+   * component was dragged, leaving a box that no longer contained its own
+   * scene. Cheap enough to call on every pointer move: the outline is four
+   * lines, and the label is only moved, not redrawn — its texture depends on
+   * the text, which has not changed.
+   */
+  setBounds(bounds: { minX: number; maxX: number; minZ: number; maxZ: number }): void {
+    const pad   = MARGIN * CELL_SIZE
+    const width = bounds.maxX - bounds.minX + pad * 2
+    const span  = bounds.maxZ - bounds.minZ + pad * 2
+    const cx    = (bounds.minX + bounds.maxX) / 2
+    const cz    = (bounds.minZ + bounds.maxZ) / 2
+
+    const plane = new THREE.PlaneGeometry(width, span).rotateX(-Math.PI / 2)
+    const old   = this.outline.geometry
+    this.outline.geometry = new THREE.EdgesGeometry(plane)
+    this.outline.computeLineDistances()
+    this.outline.position.set(cx, LINE_Y, cz)
+    plane.dispose()
+    old.dispose()
+
+    if (this.label) {
+      this.label.position.set(cx, LINE_Y + 0.02, cz + span / 2 - LABEL_HEIGHT * 0.75)
+    }
+  }
+
   /** Deliberately darker than the grid it sits on. Drawn in the grid's own
    *  colour it read as one more grid line and disappeared. */
   private lineColor(theme: Theme): THREE.Color {

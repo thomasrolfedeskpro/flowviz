@@ -66,26 +66,58 @@ export class SceneLayer {
   activeStreams:  ChevronStream[] = []
   currentStep:    Step | null = null
 
-  /** Camera framing that shows this layer's whole grid. */
-  readonly overviewTarget: THREE.Vector3
   /**
-   * Half-extents of the grid *as projected on screen*, not as measured on the
+   * What the camera frames: the grid the author declared, union whatever is
+   * actually in the scene.
+   *
+   * Union rather than either alone. The declared grid is what the author asked
+   * for, so framing must never come in tighter than that and reframe every
+   * flow that already exists; and anything dragged past its edge still has to
+   * be framed, or it would be pushed somewhere the camera never looks.
+   *
+   * Computed on demand rather than in the constructor, because both halves
+   * move while a layout is being edited.
+   */
+  private framedBounds(): { minX: number; maxX: number; minZ: number; maxZ: number } {
+    const g = this.graph.gridBounds
+    const c = contentBounds(this.graph)
+    return {
+      minX: Math.min(g.minX, c.minX), maxX: Math.max(g.maxX, c.maxX),
+      minZ: Math.min(g.minZ, c.minZ), maxZ: Math.max(g.maxZ, c.maxZ),
+    }
+  }
+
+  /** Camera framing that shows the whole of this layer. */
+  get overviewTarget(): THREE.Vector3 {
+    const { minX, maxX, minZ, maxZ } = this.framedBounds()
+    return new THREE.Vector3((minX + maxX) / 2, 0, (minZ + maxZ) / 2)
+  }
+
+  /**
+   * Half-extents of the scene *as projected on screen*, not as measured on the
    * ground. The view is isometric, so a wide shallow grid becomes a wide
    * shallow diamond — framing it by its larger ground axis leaves a third of
    * the canvas empty. The camera's aspect decides which of the two binds, and
    * only FlowScene knows that, so both are published here.
    */
-  readonly overviewHalfWidth: number
-  readonly overviewHalfHeight: number
-  /** The same extents for a camera looking straight down. */
-  readonly planHalfWidth: number
-  readonly planHalfHeight: number
-
-  /** Half-extents of this scene as projected in `mode`. */
   overviewHalf(mode: ViewMode): { width: number; height: number } {
-    return mode === 'plan'
-      ? { width: this.planHalfWidth,     height: this.planHalfHeight }
-      : { width: this.overviewHalfWidth, height: this.overviewHalfHeight }
+    const { minX, maxX, minZ, maxZ } = this.framedBounds()
+    const extentX = (maxX - minX) / 2 + CELL_SIZE
+    const extentZ = (maxZ - minZ) / 2 + CELL_SIZE
+    const PAD = 1.08
+
+    // Straight down, the ground plane is not projected at all: world X is
+    // screen-x and world Z is screen-y, so the half-extents are the grid's own.
+    if (mode === 'plan') return { width: extentX * PAD, height: extentZ * PAD }
+
+    // With the camera on the (1,1,1) axis, a ground point (x, z) lands at
+    // screen ((x - z)/√2, -(x + z)/√6). Both corners of the grid are at the
+    // extremes, so the projected half-extents are these sums. The pad leaves a
+    // margin and covers the height of the meshes standing on the grid.
+    return {
+      width:  ((extentX + extentZ) / Math.SQRT2) * PAD,
+      height: ((extentX + extentZ) / Math.sqrt(6)) * PAD,
+    }
   }
 
   private hooks: SceneLayerHooks
@@ -97,7 +129,9 @@ export class SceneLayer {
   private editMode = false
   /** Pipes off hides the tubes for a screenshot; the pads under their labels go
    *  with them. Held so edit mode can be turned on without bringing them back. */
-  private pipesVisible = true
+  /** The chips naming each pipe. Independent of the tubes: a diagram can be
+   *  too busy with protocol names on it and still need the routes drawn. */
+  private pipeLabelsVisible = true
   /** Components whose every connection is lit, overriding the step's own. */
   private relationFocus = new Set<string>()
   /** Playback multiplier: 4 means everything animates four times faster, so a
@@ -153,24 +187,6 @@ export class SceneLayer {
     this.buildWaypointHandles()
     this.buildLabelHandles()
 
-    const { minX, maxX, minZ, maxZ } = graph.gridBounds
-    const extentX = (maxX - minX) / 2 + CELL_SIZE
-    const extentZ = (maxZ - minZ) / 2 + CELL_SIZE
-    this.overviewTarget = new THREE.Vector3((minX + maxX) / 2, 0, (minZ + maxZ) / 2)
-
-    // With the camera on the (1,1,1) axis, a ground point (x, z) lands at
-    // screen ((x - z)/√2, -(x + z)/√6). Both corners of the grid are at the
-    // extremes, so the projected half-extents are these sums. The pad leaves a
-    // margin and covers the height of the meshes standing on the grid.
-    const PAD = 1.08
-    this.overviewHalfWidth  = ((extentX + extentZ) / Math.SQRT2) * PAD
-    this.overviewHalfHeight = ((extentX + extentZ) / Math.sqrt(6)) * PAD
-
-    // Straight down, the ground plane is not projected at all: world X is
-    // screen-x and world Z is screen-y, so the half-extents are the grid's own.
-    this.planHalfWidth  = extentX * PAD
-    this.planHalfHeight = extentZ * PAD
-
     // Nested scenes build alongside, hidden until a step names them.
     for (const [childId, childGraph] of graph.scenes) {
       const child = new SceneLayer(
@@ -225,11 +241,20 @@ export class SceneLayer {
 
   /** Show or hide this layer's pipes. Owned by FlowScene, which re-applies it
    *  to every layer after a rebuild. */
+  /** Re-fit the dashed boundary to what is in the scene now. Cheap, and a
+   *  no-op at the top level, which has no boundary. */
+  refreshBoundary(): void {
+    this.boundary?.setBounds(contentBounds(this.graph))
+  }
+
   setPipesVisible(visible: boolean): void {
-    this.pipesVisible = visible
     for (const pipe of this.pipes.values()) pipe.setVisible(visible)
-    // A label pad is the click target for a chip that has gone with the pipes,
-    // so it goes too rather than sitting on the ground under nothing.
+  }
+
+  /** A label pad is the click target for a chip, so it goes when the chip does
+   *  rather than sitting on the ground under nothing. */
+  setPipeLabelsVisible(visible: boolean): void {
+    this.pipeLabelsVisible = visible
     for (const h of this.labelHandles) h.visible = this.editMode && visible
   }
 
@@ -237,7 +262,7 @@ export class SceneLayer {
     this.editMode = enabled
     for (const z of this.zones) z.setHandlesVisible(enabled)
     for (const h of this.waypointHandles) h.visible = enabled
-    for (const h of this.labelHandles) h.visible = enabled && this.pipesVisible
+    for (const h of this.labelHandles) h.visible = enabled && this.pipeLabelsVisible
     if (enabled) this.syncLabelHandles()
   }
 
@@ -503,7 +528,7 @@ export class SceneLayer {
         new THREE.MeshBasicMaterial({ color: 0x8892a0, transparent: true, opacity: 0.35, depthTest: false }),
       )
       mesh.userData = { connId }
-      mesh.visible = this.editMode && this.pipesVisible
+      mesh.visible = this.editMode && this.pipeLabelsVisible
       mesh.renderOrder = 12
       attachHoverOutline(mesh)
       this.group.add(mesh)

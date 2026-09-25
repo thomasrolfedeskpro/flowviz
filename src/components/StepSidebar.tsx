@@ -26,6 +26,10 @@ interface Props {
   /** Nested scenes by owning component id — used to indent their steps. */
   scenes?: Map<string, SceneInfo>
   onGoTo: (index: number) => void
+  /** Whether the flow is playing, and how long a step holds for. Together they
+   *  drive the bar that creeps across the step on screen. */
+  isPlaying: boolean
+  msPerStep: number
   onEditModeToggle: () => void
   onSelectFlow: (id: string) => void
   /** Omitted when deleting isn't possible (no dev server to remove the file). */
@@ -76,6 +80,8 @@ export function StepSidebar({
   flows,
   scenes,
   onGoTo,
+  isPlaying,
+  msPerStep,
   onEditModeToggle,
   onSelectFlow,
   onDeleteFlow,
@@ -124,7 +130,17 @@ export function StepSidebar({
   const lanes = waterfallLanes(steps)
   const hasWaterfall = lanes.span > 0
   const waterfallName = waterfallLabel?.trim() || 'Waterfall'
-  const open = showWaterfall && hasWaterfall && tab === 'steps'
+  /**
+   * Whether the waterfall column is out.
+   *
+   * `hidden` is in here because the column emerges from *behind* the panel and
+   * is positioned against its edge — with the panel gone it would be left
+   * standing on its own against the window edge, attached to nothing.
+   *
+   * Derived rather than stored, so putting the panel away and fetching it back
+   * returns the column to however it was left rather than closing it for good.
+   */
+  const open = showWaterfall && hasWaterfall && tab === 'steps' && !hidden
 
   // Keep the active step visible when it changes programmatically
   useEffect(() => {
@@ -297,19 +313,29 @@ export function StepSidebar({
                   className={styles.stepNum}
                   style={{ marginLeft: `${(step.scene ? scenes?.get(step.scene)?.depth ?? 0 : 0) * 0.75}rem` }}
                 >
-                  {i}
+                  {i + 1}
                 </span>
                 <span className={`${styles.stepName}${open ? ` ${styles.stepNameTight}` : ''}`}>
                   {step.name ?? step.title}
                 </span>
+                {/* Keyed on the step so the sweep restarts rather than carrying
+                    on from wherever the last one had got to. */}
+                {isPlaying && i === currentIndex && (
+                  <span
+                    key={`progress-${currentIndex}`}
+                    className={styles.stepProgress}
+                    style={{ animationDuration: `${msPerStep}ms` }}
+                    aria-hidden="true"
+                  />
+                )}
 
                 {editMode && (
                   <span className={styles.stepActions}>
                     {onEditStep && (
                       <button
                         className={styles.stepActionBtn}
-                        title={`Edit step ${i}`}
-                        aria-label={`Edit step ${i}`}
+                        title={`Edit step ${i + 1}`}
+                        aria-label={`Edit step ${i + 1}`}
                         onClick={(e) => { e.stopPropagation(); onEditStep(i) }}
                       >
                         <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
@@ -320,8 +346,8 @@ export function StepSidebar({
                     {onDuplicateStep && (
                       <button
                         className={styles.stepActionBtn}
-                        title={`Duplicate step ${i}`}
-                        aria-label={`Duplicate step ${i}`}
+                        title={`Duplicate step ${i + 1}`}
+                        aria-label={`Duplicate step ${i + 1}`}
                         onClick={(e) => { e.stopPropagation(); onDuplicateStep(i) }}
                       >
                         <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
@@ -334,8 +360,8 @@ export function StepSidebar({
                     {onDeleteStep && steps.length > 1 && (
                       <button
                         className={`${styles.stepActionBtn} ${styles.stepActionDanger}`}
-                        title={`Delete step ${i}`}
-                        aria-label={`Delete step ${i}`}
+                        title={`Delete step ${i + 1}`}
+                        aria-label={`Delete step ${i + 1}`}
                         onClick={(e) => { e.stopPropagation(); onDeleteStep(i) }}
                       >
                         <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">

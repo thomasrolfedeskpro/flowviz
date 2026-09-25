@@ -4,7 +4,7 @@ import type { StepEngine } from '@/engine/stepEngine'
 import type { ViewMode } from '@/scene/viewMode'
 import type { Theme } from '@/scene/ThemeColors'
 import {
-  StepBackIcon, StepForwardIcon, PlayIcon, PauseIcon, FollowIcon, PipesIcon, LabelIcon,
+  StepBackIcon, StepForwardIcon, PlayIcon, PauseIcon, FollowIcon, PipesIcon, PipeLabelIcon, LabelIcon,
   IsometricIcon, PlanIcon, ZoomInIcon, ZoomOutIcon, SunIcon, MoonIcon,
   EnterFullScreenIcon, ExitFullScreenIcon,
 } from '@/components/ControlIcons'
@@ -43,6 +43,8 @@ export function StepControls({
   onCameraFollowChange,
   pipesVisible,
   onPipesVisibleChange,
+  pipeLabelsVisible,
+  onPipeLabelsVisibleChange,
   viewMode,
   onViewModeChange,
   onZoomIn,
@@ -69,6 +71,8 @@ export function StepControls({
   /** Whether the pipes are drawn. Off is for a screenshot of a crowded diagram. */
   pipesVisible: boolean
   onPipesVisibleChange: (visible: boolean) => void
+  pipeLabelsVisible: boolean
+  onPipeLabelsVisibleChange: (visible: boolean) => void
   /** Isometric, or looking straight down. */
   viewMode: ViewMode
   onViewModeChange: (mode: ViewMode) => void
@@ -253,6 +257,18 @@ export function StepControls({
               aria-label="Show pipes"
             >
               <PipesIcon />
+            </button>
+          </Tooltip>
+          {/* Separate from the tubes: a diagram can be too busy with protocol
+              names on it and still need the routes drawn. */}
+          <Tooltip label={pipeLabelsVisible ? 'Pipe labels shown' : 'Pipe labels hidden'}>
+            <button
+              className={`${styles.iconBtn}${pipeLabelsVisible ? ` ${styles.on}` : ''}`}
+              onClick={() => onPipeLabelsVisibleChange(!pipeLabelsVisible)}
+              aria-pressed={pipeLabelsVisible}
+              aria-label="Show pipe labels"
+            >
+              <PipeLabelIcon />
             </button>
           </Tooltip>
           {/* The pinned names a flow asked for. On for reading a still, off

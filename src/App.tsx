@@ -171,6 +171,8 @@ function App() {
   /** Whether the pipes are drawn. Off is for a screenshot of a diagram the tubes
    *  crowd; it takes their labels with them. */
   const [pipesVisible, setPipesVisible] = useState(true)
+  /** The chips naming each pipe. Hidden independently of the tubes themselves. */
+  const [pipeLabelsVisible, setPipeLabelsVisible] = useState(true)
   /** The step list. Closed, the diagram gets the whole window. */
   const [sidebarOpen, setSidebarOpen] = useState(true)
   /** Whether the pinned component names are drawn. Off by default: a flow asks
@@ -450,6 +452,10 @@ function App() {
   useEffect(() => {
     sceneRef.current?.setPipesVisible(pipesVisible)
   }, [pipesVisible])
+
+  useEffect(() => {
+    sceneRef.current?.setPipeLabelsVisible(pipeLabelsVisible)
+  }, [pipeLabelsVisible])
 
   useEffect(() => {
     sceneRef.current?.setRelationFocus(relationFocus)
@@ -745,6 +751,7 @@ function App() {
     s.setEditMode(editMode)
     s.setCameraFollow(cameraFollow)
     s.setPipesVisible(pipesVisible)
+    s.setPipeLabelsVisible(pipeLabelsVisible)
     s.setTiming(timingRef.current)
     // The sidebar is fixed over the canvas, not beside it, so tell the scene how
     // much of its width is hidden and it will compose into what is visible.
@@ -753,7 +760,7 @@ function App() {
     // No animation here: the scene has only just been built, so there is no
     // previous view for it to have come from.
     s.setViewMode(viewMode, 0)
-  }, [theme, speed, editMode, cameraFollow, pipesVisible, viewMode, viewportInset])
+  }, [theme, speed, editMode, cameraFollow, pipesVisible, pipeLabelsVisible, viewMode, viewportInset])
 
   const setMode = useCallback((next: SceneMode) => {
     sceneRef.current?.setMode(next)
@@ -1181,6 +1188,8 @@ function App() {
           hidden={!sidebarOpen}
           onToggleHidden={() => setSidebarOpen((v) => !v)}
           onGoTo={handleGoTo}
+          isPlaying={stepState.isPlaying}
+          msPerStep={timing.step / speed}
           onEditModeToggle={handleEditModeToggle}
           onCopyJson={handleCopyJson}
           onSave={handleSave}
@@ -1217,7 +1226,7 @@ function App() {
 
       {/* Persistent pipe protocol labels. They go with the pipes: a chip naming
           a protocol, floating over nothing, is the clutter this removes. */}
-      {bridge && pipesVisible && pipeLabelData.length > 0 && (
+      {bridge && pipeLabelsVisible && pipeLabelData.length > 0 && (
         <PipeLabels
           pipes={pipeLabelData}
           bridge={bridge}
@@ -1351,6 +1360,8 @@ function App() {
               onCameraFollowChange={setCameraFollow}
               pipesVisible={pipesVisible}
               onPipesVisibleChange={setPipesVisible}
+              pipeLabelsVisible={pipeLabelsVisible}
+              onPipeLabelsVisibleChange={setPipeLabelsVisible}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
               onZoomIn={handleZoomIn}

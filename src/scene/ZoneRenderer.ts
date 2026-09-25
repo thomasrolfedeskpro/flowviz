@@ -51,9 +51,10 @@ export function applyZoneCorner(
 
 /** Snap zone bounds to whole grid cells, keeping the zone at least one cell wide/deep. */
 export function snapZoneToGrid(zone: InternalZone): void {
-  // Clamped at 0: the grid starts at the origin and component positions are
-  // non-negative cells, so a zone reaching past it could never be dropped into.
-  const snap = (v: number) => Math.max(0, Math.round(v / CELL_SIZE) * CELL_SIZE)
+  // Not clamped at the origin. A zone dragged past it re-bases the scene on
+  // release, the same way a component does, so negative edges are a legitimate
+  // intermediate state rather than something to round away.
+  const snap = (v: number) => Math.round(v / CELL_SIZE) * CELL_SIZE
   zone.min.x = snap(zone.min.x)
   zone.min.z = snap(zone.min.z)
   zone.max.x = Math.max(snap(zone.max.x), zone.min.x + CELL_SIZE)
@@ -70,27 +71,6 @@ export function componentsInZone(graph: InternalGraph, zone: InternalZone): stri
     ) ids.push(id)
   }
   return ids
-}
-
-/**
- * Trim a whole-zone drag so nothing crosses the grid origin.
- *
- * `minX`/`minZ` are the leading edges of everything being moved. The grip
- * carries the zone's components with it, and a component left on a negative
- * cell can't be dragged back — a component drag clamps itself to the grid.
- */
-export function clampZoneDelta(
-  minX: number,
-  minZ: number,
-  dx: number,
-  dz: number,
-): { dx: number; dz: number } {
-  // Math.max(-5, -0) is -0, and negative zero has no business in a coordinate.
-  const trim = (d: number, min: number) => {
-    const v = Math.max(d, -min)
-    return v === 0 ? 0 : v
-  }
-  return { dx: trim(dx, minX), dz: trim(dz, minZ) }
 }
 
 /** Round a drag delta to whole cells, so a moved zone stays grid-aligned. */

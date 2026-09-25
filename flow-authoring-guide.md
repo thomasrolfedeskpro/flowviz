@@ -447,6 +447,15 @@ The chips do not dodge each other. Two components close together with the same
 anchor will overlap; give them opposing anchors (`middle-left` and
 `middle-right`) or move one.
 
+**Anchor across a line of components, not along it.** Components sharing a col
+or a row form a diagonal on screen, and an anchor pointing along that diagonal
+puts each chip right beside its *neighbour* — which reads as the whole row
+being mislabelled by one, even though every chip is on the right component.
+Pick the anchor that points into the empty space beside the line. For a column
+of components (same `col`, increasing `row`, running down-left) that is
+`bottom-right` or `top-left`; for a row (same `row`, increasing `col`, running
+down-right) it is `top-right` or `bottom-left`.
+
 ---
 
 ### 6.9 `detail` — a scene inside a component (optional)
@@ -1466,14 +1475,24 @@ definition becomes editable in place. Playback stops while you edit.
 | Move a component | Drag it; it snaps to the grid on release |
 | Resize a zone | Drag any of its four corner handles |
 | Move a zone and everything in it | Drag the amber grip on its top edge |
+| Add a routing waypoint | Double-click the pipe where you want it. It is inserted in route order, so the pipe never doubles back |
 | Move a routing waypoint | Drag the teal diamond on the pipe |
-| Delete a waypoint | Right-click the diamond — the route falls back to `auto` when the last one goes |
+| Delete a waypoint | Double-click the diamond, or right-click it — the route falls back to `auto` when the last one goes |
 | Add a component or zone | **＋ Component** / **＋ Zone**, then click the cell to drop it on |
 | Join two components | **⤳ Connect**, then click the source and the target |
 
-Esc cancels an armed add or connect. Zones and components stop at the grid
-origin — nothing can be dragged into negative cells, because a component left
-there could not be dragged back.
+Esc cancels an armed add or connect.
+
+A component can be dragged anywhere: past the grid's far edge, which grows
+`layout.grid` to cover it, or past the origin, which re-bases the scene so the
+lowest occupied cell is zero again. Re-basing renumbers every component, zone
+and waypoint in that scene, but nothing moves relative to anything else, so the
+diagram is unchanged — only the file is. That is why cells never go negative:
+`layout.grid` cannot express a negative origin, and a flow that used one would
+be misread by any older checkout rather than rejected by it.
+
+Zones behave the same way: a corner dragged past the origin, or a whole zone
+moved past it by its grip, re-bases the scene rather than stopping dead.
 
 **Everything else, in forms**
 
@@ -1631,7 +1650,7 @@ the right colours every time, and a person does not.
 | Plan view (`?view=plan`) — straight down, shadows off, labels square-on | ✅ Interactive |
 | Keyboard stepping — ← → space Home End, and `+` / `-` to zoom | ✅ Interactive |
 | Zoom buttons, and a readout that fits the scene when pressed | ✅ Interactive |
-| Pipes toggle — hide the tubes and their labels for a still | ✅ Interactive |
+| Pipes toggle, and a separate one for their labels | ✅ Interactive |
 | Deep link to a step (`?step=<n>`, 1-based) | ✅ Interactive |
 | Export PNG of this step, with or without the panels | ✅ Interactive |
 | Export WebM and GIF of the whole play-through | ✅ Interactive — the 3D view only; overlays are HTML |

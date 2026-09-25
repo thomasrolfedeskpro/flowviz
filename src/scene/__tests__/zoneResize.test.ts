@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { applyZoneCorner, clampZoneDelta, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
+import { applyZoneCorner, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
 import { buildGraph, removeWaypoint } from '@/engine/parseFlow'
 import { flowReducer } from '@/state/flowActions'
 import { CELL_SIZE } from '@/engine/layoutEngine'
@@ -150,25 +150,33 @@ describe('waypoint editing', () => {
 })
 
 describe('the grid origin', () => {
-  it('snaps a resized edge back to zero rather than into negative space', () => {
+  /**
+   * Zones used to be clamped here, which meant a zone starting at col 0 could
+   * never be resized outward and a whole-zone drag stopped dead at the edge.
+   * A negative edge is now a legitimate intermediate state: the scene re-bases
+   * on release, so the file never keeps one.
+   */
+  it('keeps a resized edge past the origin instead of rounding it to zero', () => {
     const z = zone()
     applyZoneCorner(z, 'nw', -9, -6)
     snapZoneToGrid(z)
-    expect(z.min.x).toBe(0)
-    expect(z.min.z).toBe(0)
+    expect(z.min.x).toBe(-9)
+    expect(z.min.z).toBe(-6)
   })
 
-  it('trims a whole-zone drag at the origin, keeping the other axis free', () => {
-    // Leading edge at x = 3, so it can move 3 left and no further; z is far
-    // enough out to move as much as it likes.
-    expect(clampZoneDelta(3, 30, -12, -12)).toEqual({ dx: -3, dz: -12 })
+  it('still rounds a negative edge onto a cell boundary', () => {
+    const z = zone()
+    applyZoneCorner(z, 'nw', -CELL_SIZE * 1.4, -CELL_SIZE * 2.6)
+    snapZoneToGrid(z)
+    expect(z.min.x).toBeCloseTo(-CELL_SIZE)
+    expect(z.min.z).toBeCloseTo(-CELL_SIZE * 3)
   })
 
-  it('leaves a drag away from the origin alone', () => {
-    expect(clampZoneDelta(3, 30, 12, 12)).toEqual({ dx: 12, dz: 12 })
-  })
-
-  it('refuses any further travel for a zone already on the edge', () => {
-    expect(clampZoneDelta(0, 0, -5, -5)).toEqual({ dx: 0, dz: 0 })
+  it('never collapses a zone below one cell, even across the origin', () => {
+    const z = zone()
+    applyZoneCorner(z, 'nw', z.max.x - 0.01, z.max.z - 0.01)
+    snapZoneToGrid(z)
+    expect(z.max.x - z.min.x).toBeCloseTo(CELL_SIZE)
+    expect(z.max.z - z.min.z).toBeCloseTo(CELL_SIZE)
   })
 })

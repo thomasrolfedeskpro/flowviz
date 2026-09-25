@@ -145,6 +145,7 @@
 }
 
 .item {
+  position: relative;   /* the step-progress bar hangs off the bottom of it */
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -175,9 +176,10 @@
   padding-top: 0;
 }
 
+/* No edge marker: the step number going solid blue already says which row is
+   current, and a second marker on the same row was saying it twice. */
 .item.active {
   background: var(--surface-raised);
-  box-shadow: inset 2px 0 0 var(--accent-blue);
 }
 
 .stepNum {
@@ -872,4 +874,43 @@
 /* The panel has gone, so the handle comes to rest against the window edge. */
 .handleClosed {
   right: 0;
+}
+
+/* How far through the step on screen the flow is.
+   A step whose only change is an annotation animates nothing in the scene, and
+   the first step of a play-through is the same — without this there is no sign
+   the flow is running at all. It measures the step's own hold, so it is honest
+   about the wait whatever the scene happens to be doing.
+
+   Inset to the row's padding so it lines up with the text rather than running
+   under the row's rounded corners. */
+.stepProgress {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.15rem;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent-blue);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation-name: stepProgress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  pointer-events: none;
+}
+
+@keyframes stepProgress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Someone who would rather nothing crept across the screen still gets the
+   step's position, just without the travel. */
+@media (prefers-reduced-motion: reduce) {
+  .stepProgress {
+    animation: none;
+    transform: scaleX(1);
+    opacity: 0.35;
+  }
 }

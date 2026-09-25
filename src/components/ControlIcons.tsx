@@ -81,6 +81,11 @@ function FaIcon({ name, size = 14 }: { name: string; size?: number }) {
   )
 }
 
+/** The chips naming each pipe. */
+export function PipeLabelIcon() {
+  return <FaIcon name="tag" />
+}
+
 /** The sidebar handle, pointing whichever way it is going to move. */
 export function AnglesLeftIcon() {
   return <FaIcon name="anglesLeft" size={12} />

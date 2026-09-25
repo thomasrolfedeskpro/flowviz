@@ -97,6 +97,10 @@
       "meta": {
         "description": "An array of turbines roughly 120 km offshore, collected at an offshore substation and brought ashore on an export cable.",
         "notes": "Output follows the wind, not demand. What the grid buys from it is whatever it happens to be making."
+      },
+      "pinnedLabel": {
+        "text": "Wind farm",
+        "anchor": "top-left"
       }
     },
     {
@@ -116,6 +120,10 @@
       "meta": {
         "description": "A combined-cycle gas turbine station: gas turbines plus a steam turbine running on their exhaust heat.",
         "notes": "This is the dispatchable half of the pair. It exists to be turned up when the wind drops."
+      },
+      "pinnedLabel": {
+        "text": "CCGT station",
+        "anchor": "bottom-left"
       }
     },
     {
@@ -136,6 +144,10 @@
       "meta": {
         "description": "Lifts the generator's output to transmission voltage so it can be pushed hundreds of kilometres.",
         "notes": "Halve the current and you quarter the resistive loss. That single fact is why the whole grid is built out of transformers."
+      },
+      "pinnedLabel": {
+        "text": "Step-up",
+        "anchor": "middle-right"
       }
     },
     {
@@ -156,6 +168,10 @@
       "meta": {
         "description": "The highest voltage on the UK system. Steel lattice pylons carrying two three-phase circuits, one up each side.",
         "notes": "The conductors are bare aluminium. The insulation is the air gap, which is why the pylons are as tall as they are."
+      },
+      "pinnedLabel": {
+        "text": "400 kV",
+        "anchor": "top-center"
       }
     },
     {
@@ -176,6 +192,10 @@
       "meta": {
         "description": "The second transmission voltage. Common in Scotland and around older parts of the English network.",
         "notes": "400 kV and 275 kV are both transmission. Everything below them is distribution."
+      },
+      "pinnedLabel": {
+        "text": "275 kV",
+        "anchor": "bottom-center"
       }
     },
     {
@@ -196,6 +216,10 @@
       "meta": {
         "description": "400/132 kV. The handover between the transmission operator and the regional distribution network operator.",
         "notes": "Metering here is what settles the wholesale market for the whole region."
+      },
+      "pinnedLabel": {
+        "text": "Grid supply",
+        "anchor": "top-right"
       }
     },
     {
@@ -216,6 +240,10 @@
       "meta": {
         "description": "132/33 kV. Serves a town or a large district.",
         "notes": "From here down, everything is normally arranged so that any one circuit can fail without cutting supply."
+      },
+      "pinnedLabel": {
+        "text": "Primary sub",
+        "anchor": "bottom-center"
       }
     },
     {
@@ -236,6 +264,10 @@
       "meta": {
         "description": "33 kV in, 11 kV out. The last stage that still lives behind a fence with a locked gate.",
         "notes": "11 kV is the workhorse voltage of the UK distribution network — buried under most streets in the country."
+      },
+      "pinnedLabel": {
+        "text": "33/11 kV",
+        "anchor": "top-center"
       }
     },
     {
@@ -256,6 +288,10 @@
       "meta": {
         "description": "11 kV to 400 V three-phase. The green box on the corner, or a brick kiosk, feeding a few dozen to a few hundred homes.",
         "notes": "Its transformer's star point is earthed here. That is where a TN-C-S property's earth ultimately comes from."
+      },
+      "pinnedLabel": {
+        "text": "Local sub",
+        "anchor": "top-right"
       }
     },
     {
@@ -275,6 +311,9 @@
       "meta": {
         "description": "Roughly 30 m of buried cable from the street main to the house, carrying one phase and the combined neutral-earth conductor.",
         "notes": "Which of the three phases a house gets is essentially arbitrary — the network operator balances the street as it connects properties."
+      },
+      "pinnedLabel": {
+        "anchor": "top-right"
       }
     },
     {
@@ -294,6 +333,10 @@
       "meta": {
         "description": "The sealed black box where the service cable ends. It holds the supplier's cut-out fuse, typically 60–100 A.",
         "notes": "Sealed for a reason: it is live even with everything in the house switched off, and it is not the householder's to open."
+      },
+      "pinnedLabel": {
+        "text": "Cut-out fuse",
+        "anchor": "top-center"
       }
     },
     {
@@ -313,6 +356,10 @@
       "meta": {
         "description": "The supplier's meter. Measures energy in kilowatt-hours and, if it is a smart meter, reports it without anyone visiting.",
         "notes": "The meter is the ownership boundary. Everything after the tails belongs to the householder."
+      },
+      "pinnedLabel": {
+        "text": "Meter",
+        "anchor": "top-right"
       }
     },
     {
@@ -332,6 +379,10 @@
       "meta": {
         "description": "The wide-area radio link the meter uses to send readings back to the supplier.",
         "notes": "Data, not power — the only connection in this diagram that does not carry current."
+      },
+      "pinnedLabel": {
+        "text": "DCC link",
+        "anchor": "middle-left"
       }
     },
     {
@@ -351,6 +402,9 @@
       "meta": {
         "description": "Two short 25 mm² single-core cables — brown line and blue neutral — from the meter to the consumer unit.",
         "notes": "Kept as short as practical, because they sit between the cut-out fuse and the main switch with nothing else protecting them."
+      },
+      "pinnedLabel": {
+        "anchor": "bottom-right"
       }
     },
     {
@@ -371,6 +425,10 @@
       "meta": {
         "description": "In a TN-C-S (PME) installation the property's earth is taken from the incoming supply neutral at the service head.",
         "notes": "Simplified here. PME has real limitations — it is why EV charge points and outbuildings often need their own arrangements."
+      },
+      "pinnedLabel": {
+        "text": "PME earth",
+        "anchor": "bottom-left"
       }
     },
     {
@@ -459,6 +517,9 @@
             "meta": {
               "description": "A double-pole switch, typically 100 A, that isolates line and neutral for the whole board.",
               "notes": "The only device in the board a householder is really expected to operate deliberately."
+            },
+            "pinnedLabel": {
+              "anchor": "top-left"
             }
           },
           {
@@ -478,6 +539,9 @@
             "meta": {
               "description": "A brass bar every circuit's blue conductor lands on.",
               "notes": "On a split board each RCD has its own neutral bar. Cross them over and the RCD trips the moment a load is switched on."
+            },
+            "pinnedLabel": {
+              "anchor": "top-center"
             }
           },
           {
@@ -497,6 +561,10 @@
             "meta": {
               "description": "Where every circuit protective conductor lands, plus the main bonding to gas and water pipework.",
               "notes": "Under PME this bar is connected back to the incoming supply neutral."
+            },
+            "pinnedLabel": {
+              "text": "Earth bar",
+              "anchor": "bottom-left"
             }
           },
           {
@@ -516,6 +584,9 @@
             "meta": {
               "description": "Compares the current flowing out on the line against the current coming back on the neutral. An imbalance means current is leaving by some other route.",
               "notes": "Nominal 30 mA sensitivity, disconnecting in well under 40 ms. It protects people; it does not protect cables."
+            },
+            "pinnedLabel": {
+              "anchor": "top-center"
             }
           },
           {
@@ -535,6 +606,9 @@
             "meta": {
               "description": "One device per circuit combining overcurrent and residual protection, so a fault on one circuit takes out only that circuit.",
               "notes": "The modern arrangement. It is why a board full of RCBOs is far less annoying to live with than a split-load board."
+            },
+            "pinnedLabel": {
+              "anchor": "bottom-center"
             }
           },
           {
@@ -623,6 +697,10 @@
                   "meta": {
                     "description": "Both ends of the ring land here. Two brown conductors into the breaker, two blue into the neutral bar, two bare CPCs into the earth bar.",
                     "notes": "If one leg is left off, the circuit still works — it has silently become a long radial on undersized cable. That is the classic ring fault."
+                  },
+                  "pinnedLabel": {
+                    "text": "32 A breaker",
+                    "anchor": "middle-left"
                   }
                 },
                 {
@@ -641,6 +719,10 @@
                   },
                   "meta": {
                     "description": "2.5 mm² twin-and-earth leaving the board in one direction."
+                  },
+                  "pinnedLabel": {
+                    "text": "Leg A",
+                    "anchor": "top-center"
                   }
                 },
                 {
@@ -660,6 +742,9 @@
                   "meta": {
                     "description": "A double socket, wired in and out — two cables in the back box, not one.",
                     "notes": "Every socket on a ring is a junction. Nothing is a dead end until the loop closes."
+                  },
+                  "pinnedLabel": {
+                    "anchor": "top-center"
                   }
                 },
                 {
@@ -678,6 +763,9 @@
                   },
                   "meta": {
                     "description": "The furthest point on the outward leg."
+                  },
+                  "pinnedLabel": {
+                    "anchor": "top-right"
                   }
                 },
                 {
@@ -696,6 +784,9 @@
                   },
                   "meta": {
                     "description": "The far end of the loop, roughly equidistant from the board in either direction."
+                  },
+                  "pinnedLabel": {
+                    "anchor": "bottom-right"
                   }
                 },
                 {
@@ -714,6 +805,9 @@
                   },
                   "meta": {
                     "description": "On the way back to the board."
+                  },
+                  "pinnedLabel": {
+                    "anchor": "bottom-center"
                   }
                 },
                 {
@@ -732,6 +826,10 @@
                   },
                   "meta": {
                     "description": "The same cable arriving back at the board from the other direction, closing the loop."
+                  },
+                  "pinnedLabel": {
+                    "text": "Leg B",
+                    "anchor": "bottom-center"
                   }
                 }
               ],
@@ -810,6 +908,10 @@
                   ]
                 }
               ]
+            },
+            "pinnedLabel": {
+              "text": "Ring final",
+              "anchor": "bottom-right"
             }
           },
           {
@@ -829,6 +931,10 @@
             "meta": {
               "description": "A 6 A radial on 1.0 or 1.5 mm² cable, feeding ceiling roses upstairs or down.",
               "notes": "Small breaker, small cable, small load. Lighting is a rounding error next to a shower."
+            },
+            "pinnedLabel": {
+              "text": "Lighting",
+              "anchor": "bottom-right"
             }
           },
           {
@@ -848,6 +954,10 @@
             "meta": {
               "description": "A dedicated radial to a cooker control unit, commonly around 32 A on 6 mm² cable.",
               "notes": "Sized with diversity applied — nobody runs every ring, every hob and the grill flat out at once."
+            },
+            "pinnedLabel": {
+              "text": "Cooker",
+              "anchor": "bottom-right"
             }
           },
           {
@@ -867,6 +977,10 @@
             "meta": {
               "description": "The largest single load in most houses: 40 A or more, on 10 mm² cable, with its own isolator.",
               "notes": "An electric shower is a kettle that never switches off while it runs. It is why the cut-out fuse rating matters."
+            },
+            "pinnedLabel": {
+              "text": "Shower",
+              "anchor": "bottom-right"
             }
           },
           {
@@ -886,6 +1000,10 @@
             "meta": {
               "description": "A dedicated 32 A circuit to a 7 kW wall charger.",
               "notes": "The one addition most likely to make an older board and an older service head look undersized."
+            },
+            "pinnedLabel": {
+              "text": "EV point",
+              "anchor": "bottom-right"
             }
           }
         ],
@@ -988,6 +1106,10 @@
             "route": "auto"
           }
         ]
+      },
+      "pinnedLabel": {
+        "text": "Consumer unit",
+        "anchor": "bottom-right"
       }
     }
   ],
@@ -1172,6 +1294,10 @@
         "weight": 120,
         "label": "120 km — offshore export cable",
         "color": "#ea580c"
+      },
+      "camera": {
+        "focus": "wind_farm",
+        "zoom": 1.4
       }
     },
     {
@@ -1194,7 +1320,11 @@
           "text": "This pipe is deliberately **uncoloured** — generator terminal voltage is below the scale used for the rest of the network.",
           "style": "info"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "gas_ccgt",
+        "zoom": 1.4
+      }
     },
     {
       "id": 3,
@@ -1246,6 +1376,10 @@
         "weight": 300,
         "label": "300 km — 400 kV transmission",
         "color": "#b91c1c"
+      },
+      "camera": {
+        "focus": "pylons_400",
+        "zoom": 1.3
       }
     },
     {
@@ -1276,7 +1410,11 @@
           "text": "**400 kV and 275 kV are transmission.** Everything below them — 132 kV, 33 kV, 11 kV, 400 V — is distribution, and a different company owns it.",
           "style": "info"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "pylons_275",
+        "zoom": 1.3
+      }
     },
     {
       "id": 6,
@@ -1299,6 +1437,10 @@
         "weight": 45,
         "label": "45 km — 132 kV distribution",
         "color": "#ea580c"
+      },
+      "camera": {
+        "focus": "gsp",
+        "zoom": 1.4
       }
     },
     {
@@ -1322,6 +1464,10 @@
         "weight": 18,
         "label": "18 km — 33 kV",
         "color": "#f59e0b"
+      },
+      "camera": {
+        "focus": "primary_sub",
+        "zoom": 1.4
       }
     },
     {
@@ -1345,6 +1491,10 @@
         "weight": 6,
         "label": "6 km — 11 kV",
         "color": "#eab308"
+      },
+      "camera": {
+        "focus": "secondary_sub",
+        "zoom": 1.4
       }
     },
     {
@@ -1399,6 +1549,10 @@
         "weight": 0.03,
         "label": "30 m — service cable",
         "color": "#78716c"
+      },
+      "camera": {
+        "focus": "service_cable",
+        "zoom": 1.5
       }
     },
     {
@@ -1432,7 +1586,11 @@
           "text": "**Sealed for a reason.** Breaking the seal on a cut-out is an offence, and the fuse carrier is live on both sides of the switch.",
           "style": "warning"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "cutout_fuse",
+        "zoom": 1.5
+      }
     },
     {
       "id": 12,
@@ -1504,6 +1662,10 @@
         "weight": 0.002,
         "label": "2 m — meter tails",
         "color": "#8b5a2b"
+      },
+      "camera": {
+        "focus": "meter_tails",
+        "zoom": 1.5
       }
     },
     {
@@ -1535,7 +1697,11 @@
           "text": "Green here stands for **green-and-yellow** — a single pipe colour cannot show the stripe.",
           "style": "info"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "pme_earth",
+        "zoom": 1.4
+      }
     },
     {
       "id": 15,
@@ -1553,7 +1719,11 @@
           "target": "cu_main_switch",
           "text": "isolate(line, neutral) — 100 A double pole"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "cu_main_switch",
+        "zoom": 1.4
+      }
     },
     {
       "id": 16,
@@ -1584,7 +1754,11 @@
           "connection": "c_cu_neutral_rcd",
           "color": "#2563eb"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "cu_neutral_bar",
+        "zoom": 1.4
+      }
     },
     {
       "id": 17,
@@ -1632,7 +1806,11 @@
           "connection": "c_cu_switch_rcbo",
           "color": "#8b5a2b"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "cu_rcbo_bank",
+        "zoom": 1.4
+      }
     },
     {
       "id": 19,
@@ -1683,7 +1861,10 @@
           "text": "The breaker protects the **cable**. A 6 A lighting breaker on 1.5 mm² and a 40 A shower breaker on 10 mm² are the same decision, twice.",
           "style": "info"
         }
-      ]
+      ],
+      "camera": {
+        "fit": true
+      }
     },
     {
       "id": 20,
@@ -1715,7 +1896,11 @@
           "text": "The CPC carries **no current in normal use**. Its whole job is to give a fault somewhere to go, fast enough to trip something.",
           "style": "info"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "cu_earth_bar",
+        "zoom": 1.4
+      }
     },
     {
       "id": 21,
@@ -1735,7 +1920,11 @@
           "connection": "c_cu_rcd_ring",
           "color": "#8b5a2b"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "mcb_ring",
+        "zoom": 1.5
+      }
     },
     {
       "id": 22,
@@ -1767,7 +1956,11 @@
           "text": "**2.5 mm² twin-and-earth on a 32 A breaker.** As a single radial that cable would not be rated for 32 A — the loop is what makes it work.",
           "style": "info"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "ring_terminal",
+        "zoom": 1.4
+      }
     },
     {
       "id": 23,
@@ -1793,7 +1986,11 @@
           "connection": "c_ring_kitchen_lounge",
           "color": "#8b5a2b"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "socket_kitchen",
+        "zoom": 1.4
+      }
     },
     {
       "id": 24,
@@ -1819,6 +2016,10 @@
         "weight": 0.02,
         "label": "20 m — ring cable",
         "color": "#8b5a2b"
+      },
+      "camera": {
+        "focus": "socket_lounge",
+        "zoom": 1.4
       }
     },
     {
@@ -1851,7 +2052,11 @@
           "text": "Leave one leg off at the board and the circuit still works — as a **long radial on undersized cable**. That is the classic ring fault.",
           "style": "warning"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "socket_hall",
+        "zoom": 1.4
+      }
     },
     {
       "id": 26,
@@ -1871,7 +2076,11 @@
           "connection": "c_ring_cpc",
           "color": "#16a34a"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "ring_terminal",
+        "zoom": 1.4
+      }
     },
     {
       "id": 27,
@@ -1948,7 +2157,10 @@
           "text": "**210 mA down the CPC** — seven times the RCD's threshold, and the neutral never sees it come back.",
           "style": "error"
         }
-      ]
+      ],
+      "camera": {
+        "fit": true
+      }
     },
     {
       "id": 29,
@@ -2032,7 +2244,10 @@
           "text": "**Three circuits still live.** On an older split-load board, half the house would have gone dark instead.",
           "style": "success"
         }
-      ]
+      ],
+      "camera": {
+        "fit": true
+      }
     },
     {
       "id": 31,
@@ -2075,7 +2290,11 @@
           "text": "A device that trips **again** on reset is telling you something. Find the fault, do not keep flipping the switch.",
           "style": "warning"
         }
-      ]
+      ],
+      "camera": {
+        "focus": "cu_main_switch",
+        "zoom": 1.4
+      }
     },
     {
       "id": 32,
@@ -2126,7 +2345,10 @@
           "text": "Simplified throughout. This is an explainer, **not an installation guide** — real work is notifiable and belongs to a competent person.",
           "style": "warning"
         }
-      ]
+      ],
+      "camera": {
+        "fit": true
+      }
     }
   ]
 }

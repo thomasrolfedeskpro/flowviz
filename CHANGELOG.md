@@ -8,6 +8,29 @@ rather than versioned, because the app is deployed rather than released.
 
 ### Added
 
+- **A separate toggle for pipe labels.** The playback bar now has one control
+  for the tubes and another for the chips naming them, both on by default. A
+  diagram can be too busy with protocol names on it and still need the routes
+  drawn, which one combined toggle could not express.
+- The waterfall column goes with the step list when it is put away. It emerges
+  from behind the panel and is positioned against its edge, so on its own it
+  was left standing against the window attached to nothing. Fetching the panel
+  back returns the column to however it was left.
+- **A progress line on the playing step.** A line creeps across the step's row
+  in the sidebar for as long as that step holds. A step whose only change is an
+  annotation animates nothing in the scene, and neither does the first step of
+  a play-through — without this there was no sign the flow was running.
+
+- **Components and zones can be dragged anywhere on the grid.** Past the far
+  edge grows `layout.grid` to cover them; past the origin re-bases the scene so
+  the lowest occupied cell is zero again, taking every component, zone and
+  waypoint with it. Previously a component sitting at row 1 could move up
+  exactly one cell and stop, against an invisible wall made half of the
+  declared grid and half of the origin.
+- **Routing waypoints can be added from the diagram.** Double-click a pipe in
+  edit mode to put one where you clicked, and double-click a waypoint to take
+  it away. They could be dragged and right-clicked away before, but there was
+  no way to make one — routes had to be written by hand.
 - **Import a flow.** "Import a flow…" in the Visualizations tab takes a `.json`
   file or pasted text, validates it against the flow schema before sending, and
   writes it to `public/flows/custom/` under a name you choose — which becomes
@@ -32,8 +55,24 @@ rather than versioned, because the app is deployed rather than released.
   gives it the whole window rather than leaving it shifted left around a panel
   that is no longer there.
 
+### Fixed
+
+- The camera frames the declared grid *union* what is actually in the scene,
+  rather than the declared grid alone, so a component dragged past the edge is
+  still framed. Every flow that exists today has its contents inside its grid,
+  so none of them reframe.
+- The dashed boundary round a nested scene follows what is inside it again. It
+  is derived from the scene's contents, but was built once and never re-fitted,
+  so dragging a component left a box that no longer contained its own scene.
+
 ### Changed
 
+- Step rows are numbered from one rather than zero, matching the step counter
+  in the playback bar and the 1-based `?step=` deep link.
+- The active step row no longer carries a blue edge marker; its number already
+  goes solid blue, and the row was saying the same thing twice.
+- The `uk-power` example names every component with a pinned label and moves the
+  camera on every step.
 - PNG exports render at several times screen resolution — up to 6000px on the
   longest edge, clamped to what the GPU will allocate — so label text is legible
   at full size rather than upscaled.
@@ -75,7 +114,6 @@ rather than versioned, because the app is deployed rather than released.
 - Long text in a component's hover card no longer overflows it sideways. A file
   path wraps mid-word instead of pushing out a horizontal scrollbar that could
   not be reached — moving towards it moved the card.
-
 - A flow whose framing is decided by its width rather than its height opened
   about 20% tighter than its own overview. The sidebar's width arrives after the
   scene is built, and the corrected framing was computed but never applied to

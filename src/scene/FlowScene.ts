@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { SceneManager } from '@/scene/SceneManager'
 import { OverlayBridge } from '@/scene/OverlayBridge'
 import { GridFloor } from '@/scene/GridFloor'
-import { applyZoneCorner, clampZoneDelta, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
+import { applyZoneCorner, snapZoneToGrid, componentsInZone, snapDelta } from '@/scene/ZoneRenderer'
 import type { ZoneCorner, ZoneRenderer } from '@/scene/ZoneRenderer'
 import { SceneLayer } from '@/scene/SceneLayer'
 import { componentHex } from '@/scene/ComponentMesh'
@@ -133,6 +133,8 @@ export class FlowScene extends SceneManager {
   /** Whether the pipe tubes are drawn. Held here, not on the layers, so a
    *  rebuilt or newly-entered scene comes back the way you left it. */
   private pipesVisible: boolean = true
+  /** The chips naming each pipe, hidden independently of the tubes. */
+  private pipeLabelsVisible: boolean = true
   /** Components whose whole set of connections is lit. */
   private relationFocus = new Set<string>()
   private timing: Timing = DEFAULT_TIMING
@@ -215,6 +217,7 @@ export class FlowScene extends SceneManager {
     canvas.addEventListener('pointerup',    this.onPointerUp)
     canvas.addEventListener('pointerleave', this.onPointerUp)
     canvas.addEventListener('contextmenu',  this.onContextMenu)
+    canvas.addEventListener('dblclick',     this.onDoubleClick)
     canvas.style.cursor = 'grab'
     this.startLoop()
   }
@@ -400,16 +403,10 @@ export class FlowScene extends SceneManager {
     // Zone corner resize
     if (this.resizeZone && this.resizeCorner) {
       const ground = this.pointerToGround(e.clientX, e.clientY)
-      // Stop at the grid origin while dragging, not on release. `snapZoneToGrid`
-      // clamps the committed bounds to zero either way, so without this the zone
-      // follows the pointer into negative space and then springs back the moment
-      // you let go — which reads as the whole resize being rejected. Zones that
-      // start at col 0 or row 0 could never be resized outward at all.
-      const x = Math.max(0, ground.x)
-      const z = Math.max(0, ground.z)
       // Dragging a corner past its opposite edge flips which corner is held.
-      this.resizeCorner = applyZoneCorner(this.resizeZone.zone, this.resizeCorner, x, z)
+      this.resizeCorner = applyZoneCorner(this.resizeZone.zone, this.resizeCorner, ground.x, ground.z)
       this.resizeZone.rebuild()
+      this.layer.refreshBoundary()
       return
     }
 
@@ -437,6 +434,10 @@ export class FlowScene extends SceneManager {
       for (const [connId, conn] of this.graph.connections) {
         if (conn.from.id === id || conn.to.id === id) this.pipes.get(connId)?.update()
       }
+
+      // The nested-scene boundary is derived from what is in the scene, so it
+      // has to follow whatever is being dragged around inside it.
+      this.layer.refreshBoundary()
 
       // Show/update ghost box at the snapped target position
       if (!this.dragGhost) {
@@ -528,7 +529,9 @@ export class FlowScene extends SceneManager {
     if (this.resizeZone) {
       snapZoneToGrid(this.resizeZone.zone)
       this.resizeZone.rebuild()
-      this.growGridToZones()
+      // Normalise first: a re-base moves this zone too, so its own bounds have
+      // to be read after the shift.
+      const extra = this.normaliseLayout()
       this.commit([
         {
           type:   'zone/setBounds',
@@ -536,7 +539,7 @@ export class FlowScene extends SceneManager {
           id:     this.resizeZone.zone.id,
           bounds: zoneGridBounds(this.resizeZone.zone),
         },
-        this.gridAction(),
+        ...extra,
       ])
       this.resizeZone   = null
       this.resizeCorner = null
@@ -627,6 +630,32 @@ export class FlowScene extends SceneManager {
     this.setEditHover(null, null, this.editMode ? 'move' : 'grab')
   }
 
+  /**
+   * Double-click: add a routing waypoint to a pipe, or take one away.
+   *
+   * Waypoints could be dragged and right-clicked away, but there was no way to
+   * make one in the first place — routes had to be written by hand. The handle
+   * is checked first so that double-clicking one removes it rather than adding
+   * a second on top of it, and the label pads are skipped because a click there
+   * already means "rename this pipe".
+   */
+  private onDoubleClick = (e: MouseEvent): void => {
+    if (!this.editMode) return
+
+    const handle = this.pickWaypointHandle(e.clientX, e.clientY)
+    if (handle) {
+      this.deleteWaypoint(
+        handle.userData.connId as string,
+        handle.userData.waypointIndex as number,
+      )
+      return
+    }
+    if (this.pickLabelHandle(e.clientX, e.clientY)) return
+
+    const hit = this.pickPipe(e.clientX, e.clientY)
+    if (hit) this.addWaypoint(hit.connId, hit.point)
+  }
+
   private onContextMenu = (e: MouseEvent): void => {
     e.preventDefault()
     if (!this.editMode) return
@@ -642,6 +671,91 @@ export class FlowScene extends SceneManager {
     this.dragRay.setFromCamera(this.clientToNdc(clientX, clientY), this.camera)
     const hits = this.dragRay.intersectObjects(meshes as THREE.Object3D[], false)
     return hits.length ? hits[0].object : null
+  }
+
+  /**
+   * The pipe nearest the pointer, and the point on it, within a few pixels.
+   *
+   * Measured in screen space rather than by intersecting the tube. A tube is
+   * 0.22 world units across, which at a normal framing is about six pixels —
+   * far too fine a target to ask anyone to hit, and it curves away from
+   * wherever the eye says it is. Sampling the curve and comparing projected
+   * distances gives the same answer with a tolerance a person can actually
+   * land on.
+   */
+  private pickPipe(clientX: number, clientY: number): { connId: string; point: THREE.Vector3 } | null {
+    const el = this.renderer.domElement
+    const rect = el.getBoundingClientRect()
+    const px = clientX - rect.left
+    const py = clientY - rect.top
+
+    const SAMPLES = 80
+    const TOLERANCE_PX = 14
+    let best: { connId: string; point: THREE.Vector3 } | null = null
+    let bestDist = TOLERANCE_PX * TOLERANCE_PX
+
+    const probe = new THREE.Vector3()
+    for (const [id, pipe] of this.pipes) {
+      if (!pipe.mesh.visible) continue
+      for (let i = 0; i <= SAMPLES; i++) {
+        pipe.curve.getPoint(i / SAMPLES, probe)
+        const ndc = probe.clone().project(this.camera)
+        const sx = (ndc.x + 1) / 2 * el.clientWidth
+        const sy = -(ndc.y - 1) / 2 * el.clientHeight
+        const d = (sx - px) ** 2 + (sy - py) ** 2
+        if (d < bestDist) {
+          bestDist = d
+          best = { connId: id, point: probe.clone() }
+        }
+      }
+    }
+    return best
+  }
+
+  /**
+   * Where along a curve a point lies, as a parameter in [0, 1].
+   *
+   * Sampled rather than solved: the curves here are short and this decides
+   * nothing more delicate than which two waypoints a new one belongs between.
+   */
+  private curveT(curve: THREE.Curve<THREE.Vector3>, point: THREE.Vector3): number {
+    const SAMPLES = 100
+    let best = 0
+    let bestDist = Infinity
+    const probe = new THREE.Vector3()
+    for (let i = 0; i <= SAMPLES; i++) {
+      const t = i / SAMPLES
+      curve.getPoint(t, probe)
+      const d = probe.distanceToSquared(point)
+      if (d < bestDist) { bestDist = d; best = t }
+    }
+    return best
+  }
+
+  /**
+   * Put a waypoint where the pipe was double-clicked.
+   *
+   * Inserted in route order rather than appended: a route is walked start to
+   * end, so a waypoint added between two others has to sit between them in the
+   * array or the pipe doubles back on itself.
+   */
+  private addWaypoint(connId: string, point: THREE.Vector3): void {
+    const conn = this.graph.connections.get(connId)
+    if (!conn) return
+
+    const { col, row } = worldToGrid(point.x, point.z)
+    if (col < 0 || row < 0) return
+
+    const existing = conn.route === 'auto' ? [] : conn.route
+    const tHit = this.curveT(conn.curve, point)
+    const index = existing.filter((wp) =>
+      this.curveT(conn.curve, gridToWorld(wp.col, wp.row).setY(PIPE_HEIGHT)) < tHit,
+    ).length
+
+    conn.route = [...existing.slice(0, index), { col, row }, ...existing.slice(index)]
+    this.pipes.get(connId)?.update()
+    this.layer.buildWaypointHandles()   // indices shift, so rebuild rather than patch
+    this.commit([this.routeAction(connId)])
   }
 
   private pickWaypointHandle(clientX: number, clientY: number): THREE.Object3D | null {
@@ -865,13 +979,12 @@ export class FlowScene extends SceneManager {
       minX = Math.min(minX, snap.min.x)
       minZ = Math.min(minZ, snap.min.z)
     }
-    ;({ dx, dz } = clampZoneDelta(minX, minZ, dx, dz))
-
     for (const snap of this.moveZoneSnapshot) {
       snap.zr.zone.min.set(snap.min.x + dx, snap.min.y, snap.min.z + dz)
       snap.zr.zone.max.set(snap.max.x + dx, snap.max.y, snap.max.z + dz)
       snap.zr.rebuild()
     }
+    this.layer.refreshBoundary()
     for (const snap of this.moveCompSnapshot) {
       const ic = this.graph.components.get(snap.id)!
       const cm = this.components.get(snap.id)!
@@ -893,7 +1006,7 @@ export class FlowScene extends SceneManager {
         snapDelta(first.zr.zone.min.x - first.min.x),
         snapDelta(first.zr.zone.min.z - first.min.z),
       )
-      this.growGridToZones()
+      const extra = this.normaliseLayout()
 
       // The grip moves the zone, every zone nested inside it, and every
       // component standing on it — all of that has to reach the file, or a
@@ -908,7 +1021,7 @@ export class FlowScene extends SceneManager {
         const moved = this.componentPositionAction(snap.id)
         if (moved) actions.push(moved)
       }
-      actions.push(this.gridAction())
+      actions.push(...extra)
       this.commit(actions)
     }
     this.moveGrabbed      = false
@@ -921,28 +1034,122 @@ export class FlowScene extends SceneManager {
     this.renderer.domElement.style.cursor = this.editMode ? 'move' : 'grab'
   }
 
-  /** A component drop is clamped to gridBounds, so a zone stretched past the
-   *  grid edge would be unreachable. Grow the bounds (and the floor) to cover
-   *  every zone. Grow only — shrinking could strand components off-grid. */
-  private growGridToZones(): void {
-    const b = this.graph.gridBounds
-    let { maxX, maxZ } = b
-    for (const z of this.zones) {
-      maxX = Math.max(maxX, z.zone.max.x)
-      maxZ = Math.max(maxZ, z.zone.max.z)
-    }
-    b.maxX = maxX
-    b.maxZ = maxZ
+
+  /**
+   * The snapped grid position for a raw centre, in world coords.
+   *
+   * Deliberately unbounded. A drag used to be clamped to the declared grid,
+   * which made the far edge an invisible wall and the origin a hard floor —
+   * a component sitting at row 1 could move up exactly one cell and stop.
+   * `normaliseLayout` puts the scene back into canonical form on release
+   * instead, growing the grid or re-basing the whole scene as needed.
+   */
+  private computeSnap(centerX: number, centerZ: number, w: number, h: number): { col: number; row: number; cx: number; cz: number } {
+    const { col, row } = worldToGrid(centerX - (w / 2) * CELL_SIZE, centerZ - (h / 2) * CELL_SIZE)
+    return { col, row, cx: (col + w / 2) * CELL_SIZE, cz: (row + h / 2) * CELL_SIZE }
   }
 
-  /** Compute the snapped grid position from a raw center (world coords). */
-  private computeSnap(centerX: number, centerZ: number, w: number, h: number): { col: number; row: number; cx: number; cz: number } {
-    const cols = this.graph.gridBounds.maxX / CELL_SIZE
-    const rows = this.graph.gridBounds.maxZ / CELL_SIZE
-    const raw  = worldToGrid(centerX - (w / 2) * CELL_SIZE, centerZ - (h / 2) * CELL_SIZE)
-    const col  = Math.min(Math.max(raw.col, 0), Math.max(0, Math.round(cols - w)))
-    const row  = Math.min(Math.max(raw.row, 0), Math.max(0, Math.round(rows - h)))
-    return { col, row, cx: (col + w / 2) * CELL_SIZE, cz: (row + h / 2) * CELL_SIZE }
+  /**
+   * Put the layout back into canonical form after something has been moved.
+   *
+   * Two things can be out of range once a drag is unclamped. Something can sit
+   * past the grid's far edge, which is fixed by growing the grid — the same
+   * thing zones have always done. And something can sit at a negative cell,
+   * which `layout.grid` has no way to express at all, because it is only a
+   * count of columns and rows from zero.
+   *
+   * A negative cell re-bases the scene: every component, zone and waypoint
+   * shifts so the lowest occupied cell is zero again. Every number in the file
+   * changes, but nothing moves *relative to anything else*, so the diagram is
+   * untouched and the camera re-frames onto it.
+   *
+   * Re-basing is deliberately preferred to simply allowing negative cells. The
+   * schema would accept them, so an older checkout would open such a flow
+   * without complaint, frame it from zero — leaving part of it off screen —
+   * and clamp those cells back to zero on the next drag, silently moving
+   * someone's layout. Re-basing keeps every file readable by any checkout.
+   */
+  private normaliseLayout(): FlowAction[] {
+    const actions: FlowAction[] = []
+
+    let minCol = 0
+    let minRow = 0
+    for (const ic of this.graph.components.values()) {
+      const p = componentGridPosition(ic)
+      minCol = Math.min(minCol, p.col)
+      minRow = Math.min(minRow, p.row)
+    }
+    for (const zr of this.zones) {
+      const b = zoneGridBounds(zr.zone)
+      minCol = Math.min(minCol, b.col)
+      minRow = Math.min(minRow, b.row)
+    }
+
+    if (minCol < 0 || minRow < 0) {
+      const dx = -Math.min(0, minCol) * CELL_SIZE
+      const dz = -Math.min(0, minRow) * CELL_SIZE
+
+      for (const [cid, ic] of this.graph.components) {
+        ic.center.set(ic.center.x + dx, ic.center.y, ic.center.z + dz)
+        ic.topCenter.set(ic.center.x, ic.meshSize.y, ic.center.z)
+        const cm = this.components.get(cid)
+        if (cm) {
+          cm.group.position.x += dx
+          cm.group.position.z += dz
+          cm.topCenter.copy(ic.topCenter)
+        }
+        const a = this.componentPositionAction(cid)
+        if (a) actions.push(a)
+      }
+
+      for (const zr of this.zones) {
+        zr.zone.min.set(zr.zone.min.x + dx, zr.zone.min.y, zr.zone.min.z + dz)
+        zr.zone.max.set(zr.zone.max.x + dx, zr.zone.max.y, zr.zone.max.z + dz)
+        zr.rebuild()
+        actions.push({
+          type:   'zone/setBounds',
+          scene:  this.activeSceneId,
+          id:     zr.zone.id,
+          bounds: zoneGridBounds(zr.zone),
+        })
+      }
+
+      // Waypoints are grid coordinates too, so a route left behind would bend
+      // every pipe that has one.
+      const shiftCol = -Math.min(0, minCol)
+      const shiftRow = -Math.min(0, minRow)
+      for (const [connId, conn] of this.graph.connections) {
+        if (conn.route === 'auto') continue
+        conn.route = conn.route.map((wp) => ({ col: wp.col + shiftCol, row: wp.row + shiftRow }))
+        actions.push(this.routeAction(connId))
+      }
+
+      this.graph.gridBounds.maxX += dx
+      this.graph.gridBounds.maxZ += dz
+      for (const pipe of this.pipes.values()) pipe.update()
+      this.layer.buildWaypointHandles()
+    }
+
+    // Grow — never shrink, which could strand something off-grid.
+    const b = this.graph.gridBounds
+    let maxX = b.maxX
+    let maxZ = b.maxZ
+    for (const ic of this.graph.components.values()) {
+      maxX = Math.max(maxX, ic.center.x + ic.meshSize.x / 2)
+      maxZ = Math.max(maxZ, ic.center.z + ic.meshSize.z / 2)
+    }
+    for (const zr of this.zones) {
+      maxX = Math.max(maxX, zr.zone.max.x)
+      maxZ = Math.max(maxZ, zr.zone.max.z)
+    }
+    if (maxX > b.maxX || maxZ > b.maxZ) {
+      b.maxX = maxX
+      b.maxZ = maxZ
+    }
+    actions.push(this.gridAction())
+
+    this.layer.refreshBoundary()
+    return actions
   }
 
   private endDrag(): void {
@@ -966,8 +1173,12 @@ export class FlowScene extends SceneManager {
         if (conn.from.id === id || conn.to.id === id) this.pipes.get(connId)?.update()
       }
 
-      const moved = this.componentPositionAction(id)
-      if (moved) this.commit([moved])
+      // Normalise first: a re-base moves this component too, so its own
+      // position action has to be built from where it finally sits.
+      const actions = this.normaliseLayout()
+      const moved   = this.componentPositionAction(id)
+      if (moved) actions.push(moved)
+      this.commit(actions)
 
       // Brief scale-bounce to signal the snap commit
       new Tween({ t: 0 }, tweenGroup)
@@ -1106,6 +1317,11 @@ export class FlowScene extends SceneManager {
   setPipesVisible(visible: boolean): void {
     this.pipesVisible = visible
     for (const l of this.layers.values()) l.setPipesVisible(visible)
+  }
+
+  setPipeLabelsVisible(visible: boolean): void {
+    this.pipeLabelsVisible = visible
+    for (const l of this.layers.values()) l.setPipeLabelsVisible(visible)
   }
 
   /**
@@ -1358,6 +1574,7 @@ export class FlowScene extends SceneManager {
     // Fresh pipes are built visible, so a rebuild is where "pipes off" would be
     // silently undone. Same for a relation focus.
     this.setPipesVisible(this.pipesVisible)
+    this.setPipeLabelsVisible(this.pipeLabelsVisible)
     this.setRelationFocus(this.relationFocus)
 
     // Straight to the layer: applyStep would try to transition into a scene we
@@ -1618,6 +1835,7 @@ export class FlowScene extends SceneManager {
     this.renderer.domElement.removeEventListener('pointerup',    this.onPointerUp)
     this.renderer.domElement.removeEventListener('pointerleave', this.onPointerUp)
     this.renderer.domElement.removeEventListener('contextmenu',  this.onContextMenu)
+    this.renderer.domElement.removeEventListener('dblclick',     this.onDoubleClick)
     if (this.transitionTimer !== null) clearTimeout(this.transitionTimer)
     this.stopLoop()
     this.hoverSystem.dispose()
