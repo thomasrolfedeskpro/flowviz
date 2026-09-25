@@ -1582,7 +1582,7 @@ whose *shape* matches what you are describing and follow it.
 | `card-payment.json` | 11 / 12 | – | A failure and a retry, brand logos, a millisecond waterfall |
 | `hexagonal-architecture.json` | 14 / 9 | – | Software architecture, zone nesting |
 | `airport-departure.json` | 20 / 18 | 2 | Two sub-scenes, two parallel journeys reconverging, a waterfall in minutes |
-| `uk-power.json` | 33 / 34 | 2 | `connection.color` carrying real meaning twice over: a voltage ramp, then cable colours |
+| `uk-power.json` | 33 / 34 | 2 | `connection.color` carrying real meaning twice over: a voltage ramp, then cable colours. Also `pinnedLabel` on every component, and a camera move on every step |
 | `parcel-network.json` | 40 / 45 | 3 | Scale: three levels of nesting, 40+ waterfall bars, a failure and recovery |
 | `monopoly.json` | 58 / 38 | 2 | A generated layout, a waterfall used for money, one token routed round a board |
 
@@ -1635,12 +1635,15 @@ the right colours every time, and a person does not.
 | Step sidebar with jump-to navigation | ✅ Interactive |
 | Nested scenes (`component.detail` + `step.scene`), any depth | ✅ Rendered |
 | Scene breadcrumb + indented steps for nested scenes | ✅ Rendered |
-| Dashed boundary + name on the ground inside a nested scene | ✅ Rendered (automatic) |
+| Dashed boundary + name on the ground inside a nested scene | ✅ Rendered — automatic, and re-fitted as the scene's contents are moved |
 | Edits made *inside* a nested scene | ✅ Saved — the whole definition is written back |
 | Visualization switcher + `?flow=<id>` URL | ✅ Interactive |
 | Edit mode: every field of every object, via forms | ✅ Interactive (dev server) |
 | Edit mode: add/delete components, zones, connections and steps | ✅ Interactive (dev server) |
 | Edit mode: undo/redo, live validation, raw-JSON hatch | ✅ Interactive (dev server) |
+| Edit mode: add a routing waypoint by double-clicking a pipe, remove one by double-clicking it | ✅ Interactive (dev server) |
+| Edit mode: drag past the grid — the far edge grows `layout.grid`, the origin re-bases the scene | ✅ Interactive (dev server) |
+| Import a flow from a file or pasted JSON, into `custom/` | ✅ Interactive (dev server) |
 | Save edits back to the flow file | ✅ Interactive (dev server) |
 | Delete a visualization from the list | ✅ Interactive (dev server) |
 | `step.name` sidebar label | ✅ Rendered (falls back to `title`) |
@@ -1651,6 +1654,10 @@ the right colours every time, and a person does not.
 | Keyboard stepping — ← → space Home End, and `+` / `-` to zoom | ✅ Interactive |
 | Zoom buttons, and a readout that fits the scene when pressed | ✅ Interactive |
 | Pipes toggle, and a separate one for their labels | ✅ Interactive |
+| Component labels toggle — shows the flow's `pinnedLabel` chips | ✅ Interactive |
+| Component card: pin it open, or light every connection that component makes | ✅ Interactive |
+| Hide the step list, and the waterfall column with it | ✅ Interactive |
+| Progress line across the step that is playing | ✅ Interactive |
 | Deep link to a step (`?step=<n>`, 1-based) | ✅ Interactive |
 | Export PNG of this step, with or without the panels | ✅ Interactive |
 | Export WebM and GIF of the whole play-through | ✅ Interactive — the 3D view only; overlays are HTML |
