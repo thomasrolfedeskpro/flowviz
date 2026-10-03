@@ -29,6 +29,19 @@ export function worldToGrid(x: number, z: number): { col: number; row: number } 
   }
 }
 
+/**
+ * How finely a routing waypoint lands. Components sit on whole cells, but a
+ * pipe routed around one usually wants to run *between* two columns rather
+ * than down the middle of either, so waypoints get the half-cell lattice.
+ */
+export const WAYPOINT_SNAP = 0.5
+
+/** Rounds a grid coordinate onto the waypoint lattice. Multiples of a half are
+ *  exact in binary floating point, so this never writes 7.000000001 to a file. */
+export function snapWaypoint(value: number): number {
+  return Math.round(value / WAYPOINT_SNAP) * WAYPOINT_SNAP
+}
+
 export function componentCenter(c: Component): THREE.Vector3 {
   const { col, row, elevation = 0 } = c.position
   const { w = 1, h = 1 } = c.size ?? {}

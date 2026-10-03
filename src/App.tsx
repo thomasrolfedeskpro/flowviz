@@ -49,6 +49,7 @@ import type { FlowDefinition } from '@/types/schema'
 import type { Vector3 } from 'three'
 import { flows as allFlows } from 'virtual:flows'
 import { sceneIndex, findSceneGraph } from '@/utils/scenes'
+import { compareFlows, knownGroups, normaliseGroup } from '@/utils/flowGroups'
 import styles from '@/styles/App.module.css'
 import '@/styles/global.css'
 
@@ -279,14 +280,22 @@ function App() {
       packetCounts[def.connection] = Math.max(packetCounts[def.connection] ?? 0, def.count)
     }
   }
-  // The manifest's titles were read from disk at startup; the flow on screen is
-  // whatever the definition now says it is, so it overrides its own entry.
-  const flowsForList = useMemo(
-    () => (flowDef
-      ? flowList.map((f) => (f.id === flowId ? { ...f, title: flowDef.meta.title } : f))
-      : flowList),
-    [flowList, flowId, flowDef],
-  )
+  // The manifest's titles and folders were read from disk at startup; the flow
+  // on screen is whatever the definition now says it is, so it overrides its own
+  // entry — a folder changed in the editor re-files it before the save lands.
+  const flowsForList = useMemo(() => {
+    if (!flowDef) return flowList
+    return flowList
+      .map((f) =>
+        f.id === flowId
+          ? { ...f, title: flowDef.meta.title, group: normaliseGroup(flowDef.meta.group) }
+          : f,
+      )
+      .sort(compareFlows)
+  }, [flowList, flowId, flowDef])
+
+  /** Folders already in use, offered when setting one on the flow. */
+  const flowGroups = useMemo(() => knownGroups(flowsForList), [flowsForList])
 
   const { hoveredId, setHoveredId } = useHover()
   /** Components double-clicked to keep their card up. Held here rather than in
@@ -951,6 +960,7 @@ function App() {
       meta: {
         title: string
         description?: string
+        group?: string
         waterfallLabel?: string
         timing?: Partial<Timing>
       },
@@ -1256,11 +1266,9 @@ function App() {
       {importing && (
         <ImportFlowModal
           taken={new Set(flowList.map((f) => f.id))}
+          groups={flowGroups}
           onImported={(flow) => {
-            setFlowList((list) => [...list, flow].sort(
-              (a, b) => (a.group === 'examples' ? 0 : 1) - (b.group === 'examples' ? 0 : 1)
-                || a.title.localeCompare(b.title),
-            ))
+            setFlowList((list) => [...list, flow].sort(compareFlows))
             setImporting(false)
             handleSelectFlow(flow.id)
           }}
@@ -1271,6 +1279,7 @@ function App() {
       {/* Delete confirmation is reachable outside edit mode; the rest is edit-only. */}
       {editTarget && (editMode || editTarget.kind === 'delete-flow') && (
         <EditModal
+          flowGroups={flowGroups}
           key={
             editTarget.kind === 'step' ? `step:${editTarget.index}`
             : editTarget.kind === 'flow' || editTarget.kind === 'json' ? editTarget.kind

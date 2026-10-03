@@ -5,6 +5,7 @@ import type { ViteDevServer } from 'vite'
 // The app's own validator, so a save can never write a flow the app can't load.
 // Only a type import reaches for the `@` alias, and those are erased at build.
 import { parseFlowSchema } from './src/engine/flowSchema'
+import { compareFlows, normaliseGroup } from './src/utils/flowGroups'
 
 // Exposes `virtual:flows` — every flow under public/flows with its title and the
 // path to fetch it from. Flows live in subdirectories: `examples/` ships with the
@@ -40,24 +41,25 @@ function flowManifest() {
       if (id !== resolvedId) return null
       const flows = listFlowFiles().map((rel) => {
         const json = JSON.parse(readFileSync(`${FLOW_ROOT}/${rel}`, 'utf8')) as {
-          meta?: { title?: string; description?: string }
+          meta?: { title?: string; description?: string; group?: string }
         }
         const slug = rel.replace(/\.json$/, '').split('/').pop() as string
+        const source = rel.includes('/') ? (rel.split('/')[0] as string) : ''
         return {
           // The id stays the bare filename so `?flow=oauth` keeps working
           // wherever the file sits; `path` is how the app fetches it.
           id: slug,
           path: rel,
-          group: rel.includes('/') ? (rel.split('/')[0] as string) : '',
+          source,
+          // Where it sits below its top-level folder, which is a property of
+          // the flow rather than of the file. The top-level folder itself comes
+          // from `source`, so the list always opens on the same two.
+          group: normaliseGroup(json.meta?.group),
           title: json.meta?.title ?? slug,
           description: json.meta?.description ?? '',
         }
       })
-      // Bundled examples first, then everything else, each alphabetical. The
-      // sidebar draws a rule at the boundary, so the order has to be stable
-      // rather than incidental.
-      const rank = (group: string) => (group === 'examples' ? 0 : 1)
-      flows.sort((a, b) => rank(a.group) - rank(b.group) || a.title.localeCompare(b.title))
+      flows.sort(compareFlows)
       return `export const flows = ${JSON.stringify(flows)}`
     },
 

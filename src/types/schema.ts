@@ -1,6 +1,9 @@
 export interface FlowMeta {
   title: string
   description?: string
+  /** Where the flow sits in the visualization list, as a dot-separated path:
+   *  "deskpro.infra.aws" nests three levels. Omitted, the flow is ungrouped. */
+  group?: string
   /** What the waterfall column measures — "Latency", "Cost", "Distance". Names
    *  the column and its toggle; omitted, both just say "Waterfall". */
   waterfallLabel?: string

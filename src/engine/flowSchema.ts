@@ -179,6 +179,7 @@ export const FlowDefinitionSchema = z.object({
   meta: z.object({
     title:          z.string(),
     description:    z.string().optional(),
+    group:          z.string().optional(),
     waterfallLabel: z.string().optional(),
     // Durations in milliseconds. Zero would mean "instant", which reads as a
     // rendering bug rather than a choice, so they have to be positive.

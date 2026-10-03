@@ -404,6 +404,7 @@ export function flowReducer(def: FlowDefinition, action: FlowAction): FlowDefini
     case 'meta/patch': {
       const meta = { ...def.meta, ...action.patch }
       if (!meta.description) delete meta.description
+      if (!meta.group) delete meta.group
       if (!meta.waterfallLabel) delete meta.waterfallLabel
       // Timing left entirely at the defaults is not written out: a flow that
       // never expressed an opinion about pace shouldn't gain one on save.

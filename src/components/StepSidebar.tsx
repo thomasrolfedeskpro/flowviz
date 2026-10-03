@@ -1,17 +1,43 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { Step } from '@/types/schema'
 import { waterfallLanes } from '@/utils/waterfall'
 import type { SceneInfo } from '@/utils/scenes'
 import type { LintFinding } from '@/engine/geometryLint'
-import { AnglesLeftIcon, AnglesRightIcon } from '@/components/ControlIcons'
+import { AnglesLeftIcon, AnglesRightIcon, ChevronRightIcon, FolderIcon } from '@/components/ControlIcons'
+import { buildFlowTree, folderPath } from '@/utils/flowGroups'
+import type { FlowTreeNode } from '@/utils/flowGroups'
 import styles from '@/styles/StepSidebar.module.css'
 
 export interface FlowSummary {
   id: string
   title: string
   description: string
-  /** subdirectory it came from — "examples" flows are read-only */
+  /** directory it came from — it picks the top-level folder, and "examples"
+   *  flows can't be deleted */
+  source?: string
+  /** dot-separated path below that folder, e.g. "deskpro.infra.aws". Empty
+   *  means the flow sits directly in it. */
   group?: string
+}
+
+/** Which folders are open, kept between visits. Folders start shut, so opening
+ *  the tab shows Examples and Custom rather than every flow at once. */
+const OPEN_FOLDERS_KEY = 'flowviz.openFolders'
+
+function readOpenFolders(): Set<string> {
+  try {
+    const raw = localStorage.getItem(OPEN_FOLDERS_KEY)
+    return new Set(raw ? (JSON.parse(raw) as string[]) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+/** Every folder on the way down to a flow, so selecting one can reveal it. */
+function ancestorsOf(flow: FlowSummary): string[] {
+  const segments = folderPath(flow)
+  return segments.map((_, i) => segments.slice(0, i + 1).join('.'))
 }
 
 interface Props {
@@ -123,8 +149,53 @@ export function StepSidebar({
   const [dropIndex, setDropIndex] = useState<number | null>(null)
   const [showProblems, setShowProblems] = useState(false)
   const [showWarnings, setShowWarnings] = useState(false)
+  const [openFolders, setOpenFolders] = useState<Set<string>>(readOpenFolders)
+  const [flowFilter, setFlowFilter] = useState('')
 
   const currentTitle = flows.find((f) => f.id === flowId)?.title ?? ''
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(OPEN_FOLDERS_KEY, JSON.stringify([...openFolders]))
+    } catch {
+      // A browser refusing storage costs the folder state, nothing more.
+    }
+  }, [openFolders])
+
+  // Reveal a flow that was chosen from outside the list — a `?flow=` link, or
+  // an import. Adjusted during render rather than in an effect, so the list
+  // never paints with the folder still shut. The flow at mount is seeded in,
+  // which is what keeps the tab opening on a list of folders even though the
+  // flow on screen is inside one of them.
+  const [shownFlow, setShownFlow] = useState(flowId)
+  if (flowId !== shownFlow) {
+    setShownFlow(flowId)
+    const chosen = flows.find((f) => f.id === flowId)
+    if (chosen) setOpenFolders((open) => new Set([...open, ...ancestorsOf(chosen)]))
+  }
+
+  const toggleFolder = (path: string) =>
+    setOpenFolders((open) => {
+      const next = new Set(open)
+      if (!next.delete(path)) next.add(path)
+      return next
+    })
+
+  const query = flowFilter.trim().toLowerCase()
+  /** Filtering flattens the tree: a match three folders down is no use if you
+   *  still have to find the folders. */
+  const matches = useMemo(
+    () =>
+      query
+        ? flows.filter((f) =>
+            [f.title, f.description, folderPath(f).join('.')].some((v) =>
+              v?.toLowerCase().includes(query),
+            ),
+          )
+        : [],
+    [flows, query],
+  )
+  const flowTree = useMemo(() => (query ? [] : buildFlowTree(flows)), [flows, query])
 
   // Waterfall bars are opt-in per flow: no data, no toggle.
   const lanes = waterfallLanes(steps)
@@ -165,6 +236,60 @@ export function StepSidebar({
     syncing.current = true
     to.scrollTop = from.scrollTop
     requestAnimationFrame(() => { syncing.current = false })
+  }
+
+  /** Nesting is drawn with padding rather than nested boxes, so a row three
+   *  folders down is still one flat row the full width of the panel. */
+  const indent = (depth: number) => `${0.5 + depth * 0.75}rem`
+
+  const flowRow = (f: FlowSummary, depth: number, trail?: string) => (
+    <div
+      key={f.id}
+      className={`${styles.item} ${styles.flowItem}${f.id === flowId ? ` ${styles.active}` : ''}`}
+      style={{ paddingLeft: indent(depth) }}
+      onClick={() => onSelectFlow(f.id)}
+      title={f.description}
+    >
+      <span className={styles.flowTitle}>{f.title}</span>
+      {trail && <span className={styles.flowTrail}>{trail}</span>}
+      {f.description && <span className={styles.flowDesc}>{f.description}</span>}
+      {/* Bundled examples are committed and shared, so they aren't offered for
+          deletion; and the last flow standing stays put, because there'd be
+          nothing to fall back to. */}
+      {onDeleteFlow && flows.length > 1 && f.source !== 'examples' && (
+        <button
+          className={styles.deleteBtn}
+          title={`Delete ${f.title}`}
+          aria-label={`Delete ${f.title}`}
+          onClick={(e) => { e.stopPropagation(); onDeleteFlow(f) }}
+        >
+          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+            <path d="M6 2h4v1h3v1.5H3V3h3zM4.5 5.5h7l-.6 8.5H5.1z" fill="currentColor" />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+
+  const renderFlowNode = (node: FlowTreeNode<FlowSummary>, depth: number): ReactNode => {
+    if (node.kind === 'flow') return flowRow(node.flow, depth)
+    const isOpen = openFolders.has(node.path)
+    return (
+      <div key={`folder:${node.path}`}>
+        <button
+          className={`${styles.folderRow}${isOpen ? ` ${styles.folderOpen}` : ''}`}
+          style={{ paddingLeft: indent(depth) }}
+          onClick={() => toggleFolder(node.path)}
+          aria-expanded={isOpen}
+        >
+          <span className={styles.folderChevron}><ChevronRightIcon /></span>
+          <FolderIcon open={isOpen} />
+          <span className={styles.folderName}>{node.name}</span>
+          <span className={styles.folderCount}>{node.count}</span>
+        </button>
+        {isOpen && node.children.map((child) => renderFlowNode(child, depth + 1))}
+      </div>
+    )
   }
 
   return (
@@ -530,41 +655,19 @@ export function StepSidebar({
               Import a flow…
             </button>
           )}
-          {flows.map((f, i) => (
-            <Fragment key={f.id}>
-              {/* Bundled examples sit above the rule, personal flows below it.
-                  Only drawn at the boundary, so a list of one kind has none. */}
-              {i > 0 && f.group !== 'examples' && flows[i - 1].group === 'examples' && (
-                <hr className={styles.groupRule} aria-hidden="true" />
-              )}
-            <div
-              className={`${styles.item} ${styles.flowItem}${f.id === flowId ? ` ${styles.active}` : ''}`}
-              onClick={() => onSelectFlow(f.id)}
-              title={f.description}
-            >
-              <span className={styles.flowTitle}>{f.title}</span>
-              {f.description && <span className={styles.flowDesc}>{f.description}</span>}
-              {/* Bundled examples are committed and shared, so they aren't
-                  offered for deletion; and the last flow standing stays put,
-                  because there'd be nothing to fall back to. */}
-              {onDeleteFlow && flows.length > 1 && f.group !== 'examples' && (
-                <button
-                  className={styles.deleteBtn}
-                  title={`Delete ${f.title}`}
-                  aria-label={`Delete ${f.title}`}
-                  onClick={(e) => { e.stopPropagation(); onDeleteFlow(f) }}
-                >
-                  <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-                    <path
-                      d="M6 2h4v1h3v1.5H3V3h3zM4.5 5.5h7l-.6 8.5H5.1z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-            </Fragment>
-          ))}
+          <input
+            className={styles.filterInput}
+            type="search"
+            value={flowFilter}
+            placeholder="Filter visualizations…"
+            aria-label="Filter visualizations"
+            onChange={(e) => setFlowFilter(e.target.value)}
+          />
+          {query
+            ? matches.length
+              ? matches.map((f) => flowRow(f, 0, folderPath(f).join(' / ')))
+              : <p className={styles.emptyNote}>Nothing matches “{flowFilter.trim()}”.</p>
+            : flowTree.map((node) => renderFlowNode(node, 0))}
         </div>
       )}
     </nav>

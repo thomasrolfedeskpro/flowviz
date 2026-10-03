@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { parseFlowSchema } from '@/engine/flowSchema'
 import { exportStem } from '@/utils/download'
+import { normaliseGroup } from '@/utils/flowGroups'
+import { NameCombobox } from '@/components/NameCombobox'
 import type { FlowSummary } from '@/components/StepSidebar'
 import type { FlowDefinition } from '@/types/schema'
 import styles from '@/styles/EditModal.module.css'
@@ -17,6 +19,8 @@ import styles from '@/styles/EditModal.module.css'
 interface Props {
   /** Flow ids already taken, so a clash is caught before the request. */
   taken: Set<string>
+  /** Folder paths already in use, offered as suggestions. */
+  groups: string[]
   onImported: (flow: FlowSummary) => void
   onClose: () => void
 }
@@ -33,7 +37,7 @@ function problemsOf(text: string): { def?: FlowDefinition; errors: string[] } {
   return result.success ? { def: result.data, errors: [] } : { errors: result.errors }
 }
 
-export function ImportFlowModal({ taken, onImported, onClose }: Props) {
+export function ImportFlowModal({ taken, groups, onImported, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const el = ref.current
@@ -42,6 +46,7 @@ export function ImportFlowModal({ taken, onImported, onClose }: Props) {
 
   const [text, setText]   = useState('')
   const [name, setName]   = useState('')
+  const [group, setGroup] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy]   = useState(false)
 
@@ -67,7 +72,11 @@ export function ImportFlowModal({ taken, onImported, onClose }: Props) {
     setError(null)
     // The name is the flow's title as well as its filename — a list showing one
     // thing and a file called another is a puzzle nobody needs.
-    const body: FlowDefinition = { ...def, meta: { ...def.meta, title: name.trim() } }
+    const folder = normaliseGroup(group)
+    const body: FlowDefinition = {
+      ...def,
+      meta: { ...def.meta, title: name.trim(), ...(folder ? { group: folder } : {}) },
+    }
     try {
       const res = await fetch(`/api/flows/${slug}`, {
         method: 'POST',
@@ -79,12 +88,13 @@ export function ImportFlowModal({ taken, onImported, onClose }: Props) {
         throw new Error(payload.errors?.join('\n') ?? payload.error ?? `Import failed (${res.status})`)
       }
       // Always custom/: an import is never a bundled example, so the list
-      // shows it below the rule and offers it for deletion.
+      // offers it for deletion.
       onImported({
         id: slug,
         title: body.meta.title,
         description: body.meta.description ?? '',
-        group: 'custom',
+        source: 'custom',
+        group: folder,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -122,6 +132,21 @@ export function ImportFlowModal({ taken, onImported, onClose }: Props) {
         </div>
 
         <div className={styles.field}>
+          <label className={styles.label} htmlFor="import-group">Folder</label>
+          <NameCombobox
+            id="import-group"
+            value={group}
+            names={groups}
+            placeholder="ungrouped"
+            emptyLabel="New folder — it appears once you import"
+            onChange={setGroup}
+          />
+          <p className={styles.hint}>
+            A folder inside Custom. Dots nest it: “deskpro.infra.aws”.
+          </p>
+        </div>
+
+        <div className={`${styles.field} ${styles.stack}`}>
           <span className={styles.label}>Flow JSON</span>
           <div className={styles.inline}>
             <input
