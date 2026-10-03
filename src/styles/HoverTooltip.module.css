@@ -4,6 +4,10 @@
   left: 0;
   pointer-events: auto;
   max-width: 260px;
+  /* How far the card floats above its component. The one source of truth for
+     it: `HoverTooltip` positions against this, and the bridge below spans it.
+     Changing it here moves both together. */
+  --card-gap: 12px;
   /* Deliberately no overflow here. A clipping context on the card would hide
      the header's tooltips, which sit outside its bounds by design. The body
      below does the clipping instead. */
@@ -35,6 +39,14 @@
   align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 0.3rem;
+}
+
+/* No body under it, so the gap the header leaves for one is dead space. Applies
+   both to a card compacted by the zoom and to a component that never had
+   anything to say — the two should be the same shape, because to the reader
+   they are the same card. */
+.headOnly .head {
+  margin-bottom: 0;
 }
 
 .tooltip strong {
@@ -122,6 +134,26 @@
 /* Pinned by a double-click, and staying until another one. The ring is the only
    thing that separates it from a card the pointer happens to be holding up —
    deliberately quiet, because several can be on screen at once. */
+/*
+ * The gap between the card and its component, made hoverable.
+ *
+ * The pointer crossing that gap is over neither the mesh nor the card, so the
+ * card was being dismissed mid-journey and only a dismissal delay got you
+ * across. This joins the two hit areas into one, which is what lets that delay
+ * be short enough to feel immediate on the way out.
+ *
+ * Hit-testing a pseudo-element resolves to the element that owns it, so the
+ * card's own `onPointerEnter` fires from here — no extra element, no JS.
+ */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: var(--card-gap);
+}
+
 .pinned {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 1px var(--accent-blue), 0 4px 14px rgb(0 0 0 / 0.18);

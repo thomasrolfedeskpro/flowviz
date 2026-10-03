@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   gridToWorld,
   worldToGrid,
+  snapWaypoint,
+  WAYPOINT_SNAP,
   componentCenter,
   componentMeshSize,
   CELL_SIZE,
@@ -144,5 +146,32 @@ describe('componentMeshSize()', () => {
   it('scales a 1×3 component to triple depth', () => {
     const v = componentMeshSize(component({ size: { w: 1, h: 3 } }))
     expect(v.z).toBeCloseTo(3 * CELL_SIZE * COMPONENT_GAP)
+  })
+})
+
+describe('snapWaypoint', () => {
+  it('leaves a whole cell alone', () => {
+    expect(snapWaypoint(7)).toBe(7)
+  })
+
+  it('leaves a half cell alone', () => {
+    expect(snapWaypoint(7.5)).toBe(7.5)
+  })
+
+  it('pulls a coordinate to the nearer half', () => {
+    expect(snapWaypoint(7.4)).toBe(7.5)
+    expect(snapWaypoint(7.2)).toBe(7)
+  })
+
+  it('lands exactly on the lattice, so a saved route has no float dust', () => {
+    for (let i = 0; i < 40; i++) {
+      const snapped = snapWaypoint(i * 0.137)
+      expect(snapped % WAYPOINT_SNAP).toBe(0)
+      expect(String(snapped)).toMatch(/^-?\d+(\.5)?$/)
+    }
+  })
+
+  it('snaps negatives the same way, so a re-base has nothing to tidy', () => {
+    expect(snapWaypoint(-2.4)).toBe(-2.5)
   })
 })

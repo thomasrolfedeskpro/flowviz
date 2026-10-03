@@ -4,6 +4,32 @@ Notable changes to FlowViz, newest first. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); entries are dated
 rather than versioned, because the app is deployed rather than released.
 
+## 2026-10-03
+
+### Added
+
+- **Folders in the visualization list.** The tab now opens on two folders,
+  `Examples` and `Custom`, both shut. A flow's `meta.group` nests it below its
+  folder as a dot-separated path, so `"deskpro.infra.aws"` files it three deep.
+  Set it in **Visualization settings** or on the way in through **Import a
+  flow…**; every file stays flat in `public/flows/`, so re-filing a flow never
+  moves one. Thirty flows sorted alphabetically into one list was a list you
+  read rather than navigated.
+- A filter box above the list. Typing flattens the tree to the matches and
+  names the folder each one came from, because a match three folders down is no
+  use if you still have to find the folders.
+
+### Changed
+
+- **Hovering a pipe in edit mode shows a different cursor.** Double-clicking a
+  pipe has added a routing waypoint since the editor gained one, but a pipe is
+  the only target with no handle to hover, so nothing said so.
+- **Routing waypoints land on half cells rather than whole ones.** A pipe
+  routed around a component usually wants to run *between* two columns, not
+  down the middle of one, and the old whole-cell snap could not express that —
+  it also made every drag jump on release. Components still snap to whole
+  cells, and a hand-written route can still use any value.
+
 ## 2026-09-25
 
 ### Added

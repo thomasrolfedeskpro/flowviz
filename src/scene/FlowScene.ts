@@ -14,7 +14,7 @@ import { THEME_COLORS } from '@/scene/ThemeColors'
 import type { Theme } from '@/scene/ThemeColors'
 import type { InternalGraph } from '@/types/internal'
 import type { LabelAnchor, Step } from '@/types/schema'
-import { CELL_SIZE, COMPONENT_GAP, gridToWorld, worldToGrid } from '@/engine/layoutEngine'
+import { CELL_SIZE, COMPONENT_GAP, gridToWorld, snapWaypoint, worldToGrid } from '@/engine/layoutEngine'
 import { PIPE_HEIGHT, removeWaypoint } from '@/engine/parseFlow'
 import type { ComponentPatch, FlowAction } from '@/state/flowActions'
 import { componentGridPosition, gridFromBounds, zoneGridBounds } from '@/state/gridUnits'
@@ -511,7 +511,7 @@ export class FlowScene extends SceneManager {
       if (conn && conn.route !== 'auto') {
         const wp = conn.route[this.dragWaypoint.index]
         // Commit on whole cells, same as a component drop.
-        this.setWaypoint(this.dragWaypoint, Math.round(wp.col), Math.round(wp.row))
+        this.setWaypoint(this.dragWaypoint, snapWaypoint(wp.col), snapWaypoint(wp.row))
         this.commit([this.routeAction(this.dragWaypoint.connId)])
       }
       this.dragWaypoint = null
@@ -580,6 +580,10 @@ export class FlowScene extends SceneManager {
 
     const componentId = this.pickComponent(clientX, clientY)
     if (componentId) return this.setEditHover(null, componentId, 'grab')
+
+    // A pipe is the one target with no handle to hover, so the cursor is the
+    // only thing that says a double-click here drops a waypoint.
+    if (this.pickPipe(clientX, clientY)) return this.setEditHover(null, null, 'cell')
 
     this.setEditHover(null, null, 'move')
   }
@@ -695,11 +699,14 @@ export class FlowScene extends SceneManager {
     let bestDist = TOLERANCE_PX * TOLERANCE_PX
 
     const probe = new THREE.Vector3()
+    // Runs on every pointer move in edit mode, so the projection reuses one
+    // vector rather than allocating a few thousand per frame.
+    const ndc = new THREE.Vector3()
     for (const [id, pipe] of this.pipes) {
       if (!pipe.mesh.visible) continue
       for (let i = 0; i <= SAMPLES; i++) {
         pipe.curve.getPoint(i / SAMPLES, probe)
-        const ndc = probe.clone().project(this.camera)
+        ndc.copy(probe).project(this.camera)
         const sx = (ndc.x + 1) / 2 * el.clientWidth
         const sy = -(ndc.y - 1) / 2 * el.clientHeight
         const d = (sx - px) ** 2 + (sy - py) ** 2
@@ -743,7 +750,8 @@ export class FlowScene extends SceneManager {
     const conn = this.graph.connections.get(connId)
     if (!conn) return
 
-    const { col, row } = worldToGrid(point.x, point.z)
+    const col = snapWaypoint(point.x / CELL_SIZE)
+    const row = snapWaypoint(point.z / CELL_SIZE)
     if (col < 0 || row < 0) return
 
     const existing = conn.route === 'auto' ? [] : conn.route

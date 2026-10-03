@@ -4,6 +4,7 @@ import { StepControls } from '@/components/StepControls'
 import { StepHUD } from '@/components/StepHUD'
 import { AnnotationOverlay } from '@/components/AnnotationOverlay'
 import { HoverTooltip } from '@/components/HoverTooltip'
+import { isCompactAtZoom } from '@/utils/cardDensity'
 import { ZoneTooltip } from '@/components/ZoneTooltip'
 import { PipeLabels } from '@/components/PipeLabels'
 import { ComponentLabels } from '@/components/ComponentLabels'
@@ -48,6 +49,7 @@ import type { FlowDefinition } from '@/types/schema'
 import type { Vector3 } from 'three'
 import { flows as allFlows } from 'virtual:flows'
 import { sceneIndex, findSceneGraph } from '@/utils/scenes'
+import { compareFlows, knownGroups, normaliseGroup } from '@/utils/flowGroups'
 import styles from '@/styles/App.module.css'
 import '@/styles/global.css'
 
@@ -96,11 +98,17 @@ async function loadFlow(id: string): Promise<FlowDefinition> {
 /**
  * How long a card stays after the pointer leaves the component.
  *
- * Only long enough to cross the twelve pixels between the two. The card carries
- * its own pin and connection controls, so it has to be reachable; any longer
- * and cards linger over the diagram after you have moved on.
+ * The card used to be an island: the pointer had to cross bare canvas to reach
+ * its pin and connection controls, and this delay was what held the card there
+ * long enough to make the crossing. It paid for that on every exit, where the
+ * card hangs over a diagram you have already moved on from.
+ *
+ * `HoverTooltip` now bridges the gap, so the two hit areas touch and there is
+ * no crossing to survive. What is left only has to absorb the order the pointer
+ * leaving the mesh and arriving on the card are reported in — a few frames, not
+ * a journey.
  */
-const CARD_GRACE_MS = 220
+const CARD_GRACE_MS = 90
 
 /** How many connections a component is an end of — the number its pinned card
  *  offers to light up, and the one that says how much it carries. */
@@ -272,14 +280,22 @@ function App() {
       packetCounts[def.connection] = Math.max(packetCounts[def.connection] ?? 0, def.count)
     }
   }
-  // The manifest's titles were read from disk at startup; the flow on screen is
-  // whatever the definition now says it is, so it overrides its own entry.
-  const flowsForList = useMemo(
-    () => (flowDef
-      ? flowList.map((f) => (f.id === flowId ? { ...f, title: flowDef.meta.title } : f))
-      : flowList),
-    [flowList, flowId, flowDef],
-  )
+  // The manifest's titles and folders were read from disk at startup; the flow
+  // on screen is whatever the definition now says it is, so it overrides its own
+  // entry — a folder changed in the editor re-files it before the save lands.
+  const flowsForList = useMemo(() => {
+    if (!flowDef) return flowList
+    return flowList
+      .map((f) =>
+        f.id === flowId
+          ? { ...f, title: flowDef.meta.title, group: normaliseGroup(flowDef.meta.group) }
+          : f,
+      )
+      .sort(compareFlows)
+  }, [flowList, flowId, flowDef])
+
+  /** Folders already in use, offered when setting one on the flow. */
+  const flowGroups = useMemo(() => knownGroups(flowsForList), [flowsForList])
 
   const { hoveredId, setHoveredId } = useHover()
   /** Components double-clicked to keep their card up. Held here rather than in
@@ -539,6 +555,12 @@ function App() {
     const next = sceneRef.current?.zoomLevel ?? 1
     setZoomLevel((prev) => (Math.round(prev * 100) === Math.round(next * 100) ? prev : next))
   }, [])
+
+  /** Cards drop to their names alone once the diagram is small enough that a
+   *  full one would cover it. Rides the zoom readout's own polling, so it costs
+   *  no extra renders — the percentage it is derived from has already changed
+   *  by the time this does. */
+  const cardsCompact = isCompactAtZoom(zoomLevel)
 
   // Animated, because cutting between the two projections is disorienting —
   // everything on screen moves at once and nothing tells you it was the camera.
@@ -938,6 +960,7 @@ function App() {
       meta: {
         title: string
         description?: string
+        group?: string
         waterfallLabel?: string
         timing?: Partial<Timing>
       },
@@ -1243,11 +1266,9 @@ function App() {
       {importing && (
         <ImportFlowModal
           taken={new Set(flowList.map((f) => f.id))}
+          groups={flowGroups}
           onImported={(flow) => {
-            setFlowList((list) => [...list, flow].sort(
-              (a, b) => (a.group === 'examples' ? 0 : 1) - (b.group === 'examples' ? 0 : 1)
-                || a.title.localeCompare(b.title),
-            ))
+            setFlowList((list) => [...list, flow].sort(compareFlows))
             setImporting(false)
             handleSelectFlow(flow.id)
           }}
@@ -1258,6 +1279,7 @@ function App() {
       {/* Delete confirmation is reachable outside edit mode; the rest is edit-only. */}
       {editTarget && (editMode || editTarget.kind === 'delete-flow') && (
         <EditModal
+          flowGroups={flowGroups}
           key={
             editTarget.kind === 'step' ? `step:${editTarget.index}`
             : editTarget.kind === 'flow' || editTarget.kind === 'json' ? editTarget.kind
@@ -1315,6 +1337,7 @@ function App() {
           graph={activeGraph ?? graph}
           bridge={bridge}
           pinned
+          compact={cardsCompact}
           onTogglePin={() => togglePin(id)}
           relations={relationProps(id, activeGraph ?? graph)}
         />
@@ -1324,6 +1347,7 @@ function App() {
           componentId={lingerId}
           graph={activeGraph ?? graph}
           bridge={bridge}
+          compact={cardsCompact}
           onTogglePin={() => togglePin(lingerId)}
           relations={relationProps(lingerId, activeGraph ?? graph)}
           onPointerEnter={holdCard}

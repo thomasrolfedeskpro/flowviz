@@ -44,6 +44,12 @@ name internal services and file paths, and keeping them out of git is deliberate
 The flow id is the bare filename, so `?flow=my-flow` finds it in either
 directory. The manifest in `vite.config.ts` scans one level deep only.
 
+The sidebar shows two top-level folders, `Examples` and `Custom`, picked by
+which of these directories the file came from. `meta.group` nests a flow below
+that as a dot-separated path like `"deskpro.infra.aws"` — see
+`src/utils/flowGroups.ts`. Every file stays flat in `custom/`, so re-filing a
+flow is a field edit and never a file move.
+
 ---
 
 ## Git and PR workflow

@@ -44,6 +44,13 @@ at startup) and it appears in the **Visualizations** tab of the sidebar.
 Load one directly with `?flow=<file-name-without-json>` — the id is just the
 filename, so `?flow=oauth` works wherever the file sits.
 
+The list has two top-level folders: `Examples` for what ships with the repo,
+`Custom` for everything else. `meta.group` nests a flow below that —
+`"group": "deskpro.infra.aws"` puts it three folders deep inside `Custom`.
+Folders start shut, so the tab opens on those two rows. Set the group in
+**Visualization settings** while editing, or on the way in through
+**Import a flow…**.
+
 **[`flow-authoring-guide.md`](./flow-authoring-guide.md)** is the single reference an LLM needs. It covers the full JSON schema, layout rules, zone gap requirements, packet/stream usage, annotation types, nested scenes, waterfall bars, and the aggregation rules for turning a large trace into a readable number of steps — with enough examples that a model can produce a correct diagram without iteration. Attach it to a prompt like:
 
 > "Read flow-authoring-guide.md, then create a FlowViz JSON for [your system description]."

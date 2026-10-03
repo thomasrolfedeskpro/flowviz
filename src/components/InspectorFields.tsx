@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { TYPE_COLOR } from '@/scene/ComponentMesh'
 import { COMPONENT_SHAPES } from '@/scene/componentShapes'
 import { SOLID_ICON_NAMES } from '@/scene/IconMesh'
-import { IconCombobox } from '@/components/IconCombobox'
+import { NameCombobox } from '@/components/NameCombobox'
+import { normaliseGroup } from '@/utils/flowGroups'
 import type {
   Component,
   ComponentShape,
@@ -179,11 +180,12 @@ export function ComponentFields({
         <div className={styles.field}>
           <label className={styles.label} htmlFor="insp-icon">Icon</label>
           {/* A combobox, not a 2000-row select: type to filter, or open the list. */}
-          <IconCombobox
+          <NameCombobox
             id="insp-icon"
             value={draft.icon ?? ''}
             names={SOLID_ICON_NAMES}
             placeholder="type default"
+            emptyLabel="No icon matches that"
             onChange={(icon) => preview({ icon })}
           />
           <p className={styles.hint}>
@@ -534,14 +536,18 @@ export function ConnectionFields({
 
 export function FlowFields({
   def,
+  groups,
   onApply,
   onCancel,
 }: {
   def: FlowDefinition
+  /** Folder paths already in use, offered as suggestions. */
+  groups: string[]
   onApply: (
     meta: {
       title: string
       description?: string
+      group?: string
       waterfallLabel?: string
       timing?: Partial<Timing>
     },
@@ -551,6 +557,7 @@ export function FlowFields({
 }) {
   const [title, setTitle] = useState(def.meta.title)
   const [description, setDescription] = useState(def.meta.description ?? '')
+  const [group, setGroup] = useState(def.meta.group ?? '')
   const [waterfallLabel, setWaterfallLabel] = useState(def.meta.waterfallLabel ?? '')
   const [grid, setGrid] = useState(def.layout.grid)
   const [timing, setTiming] = useState<Partial<Timing>>(def.meta.timing ?? {})
@@ -572,6 +579,7 @@ export function FlowFields({
           {
             title:          title.trim() || 'Untitled',
             description:    description.trim() || undefined,
+            group:          normaliseGroup(group) || undefined,
             waterfallLabel: waterfallLabel.trim() || undefined,
             timing:         Object.keys(timing).length ? timing : undefined,
           },
@@ -599,6 +607,22 @@ export function FlowFields({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="insp-group">Folder</label>
+          <NameCombobox
+            id="insp-group"
+            value={group}
+            names={groups}
+            placeholder="ungrouped"
+            emptyLabel="New folder — it appears once you save"
+            onChange={setGroup}
+          />
+          <p className={styles.hint}>
+            A folder inside Custom. Dots nest it further: “deskpro.infra.aws” puts it
+            three deep. Blank leaves the flow directly in Custom.
+          </p>
         </div>
 
         <div className={styles.field}>

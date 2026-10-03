@@ -68,6 +68,12 @@ The filename is the flow's id, and the id is what `?flow=` takes — it does not
 include the directory, so `?flow=my-flow` finds `custom/my-flow.json`. Two flows
 in different directories cannot share a filename.
 
+These two directories are the two folders the Visualizations tab opens on,
+`Examples` and `Custom`. `meta.group` (§3) files a flow further down inside its
+own folder. Reuse a group an existing flow already uses rather than coining a
+near-duplicate: every distinct string is another folder, and `deskpro.infra`
+beside `deskpro-infra` reads as a mistake.
+
 ---
 
 ## 2. Top-level structure
@@ -93,12 +99,17 @@ Every field is required. `zones` may be an empty array if zones are not needed.
 {
   "title":          "OAuth 2.0 PKCE Flow",
   "description":    "How a browser-based app obtains an access token without a client secret.",
+  "group":          "deskpro.infra.aws",
   "waterfallLabel": "Latency",
   "timing":         { "step": 3000, "packet": 2000, "transition": 800, "stream": 3500 }
 }
 ```
 
 `title` is shown in the step HUD. `description` is optional context.
+`group` files the flow in the Visualizations list. The list has two top-level
+folders — `Examples` for the flows that ship with the repo, `Custom` for
+everything else — and `group` nests it below that: `"deskpro.infra.aws"` puts it
+three folders deep inside `Custom`. Omitted, the flow sits directly in `Custom`.
 `waterfallLabel` names the waterfall column and its toggle — set it whenever the
 flow has bars (§ 8.13), since the bars themselves are unitless. Omitted, the
 column reads "Waterfall".
@@ -132,7 +143,9 @@ have no opinion.
 
 The grid defines the coordinate space. Component and zone positions are whole
 (col, row) cells; only connection `route` waypoints may be fractional, for
-threading a pipe through the middle of a cell rather than its corner. `cols`
+threading a pipe through the middle of a cell rather than its corner. The editor
+snaps a waypoint you add or drag to the nearest half cell; a hand-written route
+can use any value. `cols`
 controls width (left-to-right), `rows` controls depth (top-to-bottom in screen
 space).
 
@@ -1475,8 +1488,8 @@ definition becomes editable in place. Playback stops while you edit.
 | Move a component | Drag it; it snaps to the grid on release |
 | Resize a zone | Drag any of its four corner handles |
 | Move a zone and everything in it | Drag the amber grip on its top edge |
-| Add a routing waypoint | Double-click the pipe where you want it. It is inserted in route order, so the pipe never doubles back |
-| Move a routing waypoint | Drag the teal diamond on the pipe |
+| Add a routing waypoint | Double-click the pipe where you want it — the cursor turns to a plus over a pipe. It is inserted in route order, so the pipe never doubles back |
+| Move a routing waypoint | Drag the teal diamond on the pipe. It lands on the nearest half cell, so a pipe can run between two columns |
 | Delete a waypoint | Double-click the diamond, or right-click it — the route falls back to `auto` when the last one goes |
 | Add a component or zone | **＋ Component** / **＋ Zone**, then click the cell to drop it on |
 | Join two components | **⤳ Connect**, then click the source and the target |
@@ -1556,6 +1569,7 @@ have to:
 - [ ] Repeated operations use one step with `packet.count`, not one step each
 - [ ] Every `waterfall.weight`/`start` in the flow measures the same thing, with the unit in `label`
 - [ ] `meta.waterfallLabel` names what that is, if the flow has bars at all
+- [ ] `meta.group` files the flow beside its neighbours, reusing a group another flow already uses
 - [ ] `footer` notes carry their own units and are limited to one or two per step
 - [ ] `streams` appear only on long-lived open connections (streamed media, WebSockets, telemetry feeds) — never to show data merely moving
 - [ ] Multiple `packets` in a step are things happening *at the same time* — one thing crossing several hops is one packet on one waypointed connection

@@ -2,7 +2,8 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import styles from '@/styles/EditModal.module.css'
 
 /**
- * A name picker over the whole Font Awesome solid set.
+ * A free-text box with a list of suggestions under it — icon names, folder
+ * paths, anything where the known values help but don't bind.
  *
  * This is not a `<datalist>` on purpose. Chrome filters datalist options by the
  * input's current value, so once a full icon name is in the box the only
@@ -10,17 +11,20 @@ import styles from '@/styles/EditModal.module.css'
  * the popup at 513 rows regardless, which cut the list off at "deaf". Both are
  * unreachable from CSS or markup, so the list is ours.
  */
-export function IconCombobox({
+export function NameCombobox({
   id,
   value,
   names,
   placeholder,
+  emptyLabel = 'Nothing matches that',
   onChange,
 }: {
   id: string
   value: string
   names: string[]
   placeholder?: string
+  /** Shown in place of the list when the typed value matches nothing known. */
+  emptyLabel?: string
   onChange: (name: string) => void
 }) {
   const listId = useId()
@@ -125,7 +129,7 @@ export function IconCombobox({
       />
       {open && (
         <ul className={styles.comboList} id={listId} role="listbox" ref={listRef}>
-          {matches.length === 0 && <li className={styles.comboEmpty}>No icon matches that</li>}
+          {matches.length === 0 && <li className={styles.comboEmpty}>{emptyLabel}</li>}
           {matches.map((name, i) => (
             <li
               key={name}

@@ -38,12 +38,14 @@ interface Props {
   target: EditTarget
   /** The flow being edited. Every form reads its subject out of this. */
   def: FlowDefinition | null
+  /** Folder paths other flows already use, suggested in the flow's settings. */
+  flowGroups: string[]
   onPatchStep: (index: number, patch: StepPatch) => void
   onPatchComponent: (id: string, scene: SceneId, patch: ComponentPatch) => void
   onPatchZone: (id: string, scene: SceneId, patch: ZonePatch) => void
   onPatchConnection: (id: string, scene: SceneId, patch: ConnectionPatch, clearRoute: boolean) => void
   onPatchFlow: (
-    meta: { title: string; description?: string; waterfallLabel?: string },
+    meta: { title: string; description?: string; group?: string; waterfallLabel?: string },
     grid: { cols: number; rows: number },
   ) => void
   /** Applies a component's visual fields to the scene only, for live preview. */
@@ -68,6 +70,7 @@ interface Props {
 export function EditModal({
   target,
   def,
+  flowGroups,
   onPatchStep,
   onPatchComponent,
   onPatchZone,
@@ -197,6 +200,7 @@ export function EditModal({
         def && (
           <FlowFields
             def={def}
+            groups={flowGroups}
             onApply={(meta, grid) => { onPatchFlow(meta, grid); onClose() }}
             onCancel={cancel}
           />

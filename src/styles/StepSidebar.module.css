@@ -803,11 +803,103 @@
   color: var(--accent-fg);
 }
 
-/* Divides the bundled examples from personal flows in the list. */
-.groupRule {
-  margin: 0.45rem 0.3rem;
+/* ── folders in the visualization list ──────────────────── */
+
+.folderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  background: none;
   border: none;
-  border-top: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+
+.folderRow:hover {
+  background: var(--btn-hover);
+  color: var(--text-primary);
+}
+
+.folderRow:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.folderOpen {
+  color: var(--text-primary);
+}
+
+/* Points right when shut, down when open — the only thing distinguishing the
+   two states at a glance once the row is scrolled past the folder icon. */
+.folderChevron {
+  display: grid;
+  place-items: center;
+  width: 0.7rem;
+  color: var(--text-muted);
+  transition: transform 0.12s;
+}
+
+.folderOpen .folderChevron {
+  transform: rotate(90deg);
+}
+
+.folderName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderCount {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* Which folder a filtered row came from. Only drawn while filtering, because
+   the tree itself already says it the rest of the time. */
+.flowTrail {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+.filterInput {
+  width: 100%;
+  margin-bottom: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--input-bg, var(--btn-bg));
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.72rem;
+}
+
+.filterInput::placeholder {
+  color: var(--text-muted);
+}
+
+.filterInput:focus-visible {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: var(--ring);
+}
+
+.emptyNote {
+  margin: 0.6rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
 }
 
 /* Import sits at the head of the visualization list — the counterpart to the

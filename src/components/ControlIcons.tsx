@@ -95,6 +95,16 @@ export function AnglesRightIcon() {
   return <FaIcon name="anglesRight" size={12} />
 }
 
+/** A folder in the visualization list, open when you are inside it. */
+export function FolderIcon({ open }: { open: boolean }) {
+  return <FaIcon name={open ? 'folderOpen' : 'folder'} size={12} />
+}
+
+/** Turns down to point at a folder's contents when it is open. */
+export function ChevronRightIcon() {
+  return <FaIcon name="chevronRight" size={9} />
+}
+
 /** Keeps a card open. */
 export function PinIcon() {
   return <FaIcon name="thumbtack" />
