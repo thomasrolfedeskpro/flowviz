@@ -13,6 +13,13 @@ interface HoverTooltipProps {
   bridge:      OverlayBridge
   /** Kept open by its own pin, rather than following the pointer. */
   pinned?:     boolean
+  /**
+   * Name only, no body. Set while the view is zoomed far enough out that a
+   * full card would cover the diagram it is describing — see `cardDensity`.
+   * Pinned cards compact too: several of them at once is the worse case, not
+   * the exception.
+   */
+  compact?:    boolean
   onTogglePin?: () => void
   /**
    * Light every connection this component makes, across the whole flow.
@@ -47,6 +54,7 @@ export function HoverTooltip({
   graph,
   bridge,
   pinned = false,
+  compact = false,
   onTogglePin,
   relations,
   onPointerEnter,
@@ -60,7 +68,10 @@ export function HoverTooltip({
     () => component?.topCenter ?? null,
     (x, y) => {
       if (divRef.current) {
-        divRef.current.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 100% - 12px))`
+        // `--card-gap` is defined in the stylesheet, which also spans it with the
+        // bridge that makes it hoverable. Read from there so the two cannot drift.
+        divRef.current.style.transform =
+          `translate(calc(${x}px - 50%), calc(${y}px - 100% - var(--card-gap)))`
       }
     },
     [componentId, graph],
@@ -69,6 +80,11 @@ export function HoverTooltip({
   if (!component) return null
 
   const { meta } = component
+  // Nothing in the body to hide is not the same as hiding it: a card that was
+  // only ever a name must not gain a gap under it at one zoom and lose it at
+  // another.
+  const hasBody = Boolean(meta?.description || meta?.file || meta?.notes)
+  const bodyShown = hasBody && !compact
   const overlayRoot = document.getElementById('overlay-root')
   if (!overlayRoot) return null
 
@@ -76,7 +92,11 @@ export function HoverTooltip({
   return ReactDOM.createPortal(
     <div
       ref={divRef}
-      className={pinned ? `${styles.tooltip} ${styles.pinned}` : styles.tooltip}
+      className={[
+        styles.tooltip,
+        pinned && styles.pinned,
+        !bodyShown && styles.headOnly,
+      ].filter(Boolean).join(' ')}
       style={{ transform: 'translate(-9999px, -9999px)' }}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
@@ -117,13 +137,15 @@ export function HoverTooltip({
       </div>
       {/* The scrolling and the wrapping live here, not on the card, so the
           header's tooltips are not clipped by them. */}
-      <div className={styles.body}>
-        {meta?.description && <p>{meta.description}</p>}
-        {meta?.file && (
-          <code>{meta.file}{meta.line ? `:${meta.line}` : ''}</code>
-        )}
-        {meta?.notes && <p className={styles.notes}>{meta.notes}</p>}
-      </div>
+      {bodyShown && (
+        <div className={styles.body}>
+          {meta?.description && <p>{meta.description}</p>}
+          {meta?.file && (
+            <code>{meta.file}{meta.line ? `:${meta.line}` : ''}</code>
+          )}
+          {meta?.notes && <p className={styles.notes}>{meta.notes}</p>}
+        </div>
+      )}
     </div>,
     overlayRoot
   )
